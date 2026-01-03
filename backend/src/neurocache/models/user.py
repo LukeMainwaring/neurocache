@@ -46,7 +46,7 @@ class User(Base):
         cls,
         db: AsyncSession,
         user_create_schema: UserCreateSchema,
-    ) -> UserCreateSchema:
+    ) -> UserSchema:
         user = cls(**user_create_schema.model_dump())
         db.add(user)
         await db.commit()
@@ -81,7 +81,7 @@ class User(Base):
             await db.flush()
 
     @classmethod
-    async def exists(cls, db: AsyncSession, user_id: str) -> bool:
+    async def exists(cls, db: AsyncSession, id: str) -> bool:
         """Check if a user exists."""
-        result = await db.execute(select(exists(cls.id).where(cls.id == user_id)))
+        result = await db.execute(select(exists(cls.id).where(cls.id == id)))
         return result.scalar_one()

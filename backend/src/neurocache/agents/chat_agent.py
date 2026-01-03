@@ -117,10 +117,10 @@ async def chat_agent_stream(
 
     try:
         # Send message start event
-        yield f'data: {json.dumps({"type": "start", "messageId": message_id})}\n\n'
+        yield f"data: {json.dumps({'type': 'start', 'messageId': message_id})}\n\n"
 
         # Send text start event
-        yield f'data: {json.dumps({"type": "text-start", "id": text_block_id})}\n\n'
+        yield f"data: {json.dumps({'type': 'text-start', 'id': text_block_id})}\n\n"
 
         # Run chat agent with streaming
         agent = create_chat_agent()
@@ -133,13 +133,13 @@ async def chat_agent_stream(
             # delta=True gives us incremental chunks rather than accumulated text
             async for text_chunk in result.stream_text(delta=True):
                 # Send each chunk in official SSE format
-                yield f'data: {json.dumps({"type": "text-delta", "id": text_block_id, "delta": text_chunk})}\n\n'
+                yield f"data: {json.dumps({'type': 'text-delta', 'id': text_block_id, 'delta': text_chunk})}\n\n"
 
         # Send text end event
-        yield f'data: {json.dumps({"type": "text-end", "id": text_block_id})}\n\n'
+        yield f"data: {json.dumps({'type': 'text-end', 'id': text_block_id})}\n\n"
 
         # Send finish event
-        yield f'data: {json.dumps({"type": "finish"})}\n\n'
+        yield f"data: {json.dumps({'type': 'finish'})}\n\n"
 
         # Update message history
         output = await result.get_output()
@@ -153,5 +153,5 @@ async def chat_agent_stream(
         logger.exception("Error in chat agent streaming")
         # Send error in official SSE format
         error_message = "An error occurred while processing your request."
-        yield f'data: {json.dumps({"type": "error", "errorText": error_message})}\n\n'
+        yield f"data: {json.dumps({'type': 'error', 'errorText': error_message})}\n\n"
         raise
