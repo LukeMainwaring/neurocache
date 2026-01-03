@@ -1,0 +1,704 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Neurocache",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/customer/myself": {
+      "get": {
+        "tags": ["customer"],
+        "summary": "Get Myself",
+        "description": "Get a customer by ID.",
+        "operationId": "get_myself_api_customer_myself_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSchema-Output"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/customer/{user_id}": {
+      "put": {
+        "tags": ["customer"],
+        "summary": "Update Customer",
+        "description": "Update an existing customer.",
+        "operationId": "update_customer_api_customer__user_id__put",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Customer Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSchema-Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSchema-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/customer": {
+      "get": {
+        "tags": ["customer"],
+        "summary": "List Customers",
+        "description": "List all customers.",
+        "operationId": "list_customers_api_customer_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserSchema-Output"
+                  },
+                  "type": "array",
+                  "title": "Response List Customers Api Customer Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/customer/{user_id}/reset-history": {
+      "post": {
+        "tags": ["customer"],
+        "summary": "Reset Customer History",
+        "description": "Reset customer history to default values.\n\nResets:\n- intake_survey to initial state (started=False, all fields cleared)\n- plaid_data to default seed data",
+        "operationId": "reset_customer_history_api_customer__user_id__reset_history_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Customer Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSchema-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/db": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Db Health Check",
+        "description": "Check the database connection.",
+        "operationId": "db_health_check_api_health_db_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/intake/stream": {
+      "post": {
+        "tags": ["intake"],
+        "summary": "Intake Stream",
+        "description": "Intake agent streaming endpoint.\n\nHandles intake survey questions and generates initial financial plan.\nUse this endpoint when customer has not completed intake survey yet.\n\nArgs:\n    message: User message containing query and thread_id\n\nReturns:\n    Server-Sent Events stream of agent responses",
+        "operationId": "intake_stream_route_api_intake_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserMessage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ping/run": {
+      "post": {
+        "tags": ["ping"],
+        "summary": "Ping Run",
+        "description": "Non-streaming ping agent endpoint for testing.\n\nProvides proactive financial notification response based on customer data.\nCreates a new thread for this proactive notification.\n\nArgs:\n    user_id: Customer ID\n    evaluate: If True, evaluates notification and includes should_send in metadata\n\nReturns:\n    AssistantMessage with agent response and metadata (includes generated thread_id)\n\nRaises:\n    HTTPException: If no response is generated from the agent",
+        "operationId": "ping_run_route_api_ping_run_post",
+        "parameters": [
+          {
+            "name": "evaluate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Evaluate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/upkeep/stream": {
+      "post": {
+        "tags": ["upkeep"],
+        "summary": "Upkeep Stream",
+        "description": "Upkeep agent streaming endpoint.\n\nProvides ongoing financial maintenance and advice.\nUse this endpoint after customer has completed intake survey.\n\nArgs:\n    message: User message containing query and thread_id\n\nReturns:\n    Server-Sent Events stream of agent responses",
+        "operationId": "upkeep_stream_route_api_upkeep_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserMessage"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssistantMessage": {
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/MessageMetadata"
+          },
+          "role": {
+            "type": "string",
+            "const": "assistant",
+            "title": "Role",
+            "default": "assistant"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": ["thread_id", "content"],
+        "title": "AssistantMessage"
+      },
+      "UserSchema-Input": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "Customer Id",
+            "description": "Unique customer identifier"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "Customer's email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Customer's name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "When this customer profile was created"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "When this customer profile was last updated"
+          },
+          "credit_report": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Report",
+            "description": "Customer's credit report data as formatted text"
+          },
+          "plaid_data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plaid Data",
+            "description": "Customer's banking and spending data as formatted text"
+          },
+          "feature_metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature Metadata",
+            "description": "Additional feature metadata as formatted text"
+          },
+          "intake_survey": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntakeSurvey"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Intake survey where agent manages flow to populate responses and generate a financial plan"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "email",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "UserSchema",
+        "description": "Complete customer profile with all financial and survey data.\n\nThis is the top-level model that aggregates all customer information\nand will be passed to the agent via RunContext[Customer]."
+      },
+      "UserSchema-Output": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "Customer Id",
+            "description": "Unique customer identifier"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "Customer's email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Customer's name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "When this customer profile was created"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "When this customer profile was last updated"
+          },
+          "credit_report": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Report",
+            "description": "Customer's credit report data as formatted text"
+          },
+          "plaid_data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plaid Data",
+            "description": "Customer's banking and spending data as formatted text"
+          },
+          "feature_metadata": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature Metadata",
+            "description": "Additional feature metadata as formatted text"
+          },
+          "intake_survey": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Intake survey where agent manages flow to populate responses and generate a financial plan"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "email",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "UserSchema",
+        "description": "Complete customer profile with all financial and survey data.\n\nThis is the top-level model that aggregates all customer information\nand will be passed to the agent via RunContext[Customer]."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthCheckResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": ["status"],
+        "title": "HealthCheckResponse"
+      },
+      "IntakeSurvey": {
+        "properties": {
+          "started": {
+            "type": "boolean",
+            "title": "Started",
+            "description": "Whether the user has started the intake survey",
+            "default": false
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "Timestamp when survey conversation started"
+          },
+          "plan_generated": {
+            "type": "boolean",
+            "title": "Plan Generated",
+            "description": "Whether the agent has generated the initial financial plan",
+            "default": false
+          },
+          "plan_generated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Generated At",
+            "description": "Timestamp when plan was generated"
+          },
+          "plan_confirmed": {
+            "type": "boolean",
+            "title": "Plan Confirmed",
+            "description": "Whether the user has confirmed the generated financial plan",
+            "default": false
+          },
+          "opening_question_response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Question Response",
+            "description": "User's response to the opening question about their 3-month financial vision"
+          },
+          "question_1_response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question 1 Response",
+            "description": "User's response about why they want to make a change now"
+          },
+          "question_2_response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question 2 Response",
+            "description": "User's response about where their money goes each month"
+          },
+          "question_3_response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question 3 Response",
+            "description": "User's response about what obstacles prevent them from sticking to money goals"
+          },
+          "generated_plan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated Plan",
+            "description": "The initial financial plan generated by the agent after completing the intake survey"
+          }
+        },
+        "type": "object",
+        "title": "IntakeSurvey",
+        "description": "Intake survey where agent manages full conversation flow.\n\nThe frontend displays an opening question, then the agent asks 3 core questions\nand generates a plan in one conversation, without structured Q&A tracking."
+      },
+      "MessageMetadata": {
+        "properties": {
+          "original_llm_response": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Llm Response"
+          },
+          "should_send": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Should Send"
+          }
+        },
+        "type": "object",
+        "title": "MessageMetadata"
+      },
+      "UserMessage": {
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/MessageMetadata"
+          },
+          "role": {
+            "type": "string",
+            "const": "user",
+            "title": "Role",
+            "default": "user"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": ["thread_id", "content"],
+        "title": "UserMessage"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

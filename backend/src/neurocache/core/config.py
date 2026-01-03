@@ -1,0 +1,60 @@
+"""Application configuration using Pydantic Settings."""
+
+import pathlib
+from functools import lru_cache
+from typing import Literal
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class ApiSettings(BaseSettings):
+    """API and CORS configuration."""
+
+    API_PREFIX: str = "/api"
+    ALLOWED_ORIGINS: dict[str, list[str]] = {
+        "development": ["http://localhost:3000"],
+        "production": ["https://neurocache.vercel.app"],
+    }
+
+
+class BaseAgentSettings(BaseSettings):
+    """Base agent configuration."""
+
+    AGENT_MODEL: str = "gpt-4o-mini"
+    AGENT_TEMPERATURE: float = 0.0
+
+
+class PostgresSettings(BaseSettings):
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
+    POSTGRES_HOST: str
+    POSTGRES_PORT: int
+
+
+class AuthSettings(BaseSettings):
+    AUTH_DOMAIN: str = "cleanlab-development.us.auth0.com"
+    AUTH_API_AUDIENCE: str = "https://development.api.cleanlab.ai"
+    AUTH_ISSUER: str = "https://cleanlab-development.us.auth0.com/"
+    AUTH_ALGORITHMS: str = "RS256"
+
+
+class Settings(ApiSettings, BaseAgentSettings, PostgresSettings, AuthSettings):
+    """Main application settings."""
+
+    model_config = SettingsConfigDict(
+        env_file=str(pathlib.Path(__file__).parent.parent.parent.parent / ".env"),
+        env_ignore_empty=True,
+    )
+
+    ENVIRONMENT: Literal["development", "production"] = "development"
+
+    def is_production(self) -> bool:
+        """Check if running in production environment."""
+        return self.ENVIRONMENT == "production"
+
+
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached settings instance."""
+    return Settings.model_validate({})

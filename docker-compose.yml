@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: neurocache
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+    networks:
+      - neurocache
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      target: local
+    ports:
+      - "8000:8000"
+    environment:
+      UVICORN_PORT: 8000
+      POSTGRES_DB: neurocache
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+    env_file:
+      - .env
+    volumes:
+      # Mount source code for hot reload
+      - ./backend/src:/app/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - neurocache
+
+networks:
+  neurocache:
+    attachable: true
+
+volumes:
+  postgres_data:
