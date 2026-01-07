@@ -13,10 +13,8 @@ import starlette.requests
 import uvicorn
 from fastapi import FastAPI, Request, Response  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.authentication import AuthenticationMiddleware
 
 from neurocache.core.config import get_settings
-from neurocache.dependencies.auth.auth import AuthBackend
 from neurocache.routers.main import api_router
 
 config = get_settings()
@@ -78,11 +76,6 @@ async def add_request_context(request: Request, call_next: Callable[[Request], A
 
     log_context_var.reset(token)
     return response
-
-
-# FastAPI calls middleware in the reverse order of declaration
-# the log request middleware depends on this auth middleware, so this must be added after
-app.add_middleware(AuthenticationMiddleware, backend=AuthBackend())
 
 
 if __name__ == "__main__":

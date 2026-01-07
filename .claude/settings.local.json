@@ -12,7 +12,8 @@
       "Bash(uv run mypy:*)",
       "Bash(uv run ruff format:*)",
       "Bash(uv run ruff check:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(uv sync:*)"
     ]
   }
 }

@@ -32,14 +32,7 @@ class PostgresSettings(BaseSettings):
     POSTGRES_PORT: int
 
 
-class AuthSettings(BaseSettings):
-    AUTH_DOMAIN: str = "cleanlab-development.us.auth0.com"
-    AUTH_API_AUDIENCE: str = "https://development.api.cleanlab.ai"
-    AUTH_ISSUER: str = "https://cleanlab-development.us.auth0.com/"
-    AUTH_ALGORITHMS: str = "RS256"
-
-
-class Settings(ApiSettings, BaseAgentSettings, PostgresSettings, AuthSettings):
+class Settings(ApiSettings, BaseAgentSettings, PostgresSettings):
     """Main application settings."""
 
     model_config = SettingsConfigDict(
