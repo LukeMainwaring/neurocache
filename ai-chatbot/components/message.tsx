@@ -1,7 +1,7 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import equal from "fast-deep-equal";
-import { memo, useState } from "react";
+import { memo } from "react";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
@@ -9,14 +9,13 @@ import { MessageContent } from "./elements/message";
 import { Response } from "./elements/response";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
-import { MessageEditor } from "./message-editor";
 
 const PurePreviewMessage = ({
   chatId,
   message,
   isLoading,
-  setMessages,
-  regenerate,
+  setMessages: _setMessages,
+  regenerate: _regenerate,
   requiresScrollPadding: _requiresScrollPadding,
 }: {
   chatId: string;
@@ -26,8 +25,6 @@ const PurePreviewMessage = ({
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
   requiresScrollPadding: boolean;
 }) => {
-  const [mode, setMode] = useState<"view" | "edit">("view");
-
   useDataStream();
 
   return (
@@ -38,7 +35,7 @@ const PurePreviewMessage = ({
     >
       <div
         className={cn("flex w-full items-start gap-2 md:gap-3", {
-          "justify-end": message.role === "user" && mode !== "edit",
+          "justify-end": message.role === "user",
           "justify-start": message.role === "assistant",
         })}
       >
@@ -54,62 +51,38 @@ const PurePreviewMessage = ({
               (p) => p.type === "text" && p.text?.trim()
             ),
             "w-full":
-              (message.role === "assistant" &&
-                message.parts?.some(
-                  (p) => p.type === "text" && p.text?.trim()
-                )) ||
-              mode === "edit",
+              message.role === "assistant" &&
+              message.parts?.some((p) => p.type === "text" && p.text?.trim()),
             "max-w-[calc(100%-2.5rem)] sm:max-w-[min(fit-content,80%)]":
-              message.role === "user" && mode !== "edit",
+              message.role === "user",
           })}
         >
           {message.parts?.map((part, index) => {
             const { type } = part;
             const key = `message-${message.id}-part-${index}`;
             if (type === "text") {
-              if (mode === "view") {
-                return (
-                  <div key={key}>
-                    <MessageContent
-                      className={cn({
-                        "wrap-break-word w-fit rounded-2xl px-3 py-2 text-right text-white":
-                          message.role === "user",
-                        "bg-transparent px-0 py-0 text-left":
-                          message.role === "assistant",
-                      })}
-                      data-testid="message-content"
-                      style={
-                        message.role === "user"
-                          ? { backgroundColor: "#006cff" }
-                          : undefined
-                      }
-                    >
-                      <Response>{sanitizeText(part.text)}</Response>
-                    </MessageContent>
-                  </div>
-                );
-              }
-
-              if (mode === "edit") {
-                return (
-                  <div
-                    className="flex w-full flex-row items-start gap-3"
-                    key={key}
+              return (
+                <div key={key}>
+                  <MessageContent
+                    className={cn({
+                      "wrap-break-word w-fit rounded-2xl px-3 py-2 text-right text-white":
+                        message.role === "user",
+                      "bg-transparent px-0 py-0 text-left":
+                        message.role === "assistant",
+                    })}
+                    data-testid="message-content"
+                    style={
+                      message.role === "user"
+                        ? { backgroundColor: "#006cff" }
+                        : undefined
+                    }
                   >
-                    <div className="size-8" />
-                    <div className="min-w-0 flex-1">
-                      <MessageEditor
-                        key={message.id}
-                        message={message}
-                        regenerate={regenerate}
-                        setMessages={setMessages}
-                        setMode={setMode}
-                      />
-                    </div>
-                  </div>
-                );
-              }
+                    <Response>{sanitizeText(part.text)}</Response>
+                  </MessageContent>
+                </div>
+              );
             }
+            return null;
           })}
 
           <MessageActions
@@ -117,7 +90,6 @@ const PurePreviewMessage = ({
             isLoading={isLoading}
             key={`action-${message.id}`}
             message={message}
-            setMode={setMode}
           />
         </div>
       </div>
