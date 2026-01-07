@@ -43,11 +43,11 @@ export function useAutoResume({
       return;
     }
 
-    const dataPart = dataStream[0];
-
-    if (dataPart.type === "data-appendMessage") {
-      const message = JSON.parse(dataPart.data);
-      setMessages([...initialMessages, message]);
-    }
+    // TODO: do we need this?
+    // const dataPart = dataStream[0];
+    // if (dataPart.type === "data-appendMessage") {
+    //   const message = JSON.parse(dataPart.data);
+    //   setMessages([...initialMessages, message]);
+    // }
   }, [dataStream, initialMessages, setMessages]);
 }

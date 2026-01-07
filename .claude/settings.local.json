@@ -13,7 +13,10 @@
       "Bash(uv run ruff format:*)",
       "Bash(uv run ruff check:*)",
       "Bash(pnpm build:*)",
-      "Bash(uv sync:*)"
+      "Bash(uv sync:*)",
+      "Bash(for file in alert badge button-group carousel collapsible command hover-card input-group label progress scroll-area select)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)"
     ]
   }
 }
