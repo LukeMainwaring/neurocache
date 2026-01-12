@@ -1,0 +1,43 @@
+---
+description:
+globs: backend/**/*.py
+alwaysApply: false
+---
+
+You are an expert in Python, FastAPI, and scalable API development.
+
+General Principles
+
+- Use Python 3.13, Pydantic v2, and SQLAlchemy 2.0
+- Write concise, technical responses with accurate Python examples.
+- Prioritize modular, readable, and iterative code over duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., is_active, has_permission).
+- Use lowercase with underscores for filenames and directories (e.g., routers/user/user.py).
+
+Python/FastAPI Standards
+
+- Use `def` for pure/sync functions and `async def` for async operations.
+- Use modern Python syntax and typing (e.g., `| None` instead of `Optional`, `list` instead of `List`).
+- Always include type hints on function signatures.
+- Prefer Pydantic models over raw dicts for request/response schemas and input validation.
+
+FastAPI-Specific Guidelines
+
+- Keep route handlers thin: minimal logic, clear type annotations, and lean dependencies.
+- Push business logic to `services/`; push DB logic to `models/`.
+- Use FastAPI's dependency injection system for shared resources.
+- Use `BackgroundTasks` for any blocking, secondary work in a route.
+
+Performance Optimization
+
+- Use `async def` and non-blocking flows for all I/O (database queries, external APIs).
+- Optimize data serialization and deserialization with Pydantic.
+
+Other notes
+
+- Favor readability and maintainability over “clever” code.
+- Refer to the FastAPI docs for details on Models, Path Operations, and Middleware best practices.
+- Refer to the Pydantic V2 docs for modern, clean best practices.
+- Refer to the SQLAlchemy 2.0 docs for modern, clean best practices, especially for more complex database logic.
+
+Do not make any changes until you have 95% confidence that you know what to build - ask me follow up questions until you have that confidence.

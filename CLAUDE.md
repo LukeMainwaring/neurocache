@@ -58,6 +58,8 @@ Key patterns:
 -   Agents stream responses as SSE in Vercel AI SDK v1 format
 -   Messages stored as JSONB, threads have composite primary key (thread_id, agent_type)
 -   Type hints required on all functions
+-   Keep route handlers thin: push business logic to `services/`, DB logic to `models/`
+-   Use modern Python syntax: `| None` over `Optional`, `list` over `List`
 
 ### Frontend (`frontend/`)
 
@@ -87,3 +89,4 @@ Key patterns:
 
 -   This project uses Pydantic AI. LLM-friendly documentation for this library can be found at <https://ai.pydantic.dev/llms.txt>, which contains an overview and links to Markdown-formatted content.
 -   Assume that Git operations for branches, commits, and pushes will be done manually. If executing a multi-step, comprehensive plan that involves successive commits, ask before making a commit.
+-   Do not make any changes until you have 95% confidence that you know what to build - ask me follow up questions until you have that confidence.
