@@ -7,7 +7,7 @@ A personal "second brain" AI chat application. Talk to an AI agent that can help
 ```
 neurocache/
 ├── backend/        # FastAPI Python backend
-├── ai-chatbot/     # Next.js frontend
+├── frontend/       # Next.js frontend
 └── docker-compose.yml
 ```
 
@@ -26,7 +26,7 @@ neurocache/
 1. Copy environment files:
    ```bash
    cp .env.sample .env
-   cp ai-chatbot/.env.example ai-chatbot/.env.local
+   cp frontend/.env.example frontend/.env.local
    ```
 
 2. Add your OpenAI API key to `.env`
@@ -38,7 +38,7 @@ neurocache/
 
 4. Start the frontend:
    ```bash
-   cd ai-chatbot
+   cd frontend
    pnpm install
    pnpm dev
    ```
