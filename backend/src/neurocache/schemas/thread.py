@@ -13,6 +13,7 @@ class ThreadSchema(BaseSchema):
     thread_id: str
     agent_type: AgentType
     user_id: str
+    title: str | None = None
     created_at: datetime
     updated_at: datetime
 

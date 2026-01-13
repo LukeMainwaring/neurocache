@@ -28,7 +28,7 @@ async def list_threads(db: AsyncPostgresSessionDep, user_id: AuthenticatedUser) 
             ThreadSummary(
                 id=thread.thread_id,
                 thread_id=thread.thread_id,
-                title=f"Chat {thread.thread_id[:8]}",  # Placeholder title
+                title=thread.title,
                 created_at=thread.created_at,
                 updated_at=thread.updated_at,
             )

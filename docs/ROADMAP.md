@@ -4,20 +4,12 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 ## Current State
 
--   **Working**: Chat with streaming, message persistence, thread management
--   **Missing**: RAG/knowledge base (the core feature), auto-generated thread titles
+-   **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles
+-   **Missing**: RAG/knowledge base (the core feature)
 
----
+### Completed
 
-## Phase 1: Chat Polish
-
-### Thread Title Generation
-
-Generate meaningful titles from conversation content instead of "Chat {id}".
-
--   Add title field to Thread model
--   Summarize thread into title after first exchange
--   Display in sidebar
+-   **Thread Title Generation**: Generates meaningful titles from conversation content using gpt-4o-mini. Background task creates title after first message exchange, with frontend loading state and fallback to truncated user message if LLM fails.
 
 ---
 

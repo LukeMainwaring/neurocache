@@ -29,7 +29,13 @@ const PureChatItem = ({
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
         <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
-          <span>{chat.title}</span>
+          <span>
+            {chat.title ?? (
+              <span className="text-muted-foreground animate-pulse">
+                Generating...
+              </span>
+            )}
+          </span>
         </Link>
       </SidebarMenuButton>
 
@@ -60,6 +66,9 @@ const PureChatItem = ({
 
 export const ChatItem = memo(PureChatItem, (prevProps, nextProps) => {
   if (prevProps.isActive !== nextProps.isActive) {
+    return false;
+  }
+  if (prevProps.chat.title !== nextProps.chat.title) {
     return false;
   }
   return true;

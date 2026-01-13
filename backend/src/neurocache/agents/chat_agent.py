@@ -6,6 +6,7 @@ This module provides a simple chat agent that:
 - Maintains conversation history across sessions
 """
 
+import asyncio
 import json
 import logging
 import uuid
@@ -20,10 +21,12 @@ from neurocache.agents.shared import (
     update_history,
 )
 from neurocache.core.config import get_settings
+from neurocache.models.thread import Thread
 from neurocache.models.user import User as UserModel
 from neurocache.schemas.agent_type import AgentType
 from neurocache.schemas.message import UserMessage
 from neurocache.schemas.user import UserSchema
+from neurocache.services.title_generator import generate_thread_title
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +151,18 @@ async def chat_agent_stream(
             original_message_history.extend(result.new_messages())
             # Update shared history (namespaced for chat agent)
             await update_history(db, thread_id, original_message_history, AgentType.CHAT, user_id)
+
+            # Generate title for new threads (first exchange)
+            thread = await Thread.get(db, thread_id, AgentType.CHAT.value)
+            if thread and thread.title is None:
+                asyncio.create_task(
+                    generate_thread_title(
+                        thread_id=thread_id,
+                        agent_type=AgentType.CHAT.value,
+                        user_message=original_user_query,
+                        assistant_response=output,
+                    )
+                )
 
     except Exception:
         logger.exception("Error in chat agent streaming")
