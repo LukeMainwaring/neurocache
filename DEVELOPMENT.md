@@ -90,3 +90,7 @@ uv run ruff check .
 Testing, type checking, and formatting/linting is [checked in CI][ci].
 
 [ci]: .github/workflows/ci.yml
+
+## Database migrations
+
+cd backend && ./scripts/create-db-revision-docker.sh "<migration_message>"

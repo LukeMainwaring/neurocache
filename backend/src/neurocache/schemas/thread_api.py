@@ -18,7 +18,7 @@ class ThreadSummary(BaseSchema):
 
     id: str  # Same as thread_id for compatibility
     thread_id: str
-    title: str
+    title: str | None
     created_at: datetime
     updated_at: datetime
 

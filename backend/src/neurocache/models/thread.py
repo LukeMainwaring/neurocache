@@ -29,6 +29,7 @@ class Thread(Base):
     thread_id: Mapped[str]
     agent_type: Mapped[str]
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    title: Mapped[str | None]
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.now)
 
@@ -91,3 +92,11 @@ class Thread(Base):
             delete(cls).where(cls.thread_id == thread_id, cls.user_id == user_id, cls.agent_type == agent_type)
         )
         await db.commit()
+
+    @classmethod
+    async def update_title(cls, db: AsyncSession, thread_id: str, agent_type: str, title: str) -> None:
+        """Update the title of a thread."""
+        thread = await cls.get(db, thread_id, agent_type)
+        if thread:
+            thread.title = title
+            await db.flush()

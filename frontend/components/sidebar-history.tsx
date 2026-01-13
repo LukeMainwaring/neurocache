@@ -2,7 +2,7 @@
 
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import {
@@ -81,6 +81,16 @@ export function SidebarHistory() {
   } = useSWR<ThreadSummary[]>("threads", getThreads, {
     fallbackData: [],
   });
+
+  // Poll for title updates when any thread has a pending title
+  const hasPendingTitles = threads?.some((t) => t.title === null);
+  useEffect(() => {
+    if (!hasPendingTitles) return;
+    const interval = setInterval(() => {
+      mutate();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [hasPendingTitles, mutate]);
 
   const router = useRouter();
   const [deleteId, setDeleteId] = useState<string | null>(null);
