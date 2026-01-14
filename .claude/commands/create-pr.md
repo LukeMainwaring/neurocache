@@ -9,21 +9,23 @@ Generate a pull request summary for the current branch.
 
 ## Instructions
 
-1. **Analyze changes**:
+1. **If any untracked changes, commit with a clear message based on what changed**
+
+2. **Analyze changes**:
 
     ```bash
     git log main..HEAD --oneline
     git diff main...HEAD --stat
     ```
 
-2. **Generate summary** with:
+3. **Generate summary** with:
 
     - Brief description of what changed
     - List of files modified
     - Breaking changes (if any)
     - Testing notes
 
-3. **Format as PR body**:
+4. **Format as PR body**:
 
     ```markdown
     ## Summary
@@ -38,3 +40,7 @@ Generate a pull request summary for the current branch.
 
     -   [ ] [Testing checklist items]
     ```
+
+5. **Use `gh pr create` to open a pull request with the above markdown**
+
+6. **Return the PR URL when done**
