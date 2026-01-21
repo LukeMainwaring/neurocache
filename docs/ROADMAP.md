@@ -7,11 +7,32 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 -   **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles
 -   **Missing**: RAG/knowledge base (the core feature)
 
-### Completed
-
--   **Thread Title Generation**: Generates meaningful titles from conversation content using gpt-4o-mini. Background task creates title after first message exchange, with frontend loading state and fallback to truncated user message if LLM fails.
-
 ---
+
+## Phase 1: User Personalization
+
+Make the chat agent more helpful by incorporating user-specific context into every conversation.
+
+### 1.1 Improved System Prompt
+
+-   Revamp the default system prompt in `chat_agent.py` to be more thorough and helpful
+-   Structure the prompt to cleanly incorporate user personalization data
+
+### 1.2 User Personalization Settings
+
+Add editable fields for users to customize their AI experience (inspired by ChatGPT):
+
+-   **Custom instructions**: Free-form guidance for how the AI should respond
+-   **Nickname**: What the user prefers to be called
+-   **Occupation**: User's profession or role for relevant context
+-   **About you**: Additional personal context the AI should know
+
+### 1.3 Full-Stack Implementation
+
+-   **Backend**: Add personalization fields to User model, create API endpoints for get/update
+-   **Frontend**: Settings page with form to edit personalization fields
+-   **Integration**: Inject personalization data into system prompt at chat time
+
 
 ## Phase 2: Obsidian Integration (RAG)
 

@@ -62,11 +62,23 @@ def build_chat_instructions(ctx: RunContext[UserSchema]) -> str:
     """
     user = ctx.deps
 
-    return f"""{SYSTEM_PROMPT}
+    instructions = [SYSTEM_PROMPT]
 
----
+    # Add personalization context
+    user_context_parts = [f"You are chatting with {user.name}."]
 
-You are chatting with {user.name} (email: {user.email}).""".strip()
+    if user.nickname:
+        user_context_parts.append(f"The user prefers to be called: {user.nickname}")
+    if user.occupation:
+        user_context_parts.append(f"The user's occupation: {user.occupation}")
+    if user.about_you:
+        user_context_parts.append(f"About the user: {user.about_you}")
+    if user.custom_instructions:
+        user_context_parts.append(f"Custom instructions from the user:\n{user.custom_instructions}")
+
+    instructions.append("\n".join(user_context_parts))
+
+    return "\n\n---\n\n".join(instructions)
 
 
 def create_chat_agent() -> Agent[UserSchema, str]:

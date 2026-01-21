@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from neurocache.models.base import Base
-from neurocache.schemas.user import UserCreateSchema, UserSchema
+from neurocache.schemas.user import UserCreateSchema, UserPersonalizationUpdateSchema, UserSchema
 
 
 class NoUserFound(HTTPException):
@@ -26,6 +26,12 @@ class User(Base):
     name: Mapped[str | None]
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.now)
+
+    # Personalization fields
+    custom_instructions: Mapped[str | None]
+    nickname: Mapped[str | None]
+    occupation: Mapped[str | None]
+    about_you: Mapped[str | None]
 
     @classmethod
     async def get(cls, db: AsyncSession, id: str) -> UserSchema:
@@ -64,6 +70,23 @@ class User(Base):
         if user is None:
             raise NoUserFound(f"User with id {id} not found")
         for field, value in user_update.model_dump(exclude_unset=True, exclude_none=True).items():
+            setattr(user, field, value)
+        await db.commit()
+        await db.refresh(user)
+        return UserSchema.model_validate(user)
+
+    @classmethod
+    async def update_personalization(
+        cls,
+        db: AsyncSession,
+        id: str,
+        personalization: UserPersonalizationUpdateSchema,
+    ) -> UserSchema:
+        """Update user personalization settings."""
+        user = await db.get(cls, id)
+        if user is None:
+            raise NoUserFound(f"User with id {id} not found")
+        for field, value in personalization.model_dump(exclude_unset=True).items():
             setattr(user, field, value)
         await db.commit()
         await db.refresh(user)

@@ -18,7 +18,8 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
       "Bash(gh pr create:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(uv run:*)"
     ]
   }
 }
