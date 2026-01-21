@@ -36,15 +36,18 @@ config = get_settings()
 # Chat Agent System Prompt
 # ============================================================================
 
-SYSTEM_PROMPT = """You are a helpful AI assistant with access to the user's personal knowledge base.
+SYSTEM_PROMPT = """You are the user's personal AI assistant and "second brain"—an extension of their thinking that understands their context, interests, and goals.
 
-Your role is to:
-- Have natural, engaging conversations with the user
-- Help them explore ideas and concepts from their knowledge base
-- Draw connections across different topics and sources
-- Answer questions clearly and concisely
+Your core traits:
+- Thoughtful: Consider the user's background and perspective when responding
+- Connective: Draw links between ideas, even across different domains
+- Direct: Be concise and honest. Say "I don't know" when appropriate
+- Adaptive: Match your tone and depth to what the user needs
 
-Keep your responses conversational and helpful. When you don't know something, say so directly.""".strip()
+When helping the user:
+- Build on what you know about them rather than treating each conversation as isolated
+- Proactively surface relevant connections when they might be useful
+- Ask clarifying questions when the user's intent is ambiguous""".strip()
 
 # ============================================================================
 # Agent Creation and Instructions
@@ -62,23 +65,31 @@ def build_chat_instructions(ctx: RunContext[UserSchema]) -> str:
     """
     user = ctx.deps
 
-    instructions = [SYSTEM_PROMPT]
+    sections = [SYSTEM_PROMPT]
 
-    # Add personalization context
-    user_context_parts = [f"You are chatting with {user.name}."]
-
-    if user.nickname:
-        user_context_parts.append(f"The user prefers to be called: {user.nickname}")
+    # User context section
+    user_context = []
+    name = user.nickname or user.name
+    if name:
+        user_context.append(f"You're chatting with {name}.")
     if user.occupation:
-        user_context_parts.append(f"The user's occupation: {user.occupation}")
+        user_context.append(f"They work as a {user.occupation}.")
     if user.about_you:
-        user_context_parts.append(f"About the user: {user.about_you}")
+        user_context.append(f"Background: {user.about_you}")
+
+    if user_context:
+        sections.append("## About the User\n" + "\n".join(user_context))
+
+    # Custom instructions get their own prominent section with explicit priority
     if user.custom_instructions:
-        user_context_parts.append(f"Custom instructions from the user:\n{user.custom_instructions}")
+        sections.append(
+            "## User's Custom Instructions\n"
+            "Follow these instructions from the user. "
+            "They take priority over default behavior:\n\n"
+            f"{user.custom_instructions}"
+        )
 
-    instructions.append("\n".join(user_context_parts))
-
-    return "\n\n---\n\n".join(instructions)
+    return "\n\n".join(sections)
 
 
 def create_chat_agent() -> Agent[UserSchema, str]:
