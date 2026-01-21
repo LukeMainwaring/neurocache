@@ -4,73 +4,96 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 ## Current State
 
--   **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles
+-   **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings
 -   **Missing**: RAG/knowledge base (the core feature)
 
 ---
 
-## Phase 1: User Personalization
+## Completed
 
-Make the chat agent more helpful by incorporating user-specific context into every conversation.
+### Phase 1: User Personalization (Done)
 
-### 1.1 Improved System Prompt
+Made the chat agent more helpful by incorporating user-specific context into every conversation.
 
--   Revamp the default system prompt in `chat_agent.py` to be more thorough and helpful
--   Structure the prompt to cleanly incorporate user personalization data
+-   Improved system prompt in `chat_agent.py` structured to incorporate personalization data
+-   User model extended with personalization fields (custom_instructions, nickname, occupation, about_you)
+-   Backend API endpoints for get/update personalization settings
+-   Frontend settings page with form to edit personalization fields
+-   Personalization data injected into system prompt at chat time
 
-### 1.2 User Personalization Settings
+---
 
-Add editable fields for users to customize their AI experience (inspired by ChatGPT):
+## Next Up
 
--   **Custom instructions**: Free-form guidance for how the AI should respond
--   **Nickname**: What the user prefers to be called
--   **Occupation**: User's profession or role for relevant context
--   **About you**: Additional personal context the AI should know
+### Phase 2: Obsidian Integration (RAG)
 
-### 1.3 Full-Stack Implementation
+**This is the core differentiating feature.** Connect to a local Obsidian vault as the knowledge base. This phase transforms Neurocache from a personalized chatbot into a true "second brain" that can reference your accumulated knowledge.
 
--   **Backend**: Add personalization fields to User model, create API endpoints for get/update
--   **Frontend**: Settings page with form to edit personalization fields
--   **Integration**: Inject personalization data into system prompt at chat time
+**Why this is the priority:**
+- Directly enables the core vision: "Reference a knowledge base tailored to me"
+- High learning value: teaches RAG patterns, vector embeddings, semantic search
+- High user value: makes the app fundamentally more useful than ChatGPT/Claude
 
+### 2.1 PostgreSQL + pgvector Setup
 
-## Phase 2: Obsidian Integration (RAG)
+Foundation for storing and searching embeddings.
 
-The core differentiating feature. Connect to a local Obsidian vault as the knowledge base.
+-   Add pgvector extension to PostgreSQL via Docker Compose
+-   Create SQLAlchemy model for document chunks with vector column
+-   Test basic similarity search queries
 
-### 2.1 Obsidian Vault Connection
+### 2.2 Obsidian Vault Ingestion
 
--   Configure local vault path
--   Read and index markdown files
--   Watch for file changes (or manual re-sync)
+Read and process markdown files from a local vault.
 
-### 2.2 Vector Embeddings
-
--   Add pgvector extension to PostgreSQL
--   Generate embeddings for note chunks
--   Store with source file metadata
+-   Configure vault path via environment variable
+-   Parse markdown files, extract content and metadata (title, tags, links)
+-   Chunk documents intelligently (respect headers, paragraphs)
+-   Generate embeddings using OpenAI's embedding API
+-   Store chunks with embeddings and source metadata
 
 ### 2.3 RAG in Chat
 
--   Semantic search over notes before LLM call
--   Include relevant context in system prompt
--   Show source attribution (which notes were used)
+Integrate retrieval into the chat flow.
+
+-   Semantic search over note chunks before LLM call
+-   Include relevant context in system prompt (with token budget)
+-   Show source attribution in responses (which notes were used)
+-   Add "Sources" display in frontend chat UI
+
+### 2.4 Sync and Refresh
+
+Keep the knowledge base current.
+
+-   Manual re-sync endpoint/button
+-   Track file modification times to detect changes
+-   Incremental updates (only re-embed changed files)
 
 ---
 
 ## Phase 3: Enhanced Retrieval
 
+Build on RAG foundation for richer knowledge interactions.
+
 ### Cross-Reference Discovery
 
 Surface connections across notes during conversation.
 
--   "Related notes" suggestions
+-   "Related notes" suggestions based on conversation context
 -   Concept linking across different sources
+-   Leverage Obsidian's `[[wiki-links]]` for explicit connections
 
 ### Citation Display
 
 -   Inline citations linking to source notes
--   Expandable previews
+-   Expandable previews of source content
+-   Click-to-open in Obsidian (obsidian:// URI scheme)
+
+### Retrieval Tuning
+
+-   Experiment with chunk sizes and overlap
+-   Hybrid search (keyword + semantic)
+-   Re-ranking retrieved results
 
 ---
 
@@ -82,7 +105,7 @@ Features documented here to avoid re-adding them prematurely. These make sense f
 
 Currently uses a hardcoded demo user. Real auth (OAuth, email/password) only matters if the app becomes multi-user or deployed.
 
-### Error Handling & Resilience
+### Error Handling and Resilience
 
 Basic error handling exists. Retry logic, rate limiting, and graceful degradation are production concerns.
 
@@ -117,3 +140,4 @@ Conversation and knowledge base export. Low priority for personal use.
 -   Obsidian is the primary knowledge source. Keep the ingestion pipeline simple.
 -   This is a learning project. Optimize for understanding patterns, not production robustness.
 -   Incremental progress: each item should be completable in a reasonable work session.
+-   Phase 2 is broken into sub-milestones (2.1, 2.2, 2.3, 2.4) to allow incremental progress.
