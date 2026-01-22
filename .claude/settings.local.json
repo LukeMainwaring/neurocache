@@ -24,7 +24,9 @@
       "Bash(git show-branch:*)",
       "Bash(docker compose:*)",
       "Bash(./scripts/create-db-revision-docker.sh:*)",
-      "Bash(pnpm lint:*)"
+      "Bash(pnpm lint:*)",
+      "WebSearch",
+      "Bash(pnpm tsc:*)"
     ]
   }
 }
