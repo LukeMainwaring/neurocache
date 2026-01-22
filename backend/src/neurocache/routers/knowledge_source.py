@@ -7,16 +7,22 @@ import logging
 
 from fastapi import APIRouter
 
+from neurocache.core.config import get_settings
 from neurocache.dependencies.db import AsyncPostgresSessionDep
 from neurocache.models.knowledge_source import KnowledgeSource
 from neurocache.schemas.knowledge_source import (
     KnowledgeSourceCreateSchema,
     KnowledgeSourceListResponse,
     KnowledgeSourceSchema,
+    KnowledgeSourceStatus,
+    KnowledgeSourceType,
     KnowledgeSourceUpdateSchema,
 )
+from neurocache.services.vault_validator import validate_obsidian_vault
 
 logger = logging.getLogger(__name__)
+
+config = get_settings()
 
 knowledge_source_router = APIRouter(prefix="/knowledge-sources", tags=["knowledge-sources"])
 
@@ -38,8 +44,30 @@ async def create_knowledge_source(
     source_data: KnowledgeSourceCreateSchema,
     db: AsyncPostgresSessionDep,
 ) -> KnowledgeSourceSchema:
-    """Create a new knowledge source."""
-    return await KnowledgeSource.create(db, DEMO_USER_ID, source_data)
+    """Create a new knowledge source and validate if it's an Obsidian vault."""
+    source = await KnowledgeSource.create(db, DEMO_USER_ID, source_data)
+
+    if source_data.source_type == KnowledgeSourceType.OBSIDIAN:
+        is_valid, error_message = await validate_obsidian_vault()
+        if is_valid:
+            source = await KnowledgeSource.update_status(db, source.id, DEMO_USER_ID, KnowledgeSourceStatus.CONNECTED)
+        else:
+            source = await KnowledgeSource.update_status(
+                db, source.id, DEMO_USER_ID, KnowledgeSourceStatus.ERROR, error_message
+            )
+    return source
+
+
+@knowledge_source_router.get("/defaults")
+async def get_knowledge_source_defaults() -> dict[str, dict[str, str | None]]:
+    """Return default values for creating a knowledge source."""
+
+    return {
+        "obsidian": {
+            "name": config.OBSIDIAN_VAULT_NAME,
+            "file_path": config.OBSIDIAN_VAULT_PATH,
+        }
+    }
 
 
 @knowledge_source_router.get("/{source_id}")

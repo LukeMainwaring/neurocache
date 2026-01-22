@@ -32,7 +32,14 @@ class PostgresSettings(BaseSettings):
     POSTGRES_PORT: int
 
 
-class Settings(ApiSettings, BaseAgentSettings, PostgresSettings):
+class ObsidianSettings(BaseSettings):
+    """Obsidian vault configuration."""
+
+    OBSIDIAN_VAULT_PATH: str | None = None  # Host path, e.g., /Users/luke/Documents/Vault
+    OBSIDIAN_VAULT_NAME: str = "My Obsidian Vault"  # Default display name
+
+
+class Settings(ApiSettings, BaseAgentSettings, PostgresSettings, ObsidianSettings):
     """Main application settings."""
 
     model_config = SettingsConfigDict(

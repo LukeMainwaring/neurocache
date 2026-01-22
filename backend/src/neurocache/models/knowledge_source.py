@@ -106,3 +106,22 @@ class KnowledgeSource(Base):
             raise NoKnowledgeSourceFound(f"Knowledge source with id {id} not found")
         await db.delete(source)
         await db.commit()
+
+    @classmethod
+    async def update_status(
+        cls,
+        db: AsyncSession,
+        id: str,
+        user_id: str,
+        status: str,
+        error_message: str | None = None,
+    ) -> KnowledgeSourceSchema:
+        """Update the status of a knowledge source."""
+        source = await db.get(cls, id)
+        if source is None or source.user_id != user_id:
+            raise NoKnowledgeSourceFound(f"Knowledge source with id {id} not found")
+        source.status = status
+        source.error_message = error_message
+        await db.commit()
+        await db.refresh(source)
+        return KnowledgeSourceSchema.model_validate(source)

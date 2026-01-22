@@ -19,8 +19,10 @@ import { Input } from "@/components/ui/input";
 import {
   createKnowledgeSource,
   deleteKnowledgeSource,
+  fetchKnowledgeSourceDefaults,
   fetchKnowledgeSources,
   type KnowledgeSource,
+  type KnowledgeSourceDefaults,
 } from "@/lib/api/backend-client";
 
 const STATUS_LABELS: Record<KnowledgeSource["status"], string> = {
@@ -48,11 +50,18 @@ export default function KnowledgeBasePage() {
   const [name, setName] = useState("");
   const [filePath, setFilePath] = useState("");
 
+  // Defaults from backend config
+  const [defaults, setDefaults] = useState<KnowledgeSourceDefaults["obsidian"] | null>(null);
+
   useEffect(() => {
-    async function loadSources() {
+    async function loadData() {
       try {
-        const data = await fetchKnowledgeSources();
-        setSources(data);
+        const [sourcesData, defaultsData] = await Promise.all([
+          fetchKnowledgeSources(),
+          fetchKnowledgeSourceDefaults(),
+        ]);
+        setSources(sourcesData);
+        setDefaults(defaultsData.obsidian);
       } catch (error) {
         console.error("Failed to load knowledge sources:", error);
         toast.error("Failed to load knowledge sources");
@@ -60,12 +69,21 @@ export default function KnowledgeBasePage() {
         setIsLoading(false);
       }
     }
-    loadSources();
+    loadData();
   }, []);
 
   function resetForm() {
     setName("");
     setFilePath("");
+  }
+
+  function handleOpenDialog() {
+    // Pre-populate form with defaults from backend config
+    if (defaults) {
+      setName(defaults.name);
+      setFilePath(defaults.file_path || "");
+    }
+    setIsDialogOpen(true);
   }
 
   async function handleCreate() {
@@ -127,7 +145,7 @@ export default function KnowledgeBasePage() {
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={handleOpenDialog}>
               <Plus className="size-4 mr-2" />
               Add Source
             </Button>
@@ -193,7 +211,7 @@ export default function KnowledgeBasePage() {
             <p className="text-sm text-muted-foreground mb-4">
               Connect your Obsidian vault to get started
             </p>
-            <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
+            <Button variant="outline" onClick={handleOpenDialog}>
               <Plus className="size-4 mr-2" />
               Add Your First Source
             </Button>

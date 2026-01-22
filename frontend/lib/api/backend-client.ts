@@ -245,3 +245,29 @@ export async function deleteKnowledgeSource(id: string): Promise<void> {
     throw new Error(`Failed to delete knowledge source: ${response.statusText}`);
   }
 }
+
+export interface KnowledgeSourceDefaults {
+  obsidian: {
+    name: string;
+    file_path: string | null;
+  };
+}
+
+/**
+ * Fetch default values for creating a knowledge source.
+ */
+export async function fetchKnowledgeSourceDefaults(): Promise<KnowledgeSourceDefaults> {
+  const response = await fetch(`${API_URL}/api/knowledge-sources/defaults`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch knowledge source defaults: ${response.statusText}`);
+  }
+
+  return response.json();
+}
