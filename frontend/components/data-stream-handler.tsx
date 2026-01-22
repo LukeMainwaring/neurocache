@@ -21,7 +21,6 @@ export function DataStreamHandler() {
       // Handle chat title updates (refresh sidebar)
       if (delta.type === "data-chat-title") {
         mutate(chatHistoryKey);
-        continue;
       }
     }
   }, [dataStream, setDataStream, mutate]);

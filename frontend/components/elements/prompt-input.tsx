@@ -69,8 +69,8 @@ export const PromptInputTextarea = ({
         disableAutoResize
           ? "field-sizing-fixed"
           : resizeOnNewLinesOnly
-          ? "field-sizing-fixed"
-          : "field-sizing-content max-h-[6lh]",
+            ? "field-sizing-fixed"
+            : "field-sizing-content max-h-[6lh]",
         "bg-transparent dark:bg-transparent",
         "focus-visible:ring-0",
         className
@@ -107,7 +107,7 @@ export const PromptInputButton = ({
   ...props
 }: PromptInputButtonProps) => {
   const newSize =
-    size ?? Children.count(props.children) > 1 ? "default" : "icon";
+    (size ?? Children.count(props.children) > 1) ? "default" : "icon";
 
   return (
     <Button

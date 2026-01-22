@@ -31,7 +31,7 @@ const PureChatItem = ({
         <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
           <span>
             {chat.title ?? (
-              <span className="text-muted-foreground animate-pulse">
+              <span className="animate-pulse text-muted-foreground">
                 Generating...
               </span>
             )}

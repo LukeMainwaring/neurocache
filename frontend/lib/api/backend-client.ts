@@ -8,7 +8,7 @@
  * - Streaming chat responses
  */
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export interface ThreadSummary {
   id: string;
@@ -24,9 +24,9 @@ export interface ThreadListResponse {
 
 export interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   parts: Array<{
-    type: 'text';
+    type: "text";
     text: string;
   }>;
 }
@@ -42,11 +42,11 @@ export interface ThreadMessagesResponse {
  */
 export async function getThreads(): Promise<ThreadSummary[]> {
   const response = await fetch(`${API_URL}/api/threads`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    credentials: 'include', // Include cookies for auth
+    credentials: "include", // Include cookies for auth
   });
 
   if (!response.ok) {
@@ -62,11 +62,11 @@ export async function getThreads(): Promise<ThreadSummary[]> {
  */
 export async function getThreadMessages(threadId: string): Promise<Message[]> {
   const response = await fetch(`${API_URL}/api/threads/${threadId}/messages`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -86,11 +86,11 @@ export async function getThreadMessages(threadId: string): Promise<Message[]> {
  */
 export async function deleteThread(threadId: string): Promise<void> {
   const response = await fetch(`${API_URL}/api/threads/${threadId}`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -131,11 +131,11 @@ export interface UserPersonalizationUpdate {
  */
 export async function fetchCurrentUser(): Promise<User> {
   const response = await fetch(`${API_URL}/api/users/myself`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -152,11 +152,11 @@ export async function updateUserPersonalization(
   data: UserPersonalizationUpdate
 ): Promise<User> {
   const response = await fetch(`${API_URL}/api/users/myself/personalization`, {
-    method: 'PATCH',
+    method: "PATCH",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    credentials: 'include',
+    credentials: "include",
     body: JSON.stringify(data),
   });
 
@@ -171,10 +171,10 @@ export async function updateUserPersonalization(
 export interface KnowledgeSource {
   id: string;
   user_id: string;
-  source_type: 'obsidian' | 'notion' | 'local_folder';
+  source_type: "obsidian" | "notion" | "local_folder";
   name: string;
   file_path: string | null;
-  status: 'pending' | 'connected' | 'syncing' | 'error';
+  status: "pending" | "connected" | "syncing" | "error";
   last_synced_at: string | null;
   error_message: string | null;
   created_at: string;
@@ -182,7 +182,7 @@ export interface KnowledgeSource {
 }
 
 export interface KnowledgeSourceCreate {
-  source_type: 'obsidian' | 'notion' | 'local_folder';
+  source_type: "obsidian" | "notion" | "local_folder";
   name: string;
   file_path?: string;
 }
@@ -192,15 +192,17 @@ export interface KnowledgeSourceCreate {
  */
 export async function fetchKnowledgeSources(): Promise<KnowledgeSource[]> {
   const response = await fetch(`${API_URL}/api/knowledge-sources`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch knowledge sources: ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch knowledge sources: ${response.statusText}`
+    );
   }
 
   const data = await response.json();
@@ -214,16 +216,18 @@ export async function createKnowledgeSource(
   data: KnowledgeSourceCreate
 ): Promise<KnowledgeSource> {
   const response = await fetch(`${API_URL}/api/knowledge-sources`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    credentials: 'include',
+    credentials: "include",
     body: JSON.stringify(data),
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to create knowledge source: ${response.statusText}`);
+    throw new Error(
+      `Failed to create knowledge source: ${response.statusText}`
+    );
   }
 
   return response.json();
@@ -234,15 +238,17 @@ export async function createKnowledgeSource(
  */
 export async function deleteKnowledgeSource(id: string): Promise<void> {
   const response = await fetch(`${API_URL}/api/knowledge-sources/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to delete knowledge source: ${response.statusText}`);
+    throw new Error(
+      `Failed to delete knowledge source: ${response.statusText}`
+    );
   }
 }
 
@@ -258,15 +264,17 @@ export interface KnowledgeSourceDefaults {
  */
 export async function fetchKnowledgeSourceDefaults(): Promise<KnowledgeSourceDefaults> {
   const response = await fetch(`${API_URL}/api/knowledge-sources/defaults`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch knowledge source defaults: ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch knowledge source defaults: ${response.statusText}`
+    );
   }
 
   return response.json();

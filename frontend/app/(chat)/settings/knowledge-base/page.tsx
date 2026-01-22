@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { FolderOpen, Loader2, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -51,7 +57,9 @@ export default function KnowledgeBasePage() {
   const [filePath, setFilePath] = useState("");
 
   // Defaults from backend config
-  const [defaults, setDefaults] = useState<KnowledgeSourceDefaults["obsidian"] | null>(null);
+  const [defaults, setDefaults] = useState<
+    KnowledgeSourceDefaults["obsidian"] | null
+  >(null);
 
   useEffect(() => {
     async function loadData() {
@@ -137,16 +145,17 @@ export default function KnowledgeBasePage() {
     <div className="max-w-2xl space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Knowledge Base</h2>
-          <p className="text-sm text-muted-foreground">
-            Connect your knowledge sources to enhance AI responses with your personal context.
+          <h2 className="font-semibold text-lg">Knowledge Base</h2>
+          <p className="text-muted-foreground text-sm">
+            Connect your knowledge sources to enhance AI responses with your
+            personal context.
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={handleOpenDialog}>
-              <Plus className="size-4 mr-2" />
+              <Plus className="mr-2 size-4" />
               Add Source
             </Button>
           </DialogTrigger>
@@ -154,48 +163,59 @@ export default function KnowledgeBasePage() {
             <DialogHeader>
               <DialogTitle>Connect Obsidian Vault</DialogTitle>
               <DialogDescription>
-                Enter the path to your Obsidian vault folder on your local filesystem.
+                Enter the path to your Obsidian vault folder on your local
+                filesystem.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-medium leading-none">
+                <label
+                  className="font-medium text-sm leading-none"
+                  htmlFor="name"
+                >
                   Name
                 </label>
                 <Input
                   id="name"
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="My Obsidian Vault"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   A friendly name to identify this knowledge source
                 </p>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="file-path" className="text-sm font-medium leading-none">
+                <label
+                  className="font-medium text-sm leading-none"
+                  htmlFor="file-path"
+                >
                   Vault Path
                 </label>
                 <Input
                   id="file-path"
+                  onChange={(e) => setFilePath(e.target.value)}
                   placeholder="/Users/you/Documents/ObsidianVault"
                   value={filePath}
-                  onChange={(e) => setFilePath(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   The absolute path to your Obsidian vault folder
                 </p>
               </div>
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isCreating}>
+              <Button
+                disabled={isCreating}
+                onClick={() => setIsDialogOpen(false)}
+                variant="outline"
+              >
                 Cancel
               </Button>
-              <Button onClick={handleCreate} disabled={isCreating}>
-                {isCreating && <Loader2 className="size-4 animate-spin mr-2" />}
+              <Button disabled={isCreating} onClick={handleCreate}>
+                {isCreating && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Connect
               </Button>
             </DialogFooter>
@@ -206,13 +226,13 @@ export default function KnowledgeBasePage() {
       {sources.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <FolderOpen className="size-12 text-muted-foreground mb-4" />
-            <h3 className="font-medium mb-1">No knowledge sources connected</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <FolderOpen className="mb-4 size-12 text-muted-foreground" />
+            <h3 className="mb-1 font-medium">No knowledge sources connected</h3>
+            <p className="mb-4 text-muted-foreground text-sm">
               Connect your Obsidian vault to get started
             </p>
-            <Button variant="outline" onClick={handleOpenDialog}>
-              <Plus className="size-4 mr-2" />
+            <Button onClick={handleOpenDialog} variant="outline">
+              <Plus className="mr-2 size-4" />
               Add Your First Source
             </Button>
           </CardContent>
@@ -231,16 +251,18 @@ export default function KnowledgeBasePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1.5">
-                      <div className={`size-2 rounded-full ${STATUS_COLORS[source.status]}`} />
-                      <span className="text-xs text-muted-foreground">
+                      <div
+                        className={`size-2 rounded-full ${STATUS_COLORS[source.status]}`}
+                      />
+                      <span className="text-muted-foreground text-xs">
                         {STATUS_LABELS[source.status]}
                       </span>
                     </div>
                     <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleDelete(source.id)}
                       disabled={deletingId === source.id}
+                      onClick={() => handleDelete(source.id)}
+                      size="icon-sm"
+                      variant="ghost"
                     >
                       {deletingId === source.id ? (
                         <Loader2 className="size-4 animate-spin" />

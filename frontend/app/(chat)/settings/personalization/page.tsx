@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   fetchCurrentUser,
-  updateUserPersonalization,
   type User,
+  updateUserPersonalization,
 } from "@/lib/api/backend-client";
 
 export default function PersonalizationPage() {
@@ -86,8 +86,8 @@ export default function PersonalizationPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Personalization</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="font-semibold text-lg">Personalization</h2>
+        <p className="text-muted-foreground text-sm">
           Customize how the AI interacts with you. These settings help the AI
           provide more relevant and personalized responses.
         </p>
@@ -96,74 +96,74 @@ export default function PersonalizationPage() {
       <div className="space-y-6">
         <div className="space-y-2">
           <label
+            className="font-medium text-sm leading-none"
             htmlFor="nickname"
-            className="text-sm font-medium leading-none"
           >
             Nickname
           </label>
           <Input
             id="nickname"
+            onChange={(e) => setNickname(e.target.value)}
             placeholder="What should the AI call you?"
             value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             The name the AI will use when addressing you
           </p>
         </div>
 
         <div className="space-y-2">
           <label
+            className="font-medium text-sm leading-none"
             htmlFor="occupation"
-            className="text-sm font-medium leading-none"
           >
             Occupation
           </label>
           <Input
             id="occupation"
+            onChange={(e) => setOccupation(e.target.value)}
             placeholder="e.g., Software Engineer, Teacher, Student"
             value={occupation}
-            onChange={(e) => setOccupation(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Helps the AI tailor responses to your professional context
           </p>
         </div>
 
         <div className="space-y-2">
           <label
+            className="font-medium text-sm leading-none"
             htmlFor="about-you"
-            className="text-sm font-medium leading-none"
           >
             About You
           </label>
           <Textarea
             id="about-you"
-            placeholder="Tell the AI about yourself, your interests, goals, or anything relevant..."
-            value={aboutYou}
             onChange={(e) => setAboutYou(e.target.value)}
+            placeholder="Tell the AI about yourself, your interests, goals, or anything relevant..."
             rows={4}
+            value={aboutYou}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Background information to help personalize responses
           </p>
         </div>
 
         <div className="space-y-2">
           <label
+            className="font-medium text-sm leading-none"
             htmlFor="custom-instructions"
-            className="text-sm font-medium leading-none"
           >
             Custom Instructions
           </label>
           <Textarea
             id="custom-instructions"
-            placeholder="e.g., Always explain technical concepts simply. Prefer concise answers. Use examples when possible."
-            value={customInstructions}
             onChange={(e) => setCustomInstructions(e.target.value)}
+            placeholder="e.g., Always explain technical concepts simply. Prefer concise answers. Use examples when possible."
             rows={6}
+            value={customInstructions}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Specific instructions for how the AI should respond to you
           </p>
         </div>
@@ -171,11 +171,11 @@ export default function PersonalizationPage() {
 
       {hasChanges && (
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+          <Button disabled={isSaving} onClick={handleCancel} variant="outline">
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader2 className="size-4 animate-spin mr-2" />}
+          <Button disabled={isSaving} onClick={handleSave}>
+            {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
             Save Changes
           </Button>
         </div>

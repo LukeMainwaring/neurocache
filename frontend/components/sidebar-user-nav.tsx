@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ChevronUp, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +15,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { ChevronUp, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
 import { fetchCurrentUser, type User } from "@/lib/api/backend-client";
 
 export function SidebarUserNav() {
@@ -41,7 +41,7 @@ export function SidebarUserNav() {
               className="h-12 bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               data-testid="user-nav-button"
             >
-              <div className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
+              <div className="flex size-8 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-sm">
                 {initial}
               </div>
               <span className="truncate font-medium">{displayName}</span>
@@ -54,7 +54,7 @@ export function SidebarUserNav() {
           >
             <DropdownMenuItem asChild className="cursor-pointer">
               <Link href="/settings">
-                <SettingsIcon className="size-4 mr-2" />
+                <SettingsIcon className="mr-2 size-4" />
                 Settings
               </Link>
             </DropdownMenuItem>
@@ -66,12 +66,12 @@ export function SidebarUserNav() {
             >
               {mounted ? (
                 resolvedTheme === "dark" ? (
-                  <MoonIcon className="size-4 mr-2" />
+                  <MoonIcon className="mr-2 size-4" />
                 ) : (
-                  <SunIcon className="size-4 mr-2" />
+                  <SunIcon className="mr-2 size-4" />
                 )
               ) : (
-                <SunIcon className="size-4 mr-2" />
+                <SunIcon className="mr-2 size-4" />
               )}
               {mounted
                 ? `Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`

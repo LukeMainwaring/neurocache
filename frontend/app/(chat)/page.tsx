@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import { headers } from "next/headers";
+import { Suspense } from "react";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 

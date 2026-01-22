@@ -1,8 +1,8 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -20,9 +20,9 @@ export default function SettingsLayout({
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col h-dvh">
-      <header className="sticky top-0 flex items-center gap-2 bg-background px-4 py-3 border-b">
-        <Button variant="ghost" size="icon-sm" asChild>
+    <div className="flex h-dvh flex-col">
+      <header className="sticky top-0 flex items-center gap-2 border-b bg-background px-4 py-3">
+        <Button asChild size="icon-sm" variant="ghost">
           <Link href="/">
             <ArrowLeft className="size-4" />
           </Link>
@@ -36,13 +36,13 @@ export default function SettingsLayout({
             {settingsTabs.map((tab) => (
               <li key={tab.href}>
                 <Link
-                  href={tab.href}
                   className={cn(
-                    "block rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "block rounded-md px-3 py-2 font-medium text-sm transition-colors",
                     pathname === tab.href
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   )}
+                  href={tab.href}
                 >
                   {tab.name}
                 </Link>
