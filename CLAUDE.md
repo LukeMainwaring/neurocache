@@ -57,6 +57,7 @@ Key patterns:
 -   Type hints required on all functions
 -   Keep route handlers thin: push business logic to `services/`, DB logic to `models/`
 -   Use modern Python syntax: `| None` over `Optional`, `list` over `List`
+-   When creating SQLAlchemy columns, prefer simple Python type inference and only use `mapped_column` when column-based attributes require more specific customization. Example: `name: Mapped[str | None]` instead of `name: Mapped[str | None] = mapped_column(String(255), nullable=True)`
 -   After generating an alembic database migration, pause and ask if it looks okay before running the upgrade script.
 
 ### Frontend (`frontend/`)
