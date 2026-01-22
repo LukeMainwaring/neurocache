@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 const settingsTabs = [
   { name: "Personalization", href: "/settings/personalization" },
+  { name: "Knowledge Base", href: "/settings/knowledge-base" },
 ];
 
 export default function SettingsLayout({
