@@ -19,7 +19,14 @@
       "Bash(done)",
       "Bash(gh pr create:*)",
       "Bash(git push:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(git log:*)",
+      "Bash(git show-branch:*)",
+      "Bash(docker compose:*)",
+      "Bash(./scripts/create-db-revision-docker.sh:*)",
+      "Bash(pnpm lint:*)",
+      "WebSearch",
+      "Bash(pnpm tsc:*)"
     ]
   }
 }

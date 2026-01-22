@@ -166,3 +166,108 @@ export async function updateUserPersonalization(
 
   return response.json();
 }
+
+// Knowledge Source API
+export interface KnowledgeSource {
+  id: string;
+  user_id: string;
+  source_type: 'obsidian' | 'notion' | 'local_folder';
+  name: string;
+  file_path: string | null;
+  status: 'pending' | 'connected' | 'syncing' | 'error';
+  last_synced_at: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KnowledgeSourceCreate {
+  source_type: 'obsidian' | 'notion' | 'local_folder';
+  name: string;
+  file_path?: string;
+}
+
+/**
+ * Get all knowledge sources for the current user.
+ */
+export async function fetchKnowledgeSources(): Promise<KnowledgeSource[]> {
+  const response = await fetch(`${API_URL}/api/knowledge-sources`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch knowledge sources: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.sources;
+}
+
+/**
+ * Create a new knowledge source.
+ */
+export async function createKnowledgeSource(
+  data: KnowledgeSourceCreate
+): Promise<KnowledgeSource> {
+  const response = await fetch(`${API_URL}/api/knowledge-sources`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to create knowledge source: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Delete a knowledge source.
+ */
+export async function deleteKnowledgeSource(id: string): Promise<void> {
+  const response = await fetch(`${API_URL}/api/knowledge-sources/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete knowledge source: ${response.statusText}`);
+  }
+}
+
+export interface KnowledgeSourceDefaults {
+  obsidian: {
+    name: string;
+    file_path: string | null;
+  };
+}
+
+/**
+ * Fetch default values for creating a knowledge source.
+ */
+export async function fetchKnowledgeSourceDefaults(): Promise<KnowledgeSourceDefaults> {
+  const response = await fetch(`${API_URL}/api/knowledge-sources/defaults`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch knowledge source defaults: ${response.statusText}`);
+  }
+
+  return response.json();
+}
