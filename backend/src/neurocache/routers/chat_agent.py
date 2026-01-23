@@ -14,6 +14,7 @@ from fastapi.responses import StreamingResponse
 from neurocache.agents.chat_agent import chat_agent_stream
 from neurocache.dependencies.auth.auth import AuthenticatedUser
 from neurocache.dependencies.db import get_async_sqlalchemy_session
+from neurocache.dependencies.openai import get_openai_client
 from neurocache.schemas.message import UserMessage
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,8 @@ async def chat_stream_route(message: UserMessage, user_id: AuthenticatedUser) ->
         try:
             # Manage DB session inside the generator to ensure proper lifecycle
             async with get_async_sqlalchemy_session() as db:
-                async for sse_data in chat_agent_stream(message, db, user_id):
+                openai_client = get_openai_client()
+                async for sse_data in chat_agent_stream(message, db, user_id, openai_client):
                     yield sse_data
         except asyncio.CancelledError:
             logger.info("Chat agent streaming cancelled (client disconnected)")
