@@ -4,8 +4,8 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 ## Current State
 
-- **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings
-- **Missing**: RAG/knowledge base (the core feature)
+- **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings, RAG vertical slice (single document ingestion, semantic search, context injection)
+- **In Progress**: Experimenting with chunking strategies and similarity thresholds before full vault ingestion
 
 ---
 
@@ -21,55 +21,76 @@ Made the chat agent more helpful by incorporating user-specific context into eve
 - Frontend settings page with form to edit personalization fields
 - Personalization data injected into system prompt at chat time
 
-### Phase 2: Obsidian Integration (RAG)
+### Phase 2: RAG Vertical Slice (Done)
 
-### 2.1 PostgreSQL + pgvector Setup
+Built the core RAG pipeline from ingestion to retrieval to chat integration.
 
-Foundation for storing and searching embeddings.
+#### 2.1 PostgreSQL + pgvector Setup
 
-- Add pgvector extension to PostgreSQL
-- Create SQLAlchemy model for document chunks with vector column
-- Test basic similarity search queries
+- Added pgvector extension to PostgreSQL
+- Created Document and DocumentChunk models with vector column (1536 dimensions)
+- HNSW index for efficient similarity search
+
+#### 2.2 Embedding and Ingestion Services
+
+- Embedding service using OpenAI text-embedding-3-large
+- Ingestion service for single document processing
+- Naive chunking strategy (MAX_CHUNK_SIZE=1000, CHUNK_OVERLAP=100)
+- API endpoint for document ingestion (`POST /api/documents/ingest`)
+
+#### 2.3 Retrieval and RAG Integration
+
+- Retrieval service with semantic search (cosine similarity)
+- RAG integration in chat agent (RAG_TOP_K=3, RAG_SIMILARITY_THRESHOLD=0.25)
+- Context injection into system prompt
+- API endpoint for semantic search (`POST /api/documents/search`)
 
 ---
 
 ## Next Up
 
-### Phase 2: Obsidian Integration (RAG)
+### Phase 2.5: RAG Experimentation
 
-**This is the core differentiating feature.** Connect to a local Obsidian vault as the knowledge base. This phase transforms Neurocache from a personalized chatbot into a true "second brain" that can reference your accumulated knowledge.
+Before scaling to full vault ingestion, experiment with the RAG pipeline to find optimal settings.
 
-**Why this is the priority:**
+**Why this matters:**
 
-- Directly enables the core vision: "Reference a knowledge base tailored to me"
-- High learning value: teaches RAG patterns, vector embeddings, semantic search
-- High user value: makes the app fundamentally more useful than ChatGPT/Claude
+- Chunking strategy significantly impacts retrieval quality
+- Similarity thresholds affect precision/recall tradeoff
+- Better to tune on small scale before processing entire vault
+- Learning opportunity: understand how these parameters affect results
 
-### 2.2 Obsidian Vault Ingestion
+#### Chunking Strategy Experiments
 
-Read and process markdown files from a local vault (configured via environment variable).
+- Try different chunk sizes (500, 1000, 2000 chars)
+- Experiment with overlap ratios
+- Consider semantic chunking (respect markdown headers, paragraphs)
+- Evaluate recursive chunking approaches
 
-- Parse markdown files, extract content and metadata (title, tags, links)
-- Chunk documents intelligently (respect headers, paragraphs)
-- Generate embeddings using OpenAI's embedding API
-- Store chunks with embeddings and source metadata
+#### Similarity Threshold Tuning
 
-### 2.3 RAG in Chat
+- Test different RAG_SIMILARITY_THRESHOLD values
+- Analyze precision vs recall at various thresholds
+- Consider dynamic thresholds based on query type
+- Add logging/metrics to evaluate retrieval quality
 
-Integrate retrieval into the chat flow.
+### Phase 2.6: Full Vault Ingestion
 
-- Semantic search over note chunks before LLM call
-- Include relevant context in system prompt (with token budget)
-- Show source attribution in responses (which notes were used)
-- Add "Sources" display in frontend chat UI
+Scale the ingestion pipeline to process an entire Obsidian vault.
 
-### 2.4 Sync and Refresh
+- Configure vault path via environment variable
+- Batch processing for multiple markdown files
+- Parse frontmatter metadata (tags, dates, links)
+- Progress tracking for large vaults
+
+### Phase 2.7: Sync and Refresh
 
 Keep the knowledge base current.
 
 - Manual re-sync endpoint/button
 - Track file modification times to detect changes
 - Incremental updates (only re-embed changed files)
+- Handle deleted/renamed files
 
 ---
 
@@ -91,11 +112,11 @@ Surface connections across notes during conversation.
 - Expandable previews of source content
 - Click-to-open in Obsidian (obsidian:// URI scheme)
 
-### Retrieval Tuning
+### Advanced Retrieval
 
-- Experiment with chunk sizes and overlap
 - Hybrid search (keyword + semantic)
 - Re-ranking retrieved results
+- Query expansion/reformulation
 
 ---
 
@@ -142,4 +163,5 @@ Conversation and knowledge base export. Low priority for personal use.
 - Obsidian is the primary knowledge source. Keep the ingestion pipeline simple.
 - This is a learning project. Optimize for understanding patterns, not production robustness.
 - Incremental progress: each item should be completable in a reasonable work session.
-- Phase 2 is broken into sub-milestones (2.1, 2.2, 2.3, 2.4) to allow incremental progress.
+- Phase 2 is broken into sub-milestones to allow incremental progress.
+- RAG experimentation (2.5) is intentionally before full vault ingestion to tune parameters at small scale.
