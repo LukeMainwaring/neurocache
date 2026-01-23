@@ -48,9 +48,8 @@ Foundation for storing and searching embeddings.
 
 ### 2.2 Obsidian Vault Ingestion
 
-Read and process markdown files from a local vault.
+Read and process markdown files from a local vault (configured via environment variable).
 
-- Configure vault path via environment variable
 - Parse markdown files, extract content and metadata (title, tags, links)
 - Chunk documents intelligently (respect headers, paragraphs)
 - Generate embeddings using OpenAI's embedding API

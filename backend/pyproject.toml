@@ -8,6 +8,7 @@ dependencies = [
   "alembic>=1.17.2",
   "asyncpg>=0.31.0",
   "fastapi[standard]>=0.128.0",
+  "pgvector>=0.4.0",
   "psycopg[binary,pool]>=3.3.2",
   "pydantic-ai>=1.39.0",
   "pydantic>=2.12.5",
@@ -32,6 +33,10 @@ markers = [
 
 [tool.mypy]
 strict = true
+
+[[tool.mypy.overrides]]
+module = "pgvector.*"
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 120
