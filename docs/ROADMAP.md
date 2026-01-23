@@ -23,7 +23,13 @@ Made the chat agent more helpful by incorporating user-specific context into eve
 
 ### Phase 2: Obsidian Integration (RAG)
 
+### 2.1 PostgreSQL + pgvector Setup
+
+Foundation for storing and searching embeddings.
+
 - Add pgvector extension to PostgreSQL
+- Create SQLAlchemy model for document chunks with vector column
+- Test basic similarity search queries
 
 ---
 
@@ -38,13 +44,6 @@ Made the chat agent more helpful by incorporating user-specific context into eve
 - Directly enables the core vision: "Reference a knowledge base tailored to me"
 - High learning value: teaches RAG patterns, vector embeddings, semantic search
 - High user value: makes the app fundamentally more useful than ChatGPT/Claude
-
-### 2.1 PostgreSQL + pgvector Setup
-
-Foundation for storing and searching embeddings.
-
-- Create SQLAlchemy model for document chunks with vector column
-- Test basic similarity search queries
 
 ### 2.2 Obsidian Vault Ingestion
 
