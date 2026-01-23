@@ -32,6 +32,7 @@ class User(Base):
     nickname: Mapped[str | None]
     occupation: Mapped[str | None]
     about_you: Mapped[str | None]
+    age_of_first_reuben: Mapped[int | None]
 
     @classmethod
     async def get(cls, db: AsyncSession, id: str) -> UserSchema:

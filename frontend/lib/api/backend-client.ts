@@ -117,6 +117,7 @@ export interface User {
   nickname: string | null;
   occupation: string | null;
   about_you: string | null;
+  age_of_first_reuben: number | null;
 }
 
 export interface UserPersonalizationUpdate {
@@ -124,6 +125,7 @@ export interface UserPersonalizationUpdate {
   nickname?: string | null;
   occupation?: string | null;
   about_you?: string | null;
+  age_of_first_reuben?: number | null;
 }
 
 /**

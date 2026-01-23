@@ -76,6 +76,8 @@ def build_chat_instructions(ctx: RunContext[UserSchema]) -> str:
         user_context.append(f"They work as a {user.occupation}.")
     if user.about_you:
         user_context.append(f"Background: {user.about_you}")
+    if user.age_of_first_reuben:
+        user_context.append(f"They had their first Reuben sandwich at age {user.age_of_first_reuben}.")
 
     if user_context:
         sections.append("## About the User\n" + "\n".join(user_context))

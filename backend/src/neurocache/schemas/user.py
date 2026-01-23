@@ -17,6 +17,7 @@ class UserSchema(BaseSchema):
     nickname: str | None = Field(default=None, description="Preferred nickname")
     occupation: str | None = Field(default=None, description="User's occupation")
     about_you: str | None = Field(default=None, description="Information about the user")
+    age_of_first_reuben: int | None = Field(default=None, description="Age when user had their first Reuben sandwich")
 
 
 class UserCreateSchema(BaseSchema):
@@ -32,3 +33,4 @@ class UserPersonalizationUpdateSchema(BaseSchema):
     nickname: str | None = None
     occupation: str | None = None
     about_you: str | None = None
+    age_of_first_reuben: int | None = None

@@ -22,6 +22,7 @@ export default function PersonalizationPage() {
   const [nickname, setNickname] = useState("");
   const [occupation, setOccupation] = useState("");
   const [aboutYou, setAboutYou] = useState("");
+  const [ageOfFirstReuben, setAgeOfFirstReuben] = useState<number | null>(null);
   const [customInstructions, setCustomInstructions] = useState("");
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function PersonalizationPage() {
         setNickname(userData.nickname ?? "");
         setOccupation(userData.occupation ?? "");
         setAboutYou(userData.about_you ?? "");
+        setAgeOfFirstReuben(userData.age_of_first_reuben);
         setCustomInstructions(userData.custom_instructions ?? "");
       } catch (error) {
         console.error("Failed to load user:", error);
@@ -47,12 +49,14 @@ export default function PersonalizationPage() {
     nickname !== (user?.nickname ?? "") ||
     occupation !== (user?.occupation ?? "") ||
     aboutYou !== (user?.about_you ?? "") ||
+    ageOfFirstReuben !== (user?.age_of_first_reuben ?? null) ||
     customInstructions !== (user?.custom_instructions ?? "");
 
   function handleCancel() {
     setNickname(user?.nickname ?? "");
     setOccupation(user?.occupation ?? "");
     setAboutYou(user?.about_you ?? "");
+    setAgeOfFirstReuben(user?.age_of_first_reuben ?? null);
     setCustomInstructions(user?.custom_instructions ?? "");
   }
 
@@ -63,6 +67,7 @@ export default function PersonalizationPage() {
         nickname: nickname || null,
         occupation: occupation || null,
         about_you: aboutYou || null,
+        age_of_first_reuben: ageOfFirstReuben,
         custom_instructions: customInstructions || null,
       });
       setUser(updatedUser);
@@ -146,6 +151,29 @@ export default function PersonalizationPage() {
           />
           <p className="text-muted-foreground text-xs">
             Background information to help personalize responses
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <label
+            className="font-medium text-sm leading-none"
+            htmlFor="age-of-first-reuben"
+          >
+            Age of First Reuben
+          </label>
+          <Input
+            id="age-of-first-reuben"
+            onChange={(e) =>
+              setAgeOfFirstReuben(
+                e.target.value ? Number.parseInt(e.target.value, 10) : null
+              )
+            }
+            placeholder="e.g., 25"
+            type="number"
+            value={ageOfFirstReuben ?? ""}
+          />
+          <p className="text-muted-foreground text-xs">
+            The age at which you had your first Reuben sandwich
           </p>
         </div>
 
