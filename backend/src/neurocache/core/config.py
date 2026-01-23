@@ -24,6 +24,11 @@ class BaseAgentSettings(BaseSettings):
     AGENT_TEMPERATURE: float = 0.0
 
 
+class EmbeddingSettings(BaseSettings):
+    EMBEDDING_MODEL: str = "text-embedding-3-large"
+    EMBEDDING_DIMENSION: int = 1536
+
+
 class PostgresSettings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
@@ -39,7 +44,7 @@ class ObsidianSettings(BaseSettings):
     OBSIDIAN_VAULT_NAME: str = "My Obsidian Vault"  # Default display name
 
 
-class Settings(ApiSettings, BaseAgentSettings, PostgresSettings, ObsidianSettings):
+class Settings(ApiSettings, EmbeddingSettings, BaseAgentSettings, PostgresSettings, ObsidianSettings):
     """Main application settings."""
 
     model_config = SettingsConfigDict(

@@ -2,7 +2,7 @@
 
 This module provides a simple chat agent that:
 - Engages in natural conversation with the user
-- Has access to the user's personal knowledge base (future: RAG integration)
+- Has access to the user's personal knowledge base via RAG
 - Maintains conversation history across sessions
 """
 
@@ -12,6 +12,7 @@ import logging
 import uuid
 from collections.abc import AsyncGenerator
 
+from openai import AsyncOpenAI
 from pydantic_ai import Agent, ModelSettings, RunContext
 from pydantic_ai.models.openai import OpenAIChatModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,11 +22,13 @@ from neurocache.agents.shared import (
     update_history,
 )
 from neurocache.core.config import get_settings
+from neurocache.models.document_chunk import DocumentChunk
 from neurocache.models.thread import Thread
 from neurocache.models.user import User as UserModel
 from neurocache.schemas.agent_type import AgentType
 from neurocache.schemas.message import UserMessage
 from neurocache.schemas.user import UserSchema
+from neurocache.services.retrieval import search_similar_chunks_for_user
 from neurocache.services.title_generator import generate_thread_title
 
 logger = logging.getLogger(__name__)
@@ -108,6 +111,68 @@ def create_chat_agent() -> Agent[UserSchema, str]:
 
 
 # ============================================================================
+# RAG Context Retrieval
+# ============================================================================
+
+RAG_TOP_K = 3  # Number of chunks to retrieve
+RAG_SIMILARITY_THRESHOLD = 0.25  # Minimum similarity to include
+
+
+def format_rag_context(chunks: list[tuple[DocumentChunk, float]]) -> str | None:
+    """Format retrieved chunks into context for the prompt.
+
+    Args:
+        chunks: List of (chunk, similarity) tuples from retrieval
+
+    Returns:
+        Formatted context string, or None if no relevant chunks
+    """
+    # Filter by similarity threshold
+    relevant = [(chunk, sim) for chunk, sim in chunks if sim >= RAG_SIMILARITY_THRESHOLD]
+
+    if not relevant:
+        return None
+
+    context_parts = []
+    for chunk, similarity in relevant:
+        # Include source info for attribution
+        source = chunk.document.relative_path if chunk.document else "Unknown"
+        context_parts.append(f"[From: {source}]\n{chunk.content}")
+
+    return "\n\n---\n\n".join(context_parts)
+
+
+async def retrieve_context(
+    db: AsyncSession,
+    openai_client: AsyncOpenAI,
+    query: str,
+    user_id: str,
+) -> str | None:
+    """Retrieve relevant context from the user's knowledge base.
+
+    Args:
+        db: Database session
+        openai_client: OpenAI client for embeddings
+        query: The user's query
+        user_id: User ID to scope the search
+
+    Returns:
+        Formatted context string, or None if no relevant content found
+    """
+    try:
+        chunks = await search_similar_chunks_for_user(db, openai_client, query, user_id, top_k=RAG_TOP_K)
+        if not chunks:
+            return None
+        # Load document relationships for source attribution
+        for chunk, _ in chunks:
+            await db.refresh(chunk, ["document"])
+        return format_rag_context(chunks)
+    except Exception:
+        logger.exception("Error retrieving RAG context")
+        return None
+
+
+# ============================================================================
 # Streaming Handler
 # ============================================================================
 
@@ -116,6 +181,7 @@ async def chat_agent_stream(
     message: UserMessage,
     db: AsyncSession,
     user_id: str,
+    openai_client: AsyncOpenAI,
 ) -> AsyncGenerator[str, None]:
     """Handle streaming for chat agent.
 
@@ -137,6 +203,16 @@ async def chat_agent_stream(
     original_message_history = await get_history(db, thread_id, AgentType.CHAT)
     original_user_query = message.content
 
+    # Retrieve relevant context from knowledge base
+    rag_context = await retrieve_context(db, openai_client, original_user_query, user_id)
+    # Augment user prompt with context if available
+    if rag_context:
+        augmented_prompt = f"{original_user_query}\n\n---\nRelevant information from your notes:\n\n{rag_context}"
+        logger.info("RAG: Augmented prompt with context: %s", augmented_prompt)
+    else:
+        augmented_prompt = original_user_query
+        logger.info("RAG: No relevant context found")
+
     # Generate unique IDs for this message stream
     message_id = str(uuid.uuid4())
     text_block_id = str(uuid.uuid4())
@@ -151,7 +227,7 @@ async def chat_agent_stream(
         # Run chat agent with streaming
         agent = create_chat_agent()
         async with agent.run_stream(
-            user_prompt=original_user_query,
+            user_prompt=augmented_prompt,
             message_history=original_message_history,
             deps=user,
         ) as result:
