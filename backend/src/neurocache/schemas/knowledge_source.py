@@ -1,5 +1,6 @@
 """Pydantic schemas for knowledge sources."""
 
+import uuid
 from datetime import datetime
 from enum import StrEnum
 from typing import Any
@@ -29,7 +30,7 @@ class KnowledgeSourceStatus(StrEnum):
 class KnowledgeSourceSchema(BaseSchema):
     """Full knowledge source response schema."""
 
-    id: str = Field(description="Unique identifier")
+    id: uuid.UUID = Field(description="Unique identifier")
     user_id: str = Field(description="Owner user ID")
     source_type: KnowledgeSourceType = Field(description="Type of knowledge source")
     name: str = Field(description="User-friendly display name")

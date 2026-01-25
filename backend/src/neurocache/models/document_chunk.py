@@ -57,7 +57,7 @@ class DocumentChunk(Base):
         db: AsyncSession,
         query_embedding: list[float],
         top_k: int = 5,
-        knowledge_source_id: str | None = None,
+        knowledge_source_id: uuid.UUID | None = None,
     ) -> list[tuple[DocumentChunk, float]]:
         """Search for chunks most similar to the query embedding.
 

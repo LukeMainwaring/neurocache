@@ -84,7 +84,7 @@ def extract_title_from_markdown(content: str) -> str | None:
 async def ingest_document(
     db: AsyncSession,
     openai_client: AsyncOpenAI,
-    knowledge_source_id: str,
+    knowledge_source_id: uuid.UUID,
     relative_path: str,
 ) -> Document:
     """Ingest a single document from a knowledge source.

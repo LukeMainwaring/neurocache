@@ -23,7 +23,9 @@ class Document(Base):
     __tablename__ = "documents"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    knowledge_source_id: Mapped[str] = mapped_column(ForeignKey("knowledge_sources.id", ondelete="CASCADE"), index=True)
+    knowledge_source_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("knowledge_sources.id", ondelete="CASCADE"), index=True
+    )
     relative_path: Mapped[str]
     title: Mapped[str | None]
     content_hash: Mapped[str]
