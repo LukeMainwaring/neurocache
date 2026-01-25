@@ -29,7 +29,7 @@ class NoKnowledgeSourceFound(HTTPException):
 class KnowledgeSource(Base):
     __tablename__ = "knowledge_sources"
 
-    id: Mapped[str] = mapped_column(primary_key=True, index=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     source_type: Mapped[str]
     name: Mapped[str]
@@ -47,7 +47,7 @@ class KnowledgeSource(Base):
     )
 
     @classmethod
-    async def get(cls, db: AsyncSession, id: str, user_id: str) -> KnowledgeSourceSchema:
+    async def get(cls, db: AsyncSession, id: uuid.UUID, user_id: str) -> KnowledgeSourceSchema:
         """Get a knowledge source by ID for a specific user."""
         source = await db.get(cls, id)
         if source is None or source.user_id != user_id:
@@ -70,7 +70,6 @@ class KnowledgeSource(Base):
     ) -> KnowledgeSourceSchema:
         """Create a new knowledge source."""
         source = cls(
-            id=str(uuid.uuid4()),
             user_id=user_id,
             **source_create.model_dump(),
         )
@@ -83,7 +82,7 @@ class KnowledgeSource(Base):
     async def update(
         cls,
         db: AsyncSession,
-        id: str,
+        id: uuid.UUID,
         user_id: str,
         source_update: KnowledgeSourceUpdateSchema,
     ) -> KnowledgeSourceSchema:
@@ -99,7 +98,7 @@ class KnowledgeSource(Base):
         return KnowledgeSourceSchema.model_validate(source)
 
     @classmethod
-    async def delete(cls, db: AsyncSession, id: str, user_id: str) -> None:
+    async def delete(cls, db: AsyncSession, id: uuid.UUID, user_id: str) -> None:
         """Delete a knowledge source."""
         source = await db.get(cls, id)
         if source is None or source.user_id != user_id:
@@ -111,7 +110,7 @@ class KnowledgeSource(Base):
     async def update_status(
         cls,
         db: AsyncSession,
-        id: str,
+        id: uuid.UUID,
         user_id: str,
         status: str,
         error_message: str | None = None,

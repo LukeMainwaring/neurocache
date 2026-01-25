@@ -4,6 +4,7 @@ This module provides REST API endpoints for knowledge source CRUD operations.
 """
 
 import logging
+import uuid
 
 from fastapi import APIRouter
 
@@ -76,7 +77,7 @@ async def get_knowledge_source_defaults() -> dict[str, dict[str, str | None]]:
 
 @knowledge_source_router.get("/{source_id}")
 async def get_knowledge_source(
-    source_id: str,
+    source_id: uuid.UUID,
     db: AsyncPostgresSessionDep,
 ) -> KnowledgeSourceSchema:
     """Get a single knowledge source by ID."""
@@ -85,7 +86,7 @@ async def get_knowledge_source(
 
 @knowledge_source_router.patch("/{source_id}")
 async def update_knowledge_source(
-    source_id: str,
+    source_id: uuid.UUID,
     source_data: KnowledgeSourceUpdateSchema,
     db: AsyncPostgresSessionDep,
 ) -> KnowledgeSourceSchema:
@@ -95,7 +96,7 @@ async def update_knowledge_source(
 
 @knowledge_source_router.delete("/{source_id}")
 async def delete_knowledge_source(
-    source_id: str,
+    source_id: uuid.UUID,
     db: AsyncPostgresSessionDep,
 ) -> None:
     """Delete a knowledge source."""
@@ -104,7 +105,7 @@ async def delete_knowledge_source(
 
 @knowledge_source_router.post("/{source_id}/ingest")
 async def ingest_single_document(
-    source_id: str,
+    source_id: uuid.UUID,
     relative_path: str,
     db: AsyncPostgresSessionDep,
     openai_client: OpenAIClientDep,
@@ -121,7 +122,7 @@ async def ingest_single_document(
 
 @knowledge_source_router.get("/{source_id}/search")
 async def search_knowledge_source(
-    source_id: str,
+    source_id: uuid.UUID,
     query: str,
     db: AsyncPostgresSessionDep,
     openai_client: OpenAIClientDep,

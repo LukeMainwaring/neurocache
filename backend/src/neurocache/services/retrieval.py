@@ -1,6 +1,7 @@
 """Retrieval service for semantic search over document chunks."""
 
 import logging
+import uuid
 
 from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +20,7 @@ async def search_similar_chunks(
     openai_client: AsyncOpenAI,
     query: str,
     top_k: int = DEFAULT_TOP_K,
-    knowledge_source_id: str | None = None,
+    knowledge_source_id: uuid.UUID | None = None,
 ) -> list[tuple[DocumentChunk, float]]:
     """Search for document chunks most similar to the query.
 

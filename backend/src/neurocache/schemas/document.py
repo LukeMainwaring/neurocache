@@ -24,7 +24,7 @@ class DocumentSchema(BaseSchema):
     """Full document response schema."""
 
     id: uuid.UUID = Field(description="Unique identifier")
-    knowledge_source_id: str = Field(description="Parent knowledge source ID")
+    knowledge_source_id: uuid.UUID = Field(description="Parent knowledge source ID")
     relative_path: str = Field(description="Path relative to source root")
     title: str | None = Field(default=None, description="Extracted document title")
     content_hash: str = Field(description="SHA-256 hash for change detection")
@@ -41,7 +41,7 @@ class DocumentSchema(BaseSchema):
 class DocumentCreateSchema(BaseSchema):
     """Schema for creating a document."""
 
-    knowledge_source_id: str = Field(description="Parent knowledge source ID")
+    knowledge_source_id: uuid.UUID = Field(description="Parent knowledge source ID")
     relative_path: str = Field(description="Path relative to source root")
     title: str | None = Field(default=None, description="Extracted document title")
     content_hash: str = Field(description="SHA-256 hash for change detection")
