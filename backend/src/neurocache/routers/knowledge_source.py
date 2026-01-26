@@ -12,7 +12,7 @@ from neurocache.core.config import get_settings
 from neurocache.dependencies.db import AsyncPostgresSessionDep
 from neurocache.dependencies.openai import OpenAIClientDep
 from neurocache.models.knowledge_source import KnowledgeSource
-from neurocache.schemas.document import DocumentSchema
+from neurocache.schemas.document import BatchIngestResult, DocumentSchema
 from neurocache.schemas.knowledge_source import (
     KnowledgeSourceCreateSchema,
     KnowledgeSourceListResponse,
@@ -21,7 +21,7 @@ from neurocache.schemas.knowledge_source import (
     KnowledgeSourceType,
     KnowledgeSourceUpdateSchema,
 )
-from neurocache.services.ingestion import ingest_document
+from neurocache.services.ingestion import ingest_all_documents, ingest_document
 from neurocache.services.retrieval import search_similar_chunks
 from neurocache.services.vault_validator import validate_obsidian_vault
 
@@ -114,10 +114,29 @@ async def ingest_single_document(
 
     Args:
         source_id: The knowledge source ID
-        relative_path: Path relative to knowledge source root (e.g., "TODO.md")
+        relative_path: Path relative to knowledge source root (e.g., "Brain Dump.md")
     """
     document = await ingest_document(db, openai_client, source_id, relative_path)
     return DocumentSchema.model_validate(document)
+
+
+@knowledge_source_router.post("/{source_id}/ingest-all")
+async def ingest_all_documents_endpoint(
+    source_id: uuid.UUID,
+    db: AsyncPostgresSessionDep,
+    openai_client: OpenAIClientDep,
+    force_reindex: bool = False,
+) -> BatchIngestResult:
+    """Ingest all markdown documents from a knowledge source.
+
+    Discovers all .md files in the vault (excluding system directories like .obsidian)
+    and ingests them into the database with embeddings.
+
+    Args:
+        source_id: The knowledge source ID
+        force_reindex: If True, re-ingest documents even if already indexed
+    """
+    return await ingest_all_documents(db, openai_client, source_id, force_reindex)
 
 
 @knowledge_source_router.get("/{source_id}/search")

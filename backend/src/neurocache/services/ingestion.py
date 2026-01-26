@@ -3,16 +3,22 @@
 import hashlib
 import logging
 import re
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
 from openai import AsyncOpenAI
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neurocache.models.document import Document
 from neurocache.models.document_chunk import DocumentChunk
-from neurocache.schemas.document import DocumentStatus
+from neurocache.schemas.document import (
+    BatchIngestFailure,
+    BatchIngestResult,
+    DocumentStatus,
+)
 from neurocache.services.embedding import generate_embeddings_batch
 
 logger = logging.getLogger(__name__)
@@ -20,7 +26,8 @@ logger = logging.getLogger(__name__)
 # Container path where vault is mounted
 VAULT_MOUNT_PATH = "/vault"
 
-# TODO: leave out certain directories ("copilot/", ".obsidian/", ".smart-env/") and files (images) from ingestion.
+# Directories to exclude during batch ingestion
+DEFAULT_EXCLUDE_DIRS = {".obsidian", ".smart-env", "copilot", ".git", ".trash"}
 
 # Chunking config
 TARGET_CHUNK_SIZE = 1500  # target characters per chunk
@@ -249,7 +256,7 @@ async def ingest_document(
         db: Database session
         openai_client: OpenAI client for embeddings
         knowledge_source_id: The knowledge source this document belongs to
-        relative_path: Path relative to the knowledge source root (e.g., "TODO.md")
+        relative_path: Path relative to the knowledge source root (e.g., "Brain Dump.md")
 
     Returns:
         The created Document record
@@ -317,3 +324,133 @@ async def ingest_document(
     logger.info("Indexed document %s with %d chunks", document.id, len(chunks))
 
     return document
+
+
+def discover_markdown_files(
+    base_path: Path,
+    exclude_dirs: set[str] | None = None,
+) -> list[str]:
+    """Recursively find all .md files, excluding system directories.
+
+    Args:
+        base_path: Root directory to search
+        exclude_dirs: Directory names to skip (defaults to DEFAULT_EXCLUDE_DIRS)
+
+    Returns:
+        List of relative paths to markdown files
+    """
+    if exclude_dirs is None:
+        exclude_dirs = DEFAULT_EXCLUDE_DIRS
+
+    markdown_files: list[str] = []
+
+    for file_path in base_path.rglob("*.md"):
+        # Check if any parent directory should be excluded
+        parts = file_path.relative_to(base_path).parts
+        if any(part in exclude_dirs for part in parts[:-1]):  # Exclude dirs, not filename
+            continue
+        markdown_files.append(str(file_path.relative_to(base_path)))
+
+    return sorted(markdown_files)
+
+
+async def get_existing_document(
+    db: AsyncSession,
+    knowledge_source_id: uuid.UUID,
+    relative_path: str,
+) -> Document | None:
+    """Check if document already exists for this source and path.
+
+    Args:
+        db: Database session
+        knowledge_source_id: The knowledge source ID
+        relative_path: Path relative to source root
+
+    Returns:
+        Document if exists, None otherwise
+    """
+    result = await db.execute(
+        select(Document).where(
+            Document.knowledge_source_id == knowledge_source_id,
+            Document.relative_path == relative_path,
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+async def ingest_all_documents(
+    db: AsyncSession,
+    openai_client: AsyncOpenAI,
+    knowledge_source_id: uuid.UUID,
+    force_reindex: bool = False,
+) -> BatchIngestResult:
+    """Ingest all markdown documents from a knowledge source.
+
+    Args:
+        db: Database session
+        openai_client: OpenAI client for embeddings
+        knowledge_source_id: The knowledge source to ingest from
+        force_reindex: If True, re-ingest documents even if already indexed
+
+    Returns:
+        BatchIngestResult with statistics about the operation
+    """
+    start_time = time.time()
+
+    # Discover all markdown files
+    base_path = Path(VAULT_MOUNT_PATH)
+    markdown_files = discover_markdown_files(base_path)
+
+    total_files = len(markdown_files)
+    documents_created = 0
+    documents_skipped = 0
+    documents_failed = 0
+    failed_files: list[BatchIngestFailure] = []
+
+    logger.info("Discovered %d markdown files to process", total_files)
+
+    for relative_path in markdown_files:
+        try:
+            # Check if document already exists
+            existing_doc = await get_existing_document(db, knowledge_source_id, relative_path)
+
+            if existing_doc:
+                if force_reindex:
+                    # Delete existing document (cascade removes chunks)
+                    await db.delete(existing_doc)
+                    await db.flush()
+                    logger.info("Deleted existing document for re-indexing: %s", relative_path)
+                else:
+                    # Skip already indexed document
+                    documents_skipped += 1
+                    logger.debug("Skipping already indexed: %s", relative_path)
+                    continue
+
+            # Ingest the document
+            await ingest_document(db, openai_client, knowledge_source_id, relative_path)
+            documents_created += 1
+
+        except Exception as e:
+            documents_failed += 1
+            error_msg = str(e)
+            failed_files.append(BatchIngestFailure(relative_path=relative_path, error=error_msg))
+            logger.warning("Failed to ingest %s: %s", relative_path, error_msg)
+
+    duration = time.time() - start_time
+
+    logger.info(
+        "Batch ingestion complete: %d created, %d skipped, %d failed in %.2fs",
+        documents_created,
+        documents_skipped,
+        documents_failed,
+        duration,
+    )
+
+    return BatchIngestResult(
+        total_files_found=total_files,
+        documents_created=documents_created,
+        documents_skipped=documents_skipped,
+        documents_failed=documents_failed,
+        failed_files=failed_files,
+        duration_seconds=round(duration, 2),
+    )

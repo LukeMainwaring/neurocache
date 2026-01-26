@@ -4,8 +4,8 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 ## Current State
 
-- **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings, RAG vertical slice (single document ingestion, semantic search, context injection), markdown-aware chunking strategy
-- **Next Up**: Batch ingestion of all documents from a knowledge source (vs current manual 1-by-1 approach)
+- **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings, RAG vertical slice (single document ingestion, semantic search, context injection), markdown-aware chunking strategy, batch ingestion of all documents from a knowledge source
+- **Next Up**: Sync and refresh to keep the knowledge base current with file changes
 
 ---
 
@@ -53,30 +53,29 @@ Implemented markdown-aware chunking for better retrieval quality.
 - Tuned chunk parameters: target 1500 chars, max 2000, overlap 200, min 300
 - Improved over naive character-based chunking by respecting document structure
 
+#### 2.5 Batch Ingestion (Done)
+
+Scaled the ingestion pipeline to process all documents from a knowledge source at once.
+
+- `POST /knowledge-sources/{source_id}/ingest-all` endpoint
+- Automatic discovery of all .md files in the vault via `discover_markdown_files()`
+- Exclusion of system directories (.obsidian, .git, .smart-env, copilot, .trash)
+- Skip logic for already indexed documents (avoids re-processing)
+- `force_reindex` parameter to re-ingest even if already indexed
+- Error handling: continues on single file failure, reports all failures at end
+- `BatchIngestResult` response with statistics (total_files_found, documents_created, documents_skipped, documents_failed, failed_files, duration_seconds)
+
 ---
 
 ## Next Up
 
-### Phase 2.5: Batch Ingestion
-
-Scale the ingestion pipeline to process all documents from a knowledge source at once.
-
-**Current limitation:** Documents must be ingested one-by-one via API calls. This is tedious for a full vault.
-
-**Goal:** Add batch ingestion capability to process all documents from a knowledge source in a single operation.
-
-- Endpoint to trigger ingestion of all documents in a knowledge source
-- File discovery: scan directory for supported file types (.md initially)
-- Batch processing with progress tracking
-- Handle errors gracefully (continue on single file failure, report at end)
-- Consider: parse frontmatter metadata (tags, dates) for future filtering
-
 ### Phase 2.6: Sync and Refresh
 
-Keep the knowledge base current.
+Keep the knowledge base current with file changes.
 
 - Manual re-sync endpoint/button
 - Track file modification times to detect changes
+- Compare content hash to identify modified files
 - Incremental updates (only re-embed changed files)
 - Handle deleted/renamed files
 

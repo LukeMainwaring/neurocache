@@ -76,3 +76,21 @@ class DocumentListResponse(BaseSchema):
     """Response schema for listing documents."""
 
     documents: list[DocumentSchema] = Field(description="List of documents")
+
+
+class BatchIngestFailure(BaseSchema):
+    """Details about a single file that failed to ingest."""
+
+    relative_path: str = Field(description="Path relative to source root")
+    error: str = Field(description="Error message")
+
+
+class BatchIngestResult(BaseSchema):
+    """Result of a batch ingestion operation."""
+
+    total_files_found: int = Field(description="Total .md files discovered")
+    documents_created: int = Field(description="New documents successfully ingested")
+    documents_skipped: int = Field(description="Already indexed, skipped")
+    documents_failed: int = Field(description="Failed to ingest")
+    failed_files: list[BatchIngestFailure] = Field(default_factory=list)
+    duration_seconds: float = Field(description="Total processing time")
