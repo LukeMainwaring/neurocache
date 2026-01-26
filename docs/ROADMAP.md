@@ -4,8 +4,8 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 ## Current State
 
-- **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings, RAG vertical slice (single document ingestion, semantic search, context injection)
-- **In Progress**: Experimenting with chunking strategies and similarity thresholds before full vault ingestion
+- **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings, RAG vertical slice (single document ingestion, semantic search, context injection), markdown-aware chunking strategy
+- **Next Up**: Batch ingestion of all documents from a knowledge source (vs current manual 1-by-1 approach)
 
 ---
 
@@ -35,7 +35,6 @@ Built the core RAG pipeline from ingestion to retrieval to chat integration.
 
 - Embedding service using OpenAI text-embedding-3-large
 - Ingestion service for single document processing
-- Naive chunking strategy (MAX_CHUNK_SIZE=1000, CHUNK_OVERLAP=100)
 - API endpoint for document ingestion (`POST /api/documents/ingest`)
 
 #### 2.3 Retrieval and RAG Integration
@@ -45,45 +44,34 @@ Built the core RAG pipeline from ingestion to retrieval to chat integration.
 - Context injection into system prompt
 - API endpoint for semantic search (`POST /api/documents/search`)
 
+#### 2.4 Chunking Strategy (Done)
+
+Implemented markdown-aware chunking for better retrieval quality.
+
+- Section detection based on markdown headers (h1-h6) and date patterns
+- Context injection into each chunk with `[Source: filename]` and `[Section: header]` prefixes
+- Tuned chunk parameters: target 1500 chars, max 2000, overlap 200, min 300
+- Improved over naive character-based chunking by respecting document structure
+
 ---
 
 ## Next Up
 
-### Phase 2.5: RAG Experimentation
+### Phase 2.5: Batch Ingestion
 
-Before scaling to full vault ingestion, experiment with the RAG pipeline to find optimal settings.
+Scale the ingestion pipeline to process all documents from a knowledge source at once.
 
-**Why this matters:**
+**Current limitation:** Documents must be ingested one-by-one via API calls. This is tedious for a full vault.
 
-- Chunking strategy significantly impacts retrieval quality
-- Similarity thresholds affect precision/recall tradeoff
-- Better to tune on small scale before processing entire vault
-- Learning opportunity: understand how these parameters affect results
+**Goal:** Add batch ingestion capability to process all documents from a knowledge source in a single operation.
 
-#### Chunking Strategy Experiments
+- Endpoint to trigger ingestion of all documents in a knowledge source
+- File discovery: scan directory for supported file types (.md initially)
+- Batch processing with progress tracking
+- Handle errors gracefully (continue on single file failure, report at end)
+- Consider: parse frontmatter metadata (tags, dates) for future filtering
 
-- Try different chunk sizes (500, 1000, 2000 chars)
-- Experiment with overlap ratios
-- Consider semantic chunking (respect markdown headers, paragraphs)
-- Evaluate recursive chunking approaches
-
-#### Similarity Threshold Tuning
-
-- Test different RAG_SIMILARITY_THRESHOLD values
-- Analyze precision vs recall at various thresholds
-- Consider dynamic thresholds based on query type
-- Add logging/metrics to evaluate retrieval quality
-
-### Phase 2.6: Full Vault Ingestion
-
-Scale the ingestion pipeline to process an entire Obsidian vault.
-
-- Configure vault path via environment variable
-- Batch processing for multiple markdown files
-- Parse frontmatter metadata (tags, dates, links)
-- Progress tracking for large vaults
-
-### Phase 2.7: Sync and Refresh
+### Phase 2.6: Sync and Refresh
 
 Keep the knowledge base current.
 
@@ -164,4 +152,3 @@ Conversation and knowledge base export. Low priority for personal use.
 - This is a learning project. Optimize for understanding patterns, not production robustness.
 - Incremental progress: each item should be completable in a reasonable work session.
 - Phase 2 is broken into sub-milestones to allow incremental progress.
-- RAG experimentation (2.5) is intentionally before full vault ingestion to tune parameters at small scale.
