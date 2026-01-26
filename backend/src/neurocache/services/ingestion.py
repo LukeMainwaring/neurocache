@@ -2,6 +2,7 @@
 
 import hashlib
 import logging
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,10 +20,23 @@ logger = logging.getLogger(__name__)
 # Container path where vault is mounted
 VAULT_MOUNT_PATH = "/vault"
 
-# TODO: experiment with different chunking strategies. ideal size, how to break them up, how to overlap them, etc.
+# TODO: leave out certain directories ("copilot/", ".obsidian/", ".smart-env/") and files (images) from ingestion.
+
 # Chunking config
-MAX_CHUNK_SIZE = 1000  # characters
-CHUNK_OVERLAP = 100  # characters of overlap between chunks
+TARGET_CHUNK_SIZE = 1500  # target characters per chunk
+MAX_CHUNK_SIZE = 2000  # ceiling - never exceed this
+CHUNK_OVERLAP = 200  # characters of overlap between chunks
+MIN_CHUNK_SIZE = 300  # avoid creating orphan chunks smaller than this
+
+# Pattern to detect date entries at start of line (e.g., "January 14, 2024" or "5/15/2019")
+DATE_PATTERN = re.compile(
+    r"^(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}|"
+    r"^\d{1,2}/\d{1,2}/\d{4}",
+    re.MULTILINE,
+)
+
+# Pattern to detect markdown headers
+HEADER_PATTERN = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 
 
 def compute_content_hash(content: str) -> str:
@@ -30,42 +44,182 @@ def compute_content_hash(content: str) -> str:
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
-def naive_chunk_text(text: str, max_size: int = MAX_CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
-    """Split text into chunks with overlap.
+def detect_sections(text: str) -> list[tuple[str, str, int]]:
+    """Split text into sections based on headers and date patterns.
 
-    Simple chunking strategy that splits on paragraph boundaries when possible.
+    Sections are detected in priority order:
+    1. Markdown headers (# through ######)
+    2. Date patterns at line start (e.g., "January 14, 2024" or "5/15/2019")
 
     Args:
-        text: The text to chunk
+        text: The full document text
+
+    Returns:
+        List of (section_header, section_content, start_position) tuples.
+        If no sections are found, returns single entry with empty header.
+    """
+    # Find all section boundaries (headers and dates)
+    boundaries: list[tuple[int, str]] = []
+
+    # Find markdown headers
+    for match in HEADER_PATTERN.finditer(text):
+        header_text = match.group(2).strip()
+        boundaries.append((match.start(), header_text))
+
+    # Find date entries
+    for match in DATE_PATTERN.finditer(text):
+        date_text = match.group(0).strip()
+        boundaries.append((match.start(), date_text))
+
+    # Sort by position
+    boundaries.sort(key=lambda x: x[0])
+
+    if not boundaries:
+        # No sections found - return entire text as single section
+        return [("", text, 0)]
+
+    sections: list[tuple[str, str, int]] = []
+
+    # Handle content before first section (if any)
+    if boundaries[0][0] > 0:
+        preamble = text[: boundaries[0][0]].strip()
+        if preamble:
+            sections.append(("", preamble, 0))
+
+    # Extract each section
+    for i, (start_pos, header) in enumerate(boundaries):
+        # Find end of this section (start of next, or end of text)
+        if i + 1 < len(boundaries):
+            end_pos = boundaries[i + 1][0]
+        else:
+            end_pos = len(text)
+
+        section_content = text[start_pos:end_pos].strip()
+        if section_content:
+            sections.append((header, section_content, start_pos))
+
+    return sections
+
+
+def split_section_with_overlap(
+    content: str,
+    max_size: int = MAX_CHUNK_SIZE,
+    overlap: int = CHUNK_OVERLAP,
+    min_size: int = MIN_CHUNK_SIZE,
+) -> list[str]:
+    """Split a section that exceeds max_size on paragraph breaks with overlap.
+
+    Args:
+        content: Section content to split
         max_size: Maximum characters per chunk
         overlap: Characters of overlap between chunks
+        min_size: Minimum chunk size (smaller chunks merged with previous)
 
     Returns:
         List of text chunks
     """
-    if len(text) <= max_size:
-        return [text]
+    if len(content) <= max_size:
+        return [content]
 
-    chunks = []
+    chunks: list[str] = []
     start = 0
 
-    while start < len(text):
+    while start < len(content):
         end = start + max_size
 
-        if end >= len(text):
-            chunks.append(text[start:])
+        if end >= len(content):
+            # Last chunk
+            final_chunk = content[start:].strip()
+            if final_chunk:
+                # If this final chunk is too small, merge with previous
+                if len(final_chunk) < min_size and chunks:
+                    chunks[-1] = chunks[-1] + "\n\n" + final_chunk
+                else:
+                    chunks.append(final_chunk)
             break
 
         # Try to find a paragraph break near the end
-        chunk = text[start:end]
+        chunk = content[start:end]
         last_para = chunk.rfind("\n\n")
+
         if last_para > max_size // 2:
             end = start + last_para + 2  # Include the newlines
 
-        chunks.append(text[start:end].strip())
+        chunk_text = content[start:end].strip()
+        if chunk_text:
+            chunks.append(chunk_text)
+
         start = end - overlap
 
-    return [c for c in chunks if c]  # Filter empty chunks
+    return chunks
+
+
+def markdown_aware_chunk_text(
+    text: str,
+    filename: str,
+    target_size: int = TARGET_CHUNK_SIZE,
+    max_size: int = MAX_CHUNK_SIZE,
+    overlap: int = CHUNK_OVERLAP,
+    min_size: int = MIN_CHUNK_SIZE,
+) -> list[str]:
+    """Chunk text respecting markdown structure with context injection.
+
+    This function:
+    1. Detects sections based on headers and date patterns
+    2. Keeps small sections intact, splits large ones on paragraph breaks
+    3. Prepends context (filename, section header) to each chunk
+    4. Merges orphan chunks that are too small
+
+    Args:
+        text: The full document text
+        filename: Source filename for context injection
+        target_size: Target chunk size (used for small file detection)
+        max_size: Maximum chunk size before splitting
+        overlap: Characters of overlap when splitting large sections
+        min_size: Minimum chunk size (smaller chunks get merged)
+
+    Returns:
+        List of context-injected text chunks
+    """
+    # Small files: return as single chunk
+    if len(text) <= target_size:
+        context = f"[Source: {filename}]\n\n"
+        return [context + text.strip()]
+
+    sections = detect_sections(text)
+    chunks: list[str] = []
+
+    for section_header, section_content, _ in sections:
+        # Build context prefix
+        if section_header:
+            context = f"[Source: {filename}]\n[Section: {section_header}]\n\n"
+        else:
+            context = f"[Source: {filename}]\n\n"
+
+        context_len = len(context)
+        available_size = max_size - context_len
+
+        if len(section_content) <= available_size:
+            # Section fits in one chunk
+            chunks.append(context + section_content)
+        else:
+            # Split section on paragraph breaks
+            section_chunks = split_section_with_overlap(
+                section_content, max_size=available_size, overlap=overlap, min_size=min_size
+            )
+            for chunk_text in section_chunks:
+                chunks.append(context + chunk_text)
+
+    # Final pass: merge any orphan chunks that are too small
+    merged_chunks: list[str] = []
+    for chunk in chunks:
+        if merged_chunks and len(chunk) < min_size:
+            # Merge with previous chunk
+            merged_chunks[-1] = merged_chunks[-1] + "\n\n" + chunk
+        else:
+            merged_chunks.append(chunk)
+
+    return merged_chunks
 
 
 def extract_title_from_markdown(content: str) -> str | None:
@@ -135,8 +289,9 @@ async def ingest_document(
 
     logger.info("Created document %s for %s", document.id, relative_path)
 
-    # Chunk the content
-    chunks = naive_chunk_text(content)
+    # Chunk the content with markdown-aware strategy
+    filename = Path(relative_path).name
+    chunks = markdown_aware_chunk_text(content, filename)
     logger.info("Split document into %d chunks", len(chunks))
 
     # Generate embeddings in batch
