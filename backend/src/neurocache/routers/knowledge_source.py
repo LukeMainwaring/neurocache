@@ -114,7 +114,7 @@ async def ingest_single_document(
 
     Args:
         source_id: The knowledge source ID
-        relative_path: Path relative to knowledge source root (e.g., "TODO.md")
+        relative_path: Path relative to knowledge source root (e.g., "Brain Dump.md")
     """
     document = await ingest_document(db, openai_client, source_id, relative_path)
     return DocumentSchema.model_validate(document)

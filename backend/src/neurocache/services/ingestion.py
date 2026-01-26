@@ -256,7 +256,7 @@ async def ingest_document(
         db: Database session
         openai_client: OpenAI client for embeddings
         knowledge_source_id: The knowledge source this document belongs to
-        relative_path: Path relative to the knowledge source root (e.g., "TODO.md")
+        relative_path: Path relative to the knowledge source root (e.g., "Brain Dump.md")
 
     Returns:
         The created Document record
