@@ -7,7 +7,9 @@
   "paths": {
     "/api/chat/stream": {
       "post": {
-        "tags": ["chat"],
+        "tags": [
+          "chat"
+        ],
         "summary": "Stream Chat",
         "description": "Chat agent streaming endpoint.\n\nProvides general conversational interaction with the user's knowledge base.\n\nArgs:\n    message: User message containing query and thread_id\n\nReturns:\n    Server-Sent Events stream of agent responses",
         "operationId": "streamChat",
@@ -45,7 +47,9 @@
     },
     "/api/health/db": {
       "get": {
-        "tags": ["health"],
+        "tags": [
+          "health"
+        ],
         "summary": "Db Health Check",
         "description": "Check the database connection.",
         "operationId": "dbHealthCheck",
@@ -65,7 +69,9 @@
     },
     "/api/knowledge-sources": {
       "get": {
-        "tags": ["knowledge-sources"],
+        "tags": [
+          "knowledge-sources"
+        ],
         "summary": "List Knowledge Sources",
         "description": "List all knowledge sources for the current user.",
         "operationId": "listKnowledgeSources",
@@ -83,7 +89,9 @@
         }
       },
       "post": {
-        "tags": ["knowledge-sources"],
+        "tags": [
+          "knowledge-sources"
+        ],
         "summary": "Create Knowledge Source",
         "description": "Create a new knowledge source and validate if it's an Obsidian vault.",
         "operationId": "createKnowledgeSource",
@@ -123,7 +131,9 @@
     },
     "/api/knowledge-sources/defaults": {
       "get": {
-        "tags": ["knowledge-sources"],
+        "tags": [
+          "knowledge-sources"
+        ],
         "summary": "Get Knowledge Source Defaults",
         "description": "Return default values for creating a knowledge source.",
         "operationId": "getKnowledgeSourceDefaults",
@@ -157,7 +167,9 @@
     },
     "/api/knowledge-sources/{source_id}": {
       "get": {
-        "tags": ["knowledge-sources"],
+        "tags": [
+          "knowledge-sources"
+        ],
         "summary": "Get Knowledge Source",
         "description": "Get a single knowledge source by ID.",
         "operationId": "getKnowledgeSource",
@@ -197,7 +209,9 @@
         }
       },
       "patch": {
-        "tags": ["knowledge-sources"],
+        "tags": [
+          "knowledge-sources"
+        ],
         "summary": "Update Knowledge Source",
         "description": "Update a knowledge source.",
         "operationId": "updateKnowledgeSource",
@@ -247,7 +261,9 @@
         }
       },
       "delete": {
-        "tags": ["knowledge-sources"],
+        "tags": [
+          "knowledge-sources"
+        ],
         "summary": "Delete Knowledge Source",
         "description": "Delete a knowledge source.",
         "operationId": "deleteKnowledgeSource",
@@ -287,7 +303,9 @@
     },
     "/api/knowledge-sources/{source_id}/ingest": {
       "post": {
-        "tags": ["knowledge-sources"],
+        "tags": [
+          "knowledge-sources"
+        ],
         "summary": "Ingest Document",
         "description": "Ingest a single document from a knowledge source.\n\nArgs:\n    source_id: The knowledge source ID\n    relative_path: Path relative to knowledge source root (e.g., \"Brain Dump.md\")",
         "operationId": "ingestDocument",
@@ -338,7 +356,9 @@
     },
     "/api/knowledge-sources/{source_id}/ingest-all": {
       "post": {
-        "tags": ["knowledge-sources"],
+        "tags": [
+          "knowledge-sources"
+        ],
         "summary": "Ingest All Documents",
         "description": "Ingest all markdown documents from a knowledge source.\n\nDiscovers all .md files in the vault (excluding system directories like .obsidian)\nand ingests them into the database with embeddings.\n\nArgs:\n    source_id: The knowledge source ID\n    force_reindex: If True, re-ingest documents even if already indexed",
         "operationId": "ingestAllDocuments",
@@ -390,7 +410,9 @@
     },
     "/api/knowledge-sources/{source_id}/search": {
       "get": {
-        "tags": ["knowledge-sources"],
+        "tags": [
+          "knowledge-sources"
+        ],
         "summary": "Search Knowledge Source",
         "description": "Search for similar chunks within a knowledge source.\n\nArgs:\n    source_id: The knowledge source ID to search within\n    query: The search query text\n    top_k: Number of results to return (default 5)",
         "operationId": "searchKnowledgeSource",
@@ -468,7 +490,9 @@
     },
     "/api/threads": {
       "get": {
-        "tags": ["threads"],
+        "tags": [
+          "threads"
+        ],
         "summary": "List Threads",
         "description": "List all threads for the authenticated user.",
         "operationId": "listThreads",
@@ -488,7 +512,9 @@
     },
     "/api/threads/{thread_id}/messages": {
       "get": {
-        "tags": ["threads"],
+        "tags": [
+          "threads"
+        ],
         "summary": "Get Thread Messages",
         "description": "Get all messages for a specific thread.",
         "operationId": "getThreadMessages",
@@ -529,7 +555,9 @@
     },
     "/api/threads/{thread_id}": {
       "delete": {
-        "tags": ["threads"],
+        "tags": [
+          "threads"
+        ],
         "summary": "Delete Thread",
         "description": "Delete a thread and all its messages.",
         "operationId": "deleteThread",
@@ -574,7 +602,9 @@
     },
     "/api/users/myself": {
       "get": {
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "summary": "Get Myself",
         "description": "Get a user by ID.",
         "operationId": "getMyself",
@@ -594,7 +624,9 @@
     },
     "/api/users/myself/personalization": {
       "patch": {
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "summary": "Update My Personalization",
         "description": "Update the current user's personalization settings.",
         "operationId": "updateMyPersonalization",
@@ -634,7 +666,9 @@
     },
     "/api/users": {
       "get": {
-        "tags": ["users"],
+        "tags": [
+          "users"
+        ],
         "summary": "List Users",
         "description": "List all users.",
         "operationId": "listUsers",
@@ -673,7 +707,10 @@
           }
         },
         "type": "object",
-        "required": ["relative_path", "error"],
+        "required": [
+          "relative_path",
+          "error"
+        ],
         "title": "BatchIngestFailure",
         "description": "Details about a single file that failed to ingest."
       },
@@ -848,7 +885,13 @@
       },
       "DocumentStatus": {
         "type": "string",
-        "enum": ["pending", "processing", "indexed", "error", "deleted"],
+        "enum": [
+          "pending",
+          "processing",
+          "indexed",
+          "error",
+          "deleted"
+        ],
         "title": "DocumentStatus",
         "description": "Status of a document in the indexing pipeline."
       },
@@ -873,7 +916,9 @@
           }
         },
         "type": "object",
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "title": "HealthCheckResponse"
       },
       "KnowledgeSourceCreateSchema": {
@@ -901,7 +946,10 @@
           }
         },
         "type": "object",
-        "required": ["source_type", "name"],
+        "required": [
+          "source_type",
+          "name"
+        ],
         "title": "KnowledgeSourceCreateSchema",
         "description": "Schema for creating a knowledge source."
       },
@@ -917,7 +965,9 @@
           }
         },
         "type": "object",
-        "required": ["sources"],
+        "required": [
+          "sources"
+        ],
         "title": "KnowledgeSourceListResponse",
         "description": "Response schema for listing knowledge sources."
       },
@@ -1025,13 +1075,22 @@
       },
       "KnowledgeSourceStatus": {
         "type": "string",
-        "enum": ["pending", "connected", "syncing", "error"],
+        "enum": [
+          "pending",
+          "connected",
+          "syncing",
+          "error"
+        ],
         "title": "KnowledgeSourceStatus",
         "description": "Status of a knowledge source."
       },
       "KnowledgeSourceType": {
         "type": "string",
-        "enum": ["obsidian", "notion", "local_folder"],
+        "enum": [
+          "obsidian",
+          "notion",
+          "local_folder"
+        ],
         "title": "KnowledgeSourceType",
         "description": "Type of knowledge source."
       },
@@ -1105,7 +1164,9 @@
           }
         },
         "type": "object",
-        "required": ["threads"],
+        "required": [
+          "threads"
+        ],
         "title": "ThreadListResponse",
         "description": "Response containing list of threads."
       },
@@ -1125,7 +1186,10 @@
           }
         },
         "type": "object",
-        "required": ["thread_id", "messages"],
+        "required": [
+          "thread_id",
+          "messages"
+        ],
         "title": "ThreadMessagesResponse",
         "description": "Response containing thread messages.\n\nMessages are returned in their raw JSONB format as stored in the database,\nwhich includes role, content, and metadata fields."
       },
@@ -1162,7 +1226,13 @@
           }
         },
         "type": "object",
-        "required": ["id", "thread_id", "title", "created_at", "updated_at"],
+        "required": [
+          "id",
+          "thread_id",
+          "title",
+          "created_at",
+          "updated_at"
+        ],
         "title": "ThreadSummary",
         "description": "Summary of a thread for list view.\n\nCompatible with frontend sidebar expectations."
       },
@@ -1187,7 +1257,10 @@
           }
         },
         "type": "object",
-        "required": ["thread_id", "content"],
+        "required": [
+          "thread_id",
+          "content"
+        ],
         "title": "UserMessage"
       },
       "UserPersonalizationUpdateSchema": {
@@ -1320,7 +1393,13 @@
           }
         },
         "type": "object",
-        "required": ["id", "email", "name", "created_at", "updated_at"],
+        "required": [
+          "id",
+          "email",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
         "title": "UserSchema"
       },
       "ValidationError": {
@@ -1349,7 +1428,11 @@
           }
         },
         "type": "object",
-        "required": ["loc", "msg", "type"],
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
         "title": "ValidationError"
       }
     }
