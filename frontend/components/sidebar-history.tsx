@@ -1,10 +1,7 @@
 "use client";
 
-import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import useSWR from "swr";
+import { useDeleteThread, useThreads } from "@/api/hooks/threads";
+import type { ThreadSummary } from "@/api/generated/types.gen";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,11 +18,10 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  deleteThread,
-  getThreads,
-  type ThreadSummary,
-} from "@/lib/api/backend-client";
+import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ChatItem } from "./sidebar-history-item";
 
 type GroupedThreads = {
@@ -74,27 +70,23 @@ export function SidebarHistory() {
   const pathname = usePathname();
   const id = pathname?.startsWith("/chat/") ? pathname.split("/")[2] : null;
 
-  const {
-    data: threads,
-    isLoading,
-    mutate,
-  } = useSWR<ThreadSummary[]>("threads", getThreads, {
-    fallbackData: [],
-  });
+  const { data, isLoading, refetch } = useThreads();
+  const threads = data?.threads ?? [];
 
   // Poll for title updates when any thread has a pending title
-  const hasPendingTitles = threads?.some((t) => t.title === null);
+  const hasPendingTitles = threads.some((t) => t.title === null);
   useEffect(() => {
     if (!hasPendingTitles) return;
     const interval = setInterval(() => {
-      mutate();
+      refetch();
     }, 2000);
     return () => clearInterval(interval);
-  }, [hasPendingTitles, mutate]);
+  }, [hasPendingTitles, refetch]);
 
   const router = useRouter();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { deleteThread } = useDeleteThread();
 
   const handleDelete = async () => {
     const threadToDelete = deleteId;
@@ -104,20 +96,9 @@ export function SidebarHistory() {
 
     if (!threadToDelete) return;
 
-    const deletePromise = deleteThread(threadToDelete);
-
-    toast.promise(deletePromise, {
+    toast.promise(deleteThread(threadToDelete), {
       loading: "Deleting thread...",
       success: () => {
-        mutate((currentThreads) => {
-          if (currentThreads) {
-            return currentThreads.filter(
-              (thread) => thread.id !== threadToDelete
-            );
-          }
-          return currentThreads;
-        });
-
         if (isCurrentThread) {
           router.replace("/");
           router.refresh();
@@ -158,7 +139,7 @@ export function SidebarHistory() {
     );
   }
 
-  if (!threads || threads.length === 0) {
+  if (threads.length === 0) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
@@ -320,6 +301,3 @@ export function SidebarHistory() {
     </>
   );
 }
-
-// Export for mutation in chat.tsx
-export const chatHistoryKey = "threads";

@@ -1,13 +1,13 @@
 "use client";
 
+import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useSWRConfig } from "swr";
 import { useDataStream } from "./data-stream-provider";
-import { chatHistoryKey } from "./sidebar-history";
 
 export function DataStreamHandler() {
   const { dataStream, setDataStream } = useDataStream();
-  const { mutate } = useSWRConfig();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!dataStream?.length) {
@@ -20,10 +20,10 @@ export function DataStreamHandler() {
     for (const delta of newDeltas) {
       // Handle chat title updates (refresh sidebar)
       if (delta.type === "data-chat-title") {
-        mutate(chatHistoryKey);
+        queryClient.invalidateQueries({ queryKey: listThreadsQueryKey() });
       }
     }
-  }, [dataStream, setDataStream, mutate]);
+  }, [dataStream, setDataStream, queryClient]);
 
   return null;
 }

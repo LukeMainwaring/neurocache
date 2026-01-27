@@ -1,16 +1,16 @@
 "use client";
 
+import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
 import { useChat } from "@ai-sdk/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useSWRConfig } from "swr";
 import { ChatHeader } from "@/components/chat-header";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import type { ChatMessage } from "@/lib/types";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
-import { chatHistoryKey } from "./sidebar-history";
 import { toast } from "./toast";
 
 export function Chat({
@@ -23,8 +23,7 @@ export function Chat({
   autoResume: boolean;
 }) {
   const router = useRouter();
-
-  const { mutate } = useSWRConfig();
+  const queryClient = useQueryClient();
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -57,7 +56,7 @@ export function Chat({
     },
     onFinish: () => {
       // Refresh sidebar thread list
-      mutate(chatHistoryKey);
+      queryClient.invalidateQueries({ queryKey: listThreadsQueryKey() });
     },
     onError: (error) => {
       console.error("Chat error:", error);
