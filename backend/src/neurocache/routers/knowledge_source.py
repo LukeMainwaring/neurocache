@@ -21,7 +21,7 @@ from neurocache.schemas.knowledge_source import (
     KnowledgeSourceType,
     KnowledgeSourceUpdateSchema,
 )
-from neurocache.services.ingestion import ingest_all_documents, ingest_document
+from neurocache.services import ingestion as ingestion_service
 from neurocache.services.retrieval import search_similar_chunks
 from neurocache.services.vault_validator import validate_obsidian_vault
 
@@ -104,7 +104,7 @@ async def delete_knowledge_source(
 
 
 @knowledge_source_router.post("/{source_id}/ingest")
-async def ingest_single_document(
+async def ingest_document(
     source_id: uuid.UUID,
     relative_path: str,
     db: AsyncPostgresSessionDep,
@@ -116,12 +116,12 @@ async def ingest_single_document(
         source_id: The knowledge source ID
         relative_path: Path relative to knowledge source root (e.g., "Brain Dump.md")
     """
-    document = await ingest_document(db, openai_client, source_id, relative_path)
+    document = await ingestion_service.ingest_document(db, openai_client, source_id, relative_path)
     return DocumentSchema.model_validate(document)
 
 
 @knowledge_source_router.post("/{source_id}/ingest-all")
-async def ingest_all_documents_endpoint(
+async def ingest_all_documents(
     source_id: uuid.UUID,
     db: AsyncPostgresSessionDep,
     openai_client: OpenAIClientDep,
@@ -136,7 +136,7 @@ async def ingest_all_documents_endpoint(
         source_id: The knowledge source ID
         force_reindex: If True, re-ingest documents even if already indexed
     """
-    return await ingest_all_documents(db, openai_client, source_id, force_reindex)
+    return await ingestion_service.ingest_all_documents(db, openai_client, source_id, force_reindex)
 
 
 @knowledge_source_router.get("/{source_id}/search")

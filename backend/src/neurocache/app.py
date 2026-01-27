@@ -13,6 +13,7 @@ import starlette.requests
 import uvicorn
 from fastapi import FastAPI, Request, Response  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute
 
 from neurocache.core.config import get_settings
 from neurocache.routers.main import api_router
@@ -22,10 +23,23 @@ config = get_settings()
 logger = logging.getLogger(__name__)
 
 
+def generate_operation_id(route: APIRoute) -> str:
+    """Generate clean camelCase operationIds for OpenAPI spec.
+
+    Converts snake_case route function names to camelCase:
+    - list_threads -> listThreads
+    - get_thread -> getThread
+    - create_knowledge_source -> createKnowledgeSource
+    """
+    parts = route.name.split("_")
+    return parts[0] + "".join(word.capitalize() for word in parts[1:])
+
+
 app = FastAPI(
     title="Neurocache",
     openapi_url=f"{config.API_PREFIX}/openapi.json",
     docs_url=f"{config.API_PREFIX}/docs",
+    generate_unique_id_function=generate_operation_id,
 )
 
 

@@ -23,7 +23,7 @@ chat_router = APIRouter(prefix="/chat", tags=["chat"])
 
 
 @chat_router.post("/stream")
-async def chat_stream_route(message: UserMessage, user_id: AuthenticatedUser) -> StreamingResponse:
+async def stream_chat(message: UserMessage, user_id: AuthenticatedUser) -> StreamingResponse:
     """Chat agent streaming endpoint.
 
     Provides general conversational interaction with the user's knowledge base.
