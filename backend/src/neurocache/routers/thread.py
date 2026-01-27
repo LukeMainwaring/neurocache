@@ -7,7 +7,7 @@ from neurocache.dependencies.db import AsyncPostgresSessionDep
 from neurocache.models.message import Message
 from neurocache.models.thread import Thread
 from neurocache.schemas.agent_type import AgentType
-from neurocache.schemas.thread_api import (
+from neurocache.schemas.thread import (
     ThreadListResponse,
     ThreadMessagesResponse,
     ThreadSummary,

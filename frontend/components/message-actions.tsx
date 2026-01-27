@@ -3,7 +3,8 @@ import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { ChatMessage } from "@/lib/types";
 import { Action, Actions } from "./elements/actions";
-import { CopyIcon } from "./icons";
+import { CopyIcon, FileTextIcon } from "./icons";
+import { RAGSourcesDialog } from "./rag-sources-dialog";
 
 export function PureMessageActions({
   chatId: _chatId,
@@ -36,10 +37,22 @@ export function PureMessageActions({
     toast.success("Copied to clipboard!");
   };
 
-  // User messages get copy action
+  // User messages get copy action and optionally view sources
   if (message.role === "user") {
+    const ragSources = message.metadata?.ragSources;
+
     return (
       <Actions className="-mr-0.5 justify-end">
+        {ragSources && ragSources.length > 0 && (
+          <RAGSourcesDialog
+            sources={ragSources}
+            trigger={
+              <Action tooltip="View sources">
+                <FileTextIcon />
+              </Action>
+            }
+          />
+        )}
         <Action onClick={handleCopy} tooltip="Copy">
           <CopyIcon />
         </Action>
