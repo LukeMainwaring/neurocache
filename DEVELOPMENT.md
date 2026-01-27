@@ -94,3 +94,27 @@ Testing, type checking, and formatting/linting is [checked in CI][ci].
 ## Database migrations
 
 cd backend && ./scripts/create-db-revision-docker.sh "<migration_message>"
+
+## API Client Generation
+
+The frontend uses a generated TypeScript client from the backend's OpenAPI schema.
+
+After modifying backend API endpoints:
+
+```bash
+# Ensure backend is running
+docker compose up -d
+
+# Regenerate client (fetches schema, generates types, formats)
+cd frontend && pnpm generate-client
+```
+
+This generates:
+
+-   `api/generated/types.gen.ts` - TypeScript types from OpenAPI schemas
+-   `api/generated/sdk.gen.ts` - API functions for each endpoint
+-   `api/generated/@tanstack/react-query.gen.ts` - TanStack Query hooks
+
+**Do not manually edit files in `frontend/api/generated/`** - they are overwritten on regeneration.
+
+Custom hooks in `api/hooks/` wrap the generated code with cleaner APIs.

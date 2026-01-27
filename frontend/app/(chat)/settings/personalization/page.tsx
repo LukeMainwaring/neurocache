@@ -3,20 +3,14 @@
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
+import { useMyself, useUpdateMyPersonalization } from "@/api/hooks/users";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  fetchCurrentUser,
-  type User,
-  updateUserPersonalization,
-} from "@/lib/api/backend-client";
 
 export default function PersonalizationPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const { data: user, isLoading } = useMyself();
+  const { updatePersonalization, isPending } = useUpdateMyPersonalization();
 
   // Form state
   const [nickname, setNickname] = useState("");
@@ -24,24 +18,15 @@ export default function PersonalizationPage() {
   const [aboutYou, setAboutYou] = useState("");
   const [customInstructions, setCustomInstructions] = useState("");
 
+  // Sync form state when user data loads
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const userData = await fetchCurrentUser();
-        setUser(userData);
-        setNickname(userData.nickname ?? "");
-        setOccupation(userData.occupation ?? "");
-        setAboutYou(userData.about_you ?? "");
-        setCustomInstructions(userData.custom_instructions ?? "");
-      } catch (error) {
-        console.error("Failed to load user:", error);
-        toast.error("Failed to load user settings");
-      } finally {
-        setIsLoading(false);
-      }
+    if (user) {
+      setNickname(user.nickname ?? "");
+      setOccupation(user.occupation ?? "");
+      setAboutYou(user.about_you ?? "");
+      setCustomInstructions(user.custom_instructions ?? "");
     }
-    loadUser();
-  }, []);
+  }, [user]);
 
   const hasChanges =
     nickname !== (user?.nickname ?? "") ||
@@ -57,21 +42,17 @@ export default function PersonalizationPage() {
   }
 
   async function handleSave() {
-    setIsSaving(true);
     try {
-      const updatedUser = await updateUserPersonalization({
+      await updatePersonalization({
         nickname: nickname || null,
         occupation: occupation || null,
         about_you: aboutYou || null,
         custom_instructions: customInstructions || null,
       });
-      setUser(updatedUser);
       toast.success("Settings saved successfully");
     } catch (error) {
       console.error("Failed to save settings:", error);
       toast.error("Failed to save settings");
-    } finally {
-      setIsSaving(false);
     }
   }
 
@@ -171,11 +152,11 @@ export default function PersonalizationPage() {
 
       {hasChanges && (
         <div className="flex justify-end gap-2">
-          <Button disabled={isSaving} onClick={handleCancel} variant="outline">
+          <Button disabled={isPending} onClick={handleCancel} variant="outline">
             Cancel
           </Button>
-          <Button disabled={isSaving} onClick={handleSave}>
-            {isSaving && <Loader2 className="mr-2 size-4 animate-spin" />}
+          <Button disabled={isPending} onClick={handleSave}>
+            {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
             Save Changes
           </Button>
         </div>

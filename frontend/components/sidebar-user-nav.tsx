@@ -4,6 +4,7 @@ import { ChevronUp, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useMyself } from "@/api/hooks/users";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,18 +16,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { fetchCurrentUser, type User } from "@/lib/api/backend-client";
 
 export function SidebarUserNav() {
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { data: user } = useMyself();
 
   useEffect(() => {
     setMounted(true);
-    fetchCurrentUser()
-      .then(setUser)
-      .catch((err) => console.error("Failed to fetch user:", err));
   }, []);
 
   const displayName = user?.nickname || user?.name || "User";

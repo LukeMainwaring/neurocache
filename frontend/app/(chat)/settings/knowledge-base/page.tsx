@@ -1,9 +1,15 @@
 "use client";
 
 import { FolderOpen, Loader2, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-
+import type { KnowledgeSourceSchema } from "@/api/generated/types.gen";
+import {
+  useCreateKnowledgeSource,
+  useDeleteKnowledgeSource,
+  useKnowledgeSourceDefaults,
+  useKnowledgeSources,
+} from "@/api/hooks/knowledge-sources";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,23 +28,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  createKnowledgeSource,
-  deleteKnowledgeSource,
-  fetchKnowledgeSourceDefaults,
-  fetchKnowledgeSources,
-  type KnowledgeSource,
-  type KnowledgeSourceDefaults,
-} from "@/lib/api/backend-client";
 
-const STATUS_LABELS: Record<KnowledgeSource["status"], string> = {
+const STATUS_LABELS: Record<KnowledgeSourceSchema["status"], string> = {
   pending: "Pending",
   connected: "Connected",
   syncing: "Syncing",
   error: "Error",
 };
 
-const STATUS_COLORS: Record<KnowledgeSource["status"], string> = {
+const STATUS_COLORS: Record<KnowledgeSourceSchema["status"], string> = {
   pending: "bg-yellow-500",
   connected: "bg-green-500",
   syncing: "bg-blue-500",
@@ -46,39 +44,21 @@ const STATUS_COLORS: Record<KnowledgeSource["status"], string> = {
 };
 
 export default function KnowledgeBasePage() {
-  const [sources, setSources] = useState<KnowledgeSource[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: sourcesData, isLoading: isLoadingSources } =
+    useKnowledgeSources();
+  const { data: defaultsData } = useKnowledgeSourceDefaults();
+  const { createSource, isPending: isCreating } = useCreateKnowledgeSource();
+  const { deleteSource } = useDeleteKnowledgeSource();
+
+  const sources = sourcesData?.sources ?? [];
+  const defaults = defaultsData?.obsidian;
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Form state
   const [name, setName] = useState("");
   const [filePath, setFilePath] = useState("");
-
-  // Defaults from backend config
-  const [defaults, setDefaults] = useState<
-    KnowledgeSourceDefaults["obsidian"] | null
-  >(null);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [sourcesData, defaultsData] = await Promise.all([
-          fetchKnowledgeSources(),
-          fetchKnowledgeSourceDefaults(),
-        ]);
-        setSources(sourcesData);
-        setDefaults(defaultsData.obsidian);
-      } catch (error) {
-        console.error("Failed to load knowledge sources:", error);
-        toast.error("Failed to load knowledge sources");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadData();
-  }, []);
 
   function resetForm() {
     setName("");
@@ -88,8 +68,8 @@ export default function KnowledgeBasePage() {
   function handleOpenDialog() {
     // Pre-populate form with defaults from backend config
     if (defaults) {
-      setName(defaults.name);
-      setFilePath(defaults.file_path || "");
+      setName(defaults.name ?? "");
+      setFilePath(defaults.file_path ?? "");
     }
     setIsDialogOpen(true);
   }
@@ -100,30 +80,25 @@ export default function KnowledgeBasePage() {
       return;
     }
 
-    setIsCreating(true);
     try {
-      const newSource = await createKnowledgeSource({
-        source_type: "obsidian",
+      await createSource({
         name: name.trim(),
+        source_type: "obsidian",
         file_path: filePath.trim(),
       });
-      setSources((prev) => [newSource, ...prev]);
       setIsDialogOpen(false);
       resetForm();
       toast.success("Knowledge source added");
     } catch (error) {
       console.error("Failed to create knowledge source:", error);
       toast.error("Failed to add knowledge source");
-    } finally {
-      setIsCreating(false);
     }
   }
 
   async function handleDelete(id: string) {
     setDeletingId(id);
     try {
-      await deleteKnowledgeSource(id);
-      setSources((prev) => prev.filter((s) => s.id !== id));
+      await deleteSource(id);
       toast.success("Knowledge source removed");
     } catch (error) {
       console.error("Failed to delete knowledge source:", error);
@@ -133,7 +108,7 @@ export default function KnowledgeBasePage() {
     }
   }
 
-  if (isLoading) {
+  if (isLoadingSources) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />

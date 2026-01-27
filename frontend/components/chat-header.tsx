@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon } from "./icons";
 import { useSidebar } from "./ui/sidebar";
 
-function PureChatHeader({}: {}) {
+function PureChatHeader() {
   const router = useRouter();
   const { open } = useSidebar();
 

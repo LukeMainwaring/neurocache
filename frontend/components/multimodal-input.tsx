@@ -30,7 +30,7 @@ function PureMultimodalInput({
   setInput,
   status,
   stop,
-  messages,
+  messages: _messages,
   setMessages,
   sendMessage,
   className,

@@ -1,12 +1,13 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useSWRConfig } from "swr";
+import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
 import { PlusIcon, TrashIcon } from "@/components/icons";
-import { chatHistoryKey, SidebarHistory } from "@/components/sidebar-history";
+import { SidebarHistory } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +33,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 export function AppSidebar() {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
-  const { mutate } = useSWRConfig();
+  const queryClient = useQueryClient();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
   const handleDeleteAll = () => {
@@ -43,7 +44,7 @@ export function AppSidebar() {
     toast.promise(deletePromise, {
       loading: "Deleting all chats...",
       success: () => {
-        mutate(chatHistoryKey);
+        queryClient.invalidateQueries({ queryKey: listThreadsQueryKey() });
         setShowDeleteAllDialog(false);
         router.replace("/");
         router.refresh();

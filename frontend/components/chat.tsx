@@ -1,16 +1,16 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useSWRConfig } from "swr";
+import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
 import { ChatHeader } from "@/components/chat-header";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import type { ChatMessage } from "@/lib/types";
 import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
-import { chatHistoryKey } from "./sidebar-history";
 import { toast } from "./toast";
 
 export function Chat({
@@ -23,8 +23,7 @@ export function Chat({
   autoResume: boolean;
 }) {
   const router = useRouter();
-
-  const { mutate } = useSWRConfig();
+  const queryClient = useQueryClient();
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -57,7 +56,7 @@ export function Chat({
     },
     onFinish: () => {
       // Refresh sidebar thread list
-      mutate(chatHistoryKey);
+      queryClient.invalidateQueries({ queryKey: listThreadsQueryKey() });
     },
     onError: (error) => {
       console.error("Chat error:", error);
@@ -93,31 +92,29 @@ export function Chat({
   });
 
   return (
-    <>
-      <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
-        <ChatHeader />
+    <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
+      <ChatHeader />
 
-        <Messages
+      <Messages
+        chatId={id}
+        messages={messages}
+        regenerate={regenerate}
+        setMessages={setMessages}
+        status={status}
+      />
+
+      <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
+        <MultimodalInput
           chatId={id}
+          input={input}
           messages={messages}
-          regenerate={regenerate}
+          sendMessage={sendMessage}
+          setInput={setInput}
           setMessages={setMessages}
           status={status}
+          stop={stop}
         />
-
-        <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
-          <MultimodalInput
-            chatId={id}
-            input={input}
-            messages={messages}
-            sendMessage={sendMessage}
-            setInput={setInput}
-            setMessages={setMessages}
-            status={status}
-            stop={stop}
-          />
-        </div>
       </div>
-    </>
+    </div>
   );
 }
