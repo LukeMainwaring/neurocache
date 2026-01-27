@@ -1,8 +1,7 @@
-import { Suspense } from "react";
-
+import { getThreadMessages } from "@/api/hooks/threads";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
-import { getThreadMessages } from "@/lib/api/backend-client";
+import { Suspense } from "react";
 
 export default function Page(props: { params: Promise<{ id: string }> }) {
   return (
