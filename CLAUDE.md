@@ -59,6 +59,10 @@ Key patterns:
 -   Use modern Python syntax: `| None` over `Optional`, `list` over `List`
 -   When creating SQLAlchemy columns, prefer simple Python type inference and only use `mapped_column` when column-based attributes require more specific customization. Example: `name: Mapped[str | None]` instead of `name: Mapped[str | None] = mapped_column(String(255), nullable=True)`
 -   After generating an alembic database migration, pause and ask if it looks okay before running the upgrade script.
+-   Re-export convention for `__init__.py`:
+    -   **Default:** Keep `__init__.py` empty; use deep imports (`from neurocache.models.thread import Thread`)
+    -   **Exception — `models/`:** Re-export all models for Alembic autogenerate support
+    -   **Exception — `routers/`:** Re-export routers for clean aggregation in `main.py`
 
 ### Frontend (`frontend/`)
 
