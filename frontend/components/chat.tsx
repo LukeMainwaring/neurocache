@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
+import { getThreadMessages } from "@/api/hooks/threads";
 import { ChatHeader } from "@/components/chat-header";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import type { ChatMessage } from "@/lib/types";
@@ -54,9 +55,20 @@ export function Chat({
     onData: (dataPart) => {
       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
     },
-    onFinish: () => {
+    onFinish: async () => {
       // Refresh sidebar thread list
       queryClient.invalidateQueries({ queryKey: listThreadsQueryKey() });
+
+      // Refetch messages to get RAG metadata (stored server-side)
+      // This ensures "View Sources" button appears after streaming completes
+      try {
+        const updatedMessages = await getThreadMessages(id);
+        if (updatedMessages.length > 0) {
+          setMessages(updatedMessages);
+        }
+      } catch (error) {
+        console.error("Failed to refresh messages with RAG metadata:", error);
+      }
     },
     onError: (error) => {
       console.error("Chat error:", error);

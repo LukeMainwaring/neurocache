@@ -835,3 +835,22 @@ export const ImageIcon = ({ size = 16 }: { size?: number }) => {
     </svg>
   );
 };
+
+export const FileTextIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      style={{ color: "currentcolor" }}
+      viewBox="0 0 16 16"
+      width={size}
+    >
+      <path
+        clipRule="evenodd"
+        d="M14.5 13.5V6.5H10.5H9.5V5.5V1.5H2.5V13.5C2.5 14.0523 2.94772 14.5 3.5 14.5H13.5C14.0523 14.5 14.5 14.0523 14.5 13.5ZM11 1.62132V5H14.3787L11 1.62132ZM1 1V1.5V13.5C1 14.8807 2.11929 16 3.5 16H13.5C14.8807 16 16 14.8807 16 13.5V6V5.5V5.37868C16 4.84825 15.7893 4.33954 15.4142 3.96447L12.0355 0.585787C11.6605 0.210714 11.1518 0 10.6213 0H10.5H2.5H1V1ZM4 8.5H4.75H11.25H12V10H11.25H4.75H4V8.5ZM4.75 11.5H4V13H4.75H11.25H12V11.5H11.25H4.75Z"
+        fill="currentColor"
+        fillRule="evenodd"
+      />
+    </svg>
+  );
+};

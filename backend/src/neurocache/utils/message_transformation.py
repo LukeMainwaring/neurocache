@@ -5,18 +5,19 @@ from typing import Any
 
 
 def transform_messages_for_frontend(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Transform stored ModelMessage format to frontend-compatible format.
+    """Transform stored messages to frontend-compatible format.
 
-    Converts PydanticAI ModelMessage format (ModelRequest/ModelResponse) to the
-    format expected by the frontend Vercel AI SDK:
+    Converts stored Pydantic AI message format to the format expected by
+    the frontend Vercel AI SDK:
     {
         id: string,
         role: "user" | "assistant",
-        parts: [{type: "text", text: string}]
+        parts: [{type: "text", text: string}],
+        metadata?: { ragSources?: [...] }
     }
 
     Args:
-        messages: List of serialized PydanticAI ModelMessages from database
+        messages: List of stored message dicts from database
 
     Returns:
         List of frontend-compatible message dictionaries
@@ -24,46 +25,38 @@ def transform_messages_for_frontend(messages: list[dict[str, Any]]) -> list[dict
     frontend_messages = []
 
     for msg in messages:
-        # ModelRequest has 'parts' field with user content
-        # ModelResponse has 'parts' field with assistant content
         kind = msg.get("kind")
 
         if kind == "request":
-            # User message
-            parts = msg.get("parts", [])
+            # User message - extract content from parts
             content = ""
-
-            # Extract text content from parts
-            for part in parts:
-                part_kind = part.get("part_kind")
-                if part_kind == "user-prompt":
+            for part in msg.get("parts", []):
+                if part.get("part_kind") == "user-prompt":
                     content = part.get("content", "")
-                elif part_kind == "text":
-                    content += part.get("content", "")
+                    break
 
-            frontend_messages.append(
-                {
-                    "id": str(uuid.uuid4()),  # Generate ID for frontend
-                    "role": "user",
-                    "parts": [{"type": "text", "text": content}],
-                }
-            )
+            frontend_msg: dict[str, Any] = {
+                "id": str(uuid.uuid4()),
+                "role": "user",
+                "parts": [{"type": "text", "text": content}],
+            }
+
+            if msg.get("rag_sources"):
+                frontend_msg["metadata"] = {"ragSources": msg["rag_sources"]}
+
+            frontend_messages.append(frontend_msg)
 
         elif kind == "response":
-            # Assistant message
-            parts = msg.get("parts", [])
+            # Assistant message - extract text content
             content = ""
-
-            # Extract text content from parts
-            for part in parts:
-                part_kind = part.get("part_kind")
-                if part_kind == "text":
+            for part in msg.get("parts", []):
+                if part.get("part_kind") == "text":
                     content += part.get("content", "")
 
-            if content:  # Only add if there's actual content
+            if content:
                 frontend_messages.append(
                     {
-                        "id": str(uuid.uuid4()),  # Generate ID for frontend
+                        "id": str(uuid.uuid4()),
                         "role": "assistant",
                         "parts": [{"type": "text", "text": content}],
                     }

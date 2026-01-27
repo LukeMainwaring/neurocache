@@ -1,7 +1,14 @@
 import type { UIMessage } from "ai";
 
+export type RAGSource = {
+  path: string;
+  similarity: number;
+  content?: string;
+};
+
 export type MessageMetadata = {
-  createdAt: string;
+  createdAt?: string;
+  ragSources?: RAGSource[];
 };
 
 export type CustomUIDataTypes = {
