@@ -1,7 +1,11 @@
 "use client";
 
-import { useDeleteThread, useThreads } from "@/api/hooks/threads";
+import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import type { ThreadSummary } from "@/api/generated/types.gen";
+import { useDeleteThread, useThreads } from "@/api/hooks/threads";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,10 +22,6 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { ChatItem } from "./sidebar-history-item";
 
 type GroupedThreads = {
@@ -76,7 +76,9 @@ export function SidebarHistory() {
   // Poll for title updates when any thread has a pending title
   const hasPendingTitles = threads.some((t) => t.title === null);
   useEffect(() => {
-    if (!hasPendingTitles) return;
+    if (!hasPendingTitles) {
+      return;
+    }
     const interval = setInterval(() => {
       refetch();
     }, 2000);
@@ -88,13 +90,15 @@ export function SidebarHistory() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { deleteThread } = useDeleteThread();
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     const threadToDelete = deleteId;
     const isCurrentThread = pathname === `/chat/${threadToDelete}`;
 
     setShowDeleteDialog(false);
 
-    if (!threadToDelete) return;
+    if (!threadToDelete) {
+      return;
+    }
 
     toast.promise(deleteThread(threadToDelete), {
       loading: "Deleting thread...",

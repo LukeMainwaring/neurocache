@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ChatMessage } from "@/lib/types";
 import {
   deleteThreadMutation,
   listThreadsOptions,
   listThreadsQueryKey,
 } from "../generated/@tanstack/react-query.gen";
 import { getThreadMessages as getThreadMessagesApi } from "../generated/sdk.gen";
-import type { ChatMessage } from "@/lib/types";
 
 // Ensure client is configured with baseURL
 import "../client";
@@ -39,7 +39,7 @@ export const useDeleteThread = () => {
  * Plain async function for server components (can't use hooks).
  */
 export async function getThreadMessages(
-  threadId: string,
+  threadId: string
 ): Promise<ChatMessage[]> {
   const response = await getThreadMessagesApi({
     path: { thread_id: threadId },

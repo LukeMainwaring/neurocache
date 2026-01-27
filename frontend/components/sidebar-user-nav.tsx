@@ -4,6 +4,7 @@ import { ChevronUp, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useMyself } from "@/api/hooks/users";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +16,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useMyself } from "@/api/hooks/users";
 
 export function SidebarUserNav() {
   const { setTheme, resolvedTheme } = useTheme();

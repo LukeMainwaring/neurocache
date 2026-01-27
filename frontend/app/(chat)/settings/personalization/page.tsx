@@ -1,12 +1,12 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useMyself, useUpdateMyPersonalization } from "@/api/hooks/users";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 export default function PersonalizationPage() {
   const { data: user, isLoading } = useMyself();

@@ -1,5 +1,10 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
 import { PlusIcon, TrashIcon } from "@/components/icons";
 import { SidebarHistory } from "@/components/sidebar-history";
@@ -13,11 +18,6 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,

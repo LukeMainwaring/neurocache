@@ -4,7 +4,7 @@ import {
   getMyselfQueryKey,
   updateMyPersonalizationMutation,
 } from "../generated/@tanstack/react-query.gen";
-import { UserPersonalizationUpdateSchema } from "../generated/types.gen";
+import type { UserPersonalizationUpdateSchema } from "../generated/types.gen";
 
 export const useMyself = () => {
   return useQuery(getMyselfOptions());

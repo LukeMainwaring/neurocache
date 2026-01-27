@@ -9,9 +9,7 @@ export async function POST(request: Request) {
   const streamUrl = `${backendUrl}/api/chat/stream`;
 
   // Extract the latest user message content
-  const userMessage = body.messages
-    ? body.messages[body.messages.length - 1]
-    : null;
+  const userMessage = body.messages ? body.messages.at(-1) : null;
 
   if (!userMessage || userMessage.role !== "user") {
     return new Response(JSON.stringify({ error: "No user message found" }), {

@@ -16,7 +16,7 @@ export function useAutoResume({
   autoResume,
   initialMessages,
   resumeStream,
-  setMessages,
+  setMessages: _setMessages,
 }: UseAutoResumeParams) {
   const { dataStream } = useDataStream();
 
@@ -42,5 +42,5 @@ export function useAutoResume({
     if (dataStream.length === 0) {
       return;
     }
-  }, [dataStream, initialMessages, setMessages]);
+  }, [dataStream]);
 }

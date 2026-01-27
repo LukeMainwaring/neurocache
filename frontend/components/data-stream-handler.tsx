@@ -1,8 +1,8 @@
 "use client";
 
-import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
 import { useDataStream } from "./data-stream-provider";
 
 export function DataStreamHandler() {

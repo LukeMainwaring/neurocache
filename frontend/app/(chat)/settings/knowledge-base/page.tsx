@@ -1,12 +1,15 @@
 "use client";
 
+import { FolderOpen, Loader2, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { KnowledgeSourceSchema } from "@/api/generated/types.gen";
 import {
   useCreateKnowledgeSource,
   useDeleteKnowledgeSource,
   useKnowledgeSourceDefaults,
   useKnowledgeSources,
 } from "@/api/hooks/knowledge-sources";
-import type { KnowledgeSourceSchema } from "@/api/generated/types.gen";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,9 +28,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { FolderOpen, Loader2, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 
 const STATUS_LABELS: Record<KnowledgeSourceSchema["status"], string> = {
   pending: "Pending",

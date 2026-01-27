@@ -4,6 +4,8 @@
   "files": {
     "includes": [
       "**/*",
+      "!api/generated",
+      "!api/scripts",
       "!components/ui",
       "!lib/utils.ts",
       "!hooks/use-mobile.ts"
