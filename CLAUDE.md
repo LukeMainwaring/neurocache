@@ -29,10 +29,11 @@ cd backend && ./scripts/create-db-revision-docker.sh "<migration_message>"
 
 ```bash
 cd frontend && pnpm install
-cd frontend && pnpm dev        # start dev server with turbo
-cd frontend && pnpm build      # production build
-cd frontend && pnpm lint       # lint with ultracite
-cd frontend && pnpm format     # format with ultracite
+cd frontend && pnpm dev             # start dev server with turbo
+cd frontend && pnpm build           # production build
+cd frontend && pnpm lint            # lint with ultracite
+cd frontend && pnpm format          # format with ultracite
+cd frontend && pnpm generate-client # regenerate API client from backend OpenAPI
 ```
 
 ## Architecture
@@ -71,18 +72,21 @@ Next.js 16 with App Router and React 19.
 -   **`app/(chat)/`**: Chat route group with main chat pages
 -   **`app/(chat)/api/chat/route.ts`**: Proxy route that forwards chat requests to backend
 -   **`components/chat.tsx`**: Main chat component using `@ai-sdk/react` useChat hook
--   **`lib/api/backend-client.ts`**: API client for backend communication
+-   **`api/client.ts`**: Axios client configuration (baseURL, credentials)
+-   **`api/hooks/`**: Custom TanStack Query hooks wrapping generated client
+-   **`api/generated/`**: Auto-generated TypeScript client from OpenAPI (do not edit manually)
 -   **`components/ui/`**: Reusable UI components (shadcn/ui style)
 
 Key patterns:
 
 -   Uses Vercel AI SDK's `useChat` for streaming chat
 -   Backend URL configured via `NEXT_PUBLIC_BACKEND_URL` env var
--   SWR for data fetching with automatic revalidation
+-   TanStack Query for data fetching with automatic caching/invalidation
+-   Generated API client from backend OpenAPI schema - run `pnpm generate-client` after backend API changes
 
 ### Data Flow
 
-1. Frontend `useChat` sends messages to `/api/chat` route
+1. Frontend `useChat` sends streaming messages to `/api/chat` route; non-streaming calls use TanStack Query hooks from `api/hooks/`
 2. Route proxies to backend `/api/chat/stream`
 3. Backend's chat agent processes with Pydantic AI
 4. Response streams back as SSE, stored in PostgreSQL
@@ -95,3 +99,4 @@ Key patterns:
 -   Do not make any changes until you have 95% confidence that you know what to build - ask me follow up questions until you have that confidence.
 
 -   Do not worry about running the pytest commands yet. I have not implemented unit tests and likely will not for a while
+-   After modifying backend API endpoints, regenerate the frontend client with `cd frontend && pnpm generate-client`. Do not manually edit files in `frontend/api/generated/`.
