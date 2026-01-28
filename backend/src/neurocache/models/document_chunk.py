@@ -57,7 +57,8 @@ class DocumentChunk(Base):
         db: AsyncSession,
         query_embedding: list[float],
         user_id: str,
-        top_k: int = 5,
+        top_k: int,
+        similarity_threshold: float,
     ) -> list[tuple[DocumentChunk, float]]:
         """Search for chunks within all of a user's knowledge sources.
 
@@ -65,7 +66,8 @@ class DocumentChunk(Base):
             db: Database session
             query_embedding: The embedding vector to search for
             user_id: Filter to chunks from this user's knowledge sources
-            top_k: Number of results to return
+            top_k: Maximum number of results to return
+            similarity_threshold: Minimum similarity score (0-1) to include
 
         Returns:
             List of (DocumentChunk, similarity_score) tuples, ordered by similarity descending.
@@ -73,12 +75,14 @@ class DocumentChunk(Base):
         from neurocache.models.document import Document
 
         distance = cls.embedding.cosine_distance(query_embedding)
+        similarity = (1 - distance).label("similarity")
         stmt = (
-            select(cls, (1 - distance).label("similarity"))
+            select(cls, similarity)
             .join(Document)
             .join(KnowledgeSource)
             .where(KnowledgeSource.user_id == user_id)
             .where(cls.embedding.is_not(None))
+            .where(1 - distance >= similarity_threshold)
             .order_by(distance)
             .limit(top_k)
         )

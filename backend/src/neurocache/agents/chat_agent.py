@@ -112,14 +112,14 @@ def create_chat_agent() -> Agent[UserSchema, str]:
 # RAG Context Retrieval
 # ============================================================================
 
-RAG_TOP_K = 3  # Number of chunks to retrieve
-RAG_SIMILARITY_THRESHOLD = 0.25  # Minimum similarity to include
-
 
 def format_rag_context(
-    chunks: list[tuple[DocumentChunk, float]],
+    relevant_chunks: list[tuple[DocumentChunk, float]],
 ) -> tuple[str | None, list[RAGSource]]:
     """Format retrieved chunks into context for the prompt.
+
+    Reconstructs attribution prefixes from chunk metadata and document path
+    (the chunk content itself is stored without prefixes for clean embeddings).
 
     Args:
         chunks: List of (chunk, similarity) tuples from retrieval
@@ -129,28 +129,30 @@ def format_rag_context(
         - formatted_context: String for the prompt, or None if no relevant chunks
         - sources_metadata: List of source info dicts for the frontend
     """
-    # Filter by similarity threshold
-    relevant = [(chunk, sim) for chunk, sim in chunks if sim >= RAG_SIMILARITY_THRESHOLD]
-
-    if not relevant:
+    if not relevant_chunks:
         return None, []
 
     context_parts = []
     sources: list[RAGSource] = []
 
-    for chunk, similarity in relevant:
-        # Include source info for attribution
+    for chunk, similarity in relevant_chunks:
         source_path = chunk.document.relative_path if chunk.document else "Unknown"
-        context_parts.append(f"[From: {source_path}]\n{chunk.content}")
 
-        sources.append(
-            {
-                "path": source_path,
-                "similarity": float(similarity),
-                "content": chunk.content,
-            }
-        )
+        # Reconstruct attribution prefix from metadata
+        prefix = f"[Source: {source_path}]"
+        section_header = (chunk.chunk_metadata or {}).get("section_header")
+        if section_header:
+            prefix += f"\n[Section: {section_header}]"
 
+        context_parts.append(f"{prefix}\n\n{chunk.content}")
+        source: RAGSource = {
+            "path": source_path,
+            "similarity": float(similarity),
+            "content": chunk.content,
+        }
+        if section_header:
+            source["section_header"] = section_header
+        sources.append(source)
     return "\n\n---\n\n".join(context_parts), sources
 
 
@@ -172,13 +174,13 @@ async def retrieve_context(
         Tuple of (formatted_context, sources_metadata)
     """
     try:
-        chunks = await search_similar_chunks_for_user(db, openai_client, query, user_id, top_k=RAG_TOP_K)
-        if not chunks:
+        relevant_chunks = await search_similar_chunks_for_user(db, openai_client, query, user_id)
+        if not relevant_chunks:
             return None, []
         # Load document relationships for source attribution
-        for chunk, _ in chunks:
+        for chunk, _ in relevant_chunks:
             await db.refresh(chunk, ["document"])
-        return format_rag_context(chunks)
+        return format_rag_context(relevant_chunks)
     except Exception:
         logger.exception("Error retrieving RAG context")
         return None, []

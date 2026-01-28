@@ -5,6 +5,7 @@ from typing import Any
 from pydantic_ai.messages import ModelMessage, ModelMessagesTypeAdapter
 
 # Type alias for RAG source metadata
+# TODO: Replace with RAGSource pydantic schema once properties are more defined
 RAGSource = dict[str, str | float]
 
 

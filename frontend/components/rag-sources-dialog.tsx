@@ -31,7 +31,7 @@ export function RAGSourcesDialog({ sources, trigger }: RAGSourcesDialogProps) {
         <div className="space-y-4">
           {sources.map((source, index) => (
             <div
-              className="rounded-lg border bg-muted/50 p-4"
+              className="overflow-hidden rounded-lg border bg-muted/50 p-4"
               key={`${source.path}-${index}`}
             >
               <div className="mb-2 flex items-start justify-between gap-2">
@@ -42,8 +42,13 @@ export function RAGSourcesDialog({ sources, trigger }: RAGSourcesDialogProps) {
                   {Math.round(source.similarity * 100)}% match
                 </span>
               </div>
+              {source.section_header && (
+                <p className="mb-2 text-muted-foreground text-xs italic">
+                  Section: {source.section_header}
+                </p>
+              )}
               {source.content && (
-                <p className="max-h-48 overflow-y-auto text-muted-foreground text-sm">
+                <p className="max-h-48 overflow-y-auto break-words text-muted-foreground text-sm">
                   {source.content}
                 </p>
               )}
