@@ -93,7 +93,16 @@ Testing, type checking, and formatting/linting is [checked in CI][ci].
 
 ## Database migrations
 
+```bash
+# Create a new migration (generates file in migrations/versions/)
 cd backend && ./scripts/create-db-revision-docker.sh "<migration_message>"
+
+# Apply all pending migrations
+cd backend && ./scripts/migrate-docker.sh
+
+# Roll back one migration (use with caution—may cause data loss)
+cd backend && ./scripts/downgrade-db-revision-docker.sh
+```
 
 ## API Client Generation
 
