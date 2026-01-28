@@ -52,41 +52,6 @@ class DocumentChunk(Base):
     )
 
     @classmethod
-    async def search_similar(
-        cls,
-        db: AsyncSession,
-        query_embedding: list[float],
-        top_k: int = 5,
-        knowledge_source_id: uuid.UUID | None = None,
-    ) -> list[tuple[DocumentChunk, float]]:
-        """Search for chunks most similar to the query embedding.
-
-        Args:
-            db: Database session
-            query_embedding: The embedding vector to search for
-            top_k: Number of results to return
-            knowledge_source_id: Optional filter to search within a specific knowledge source
-
-        Returns:
-            List of (DocumentChunk, similarity_score) tuples, ordered by similarity descending.
-        """
-        distance = cls.embedding.cosine_distance(query_embedding)
-        stmt = (
-            select(cls, (1 - distance).label("similarity"))
-            .where(cls.embedding.is_not(None))
-            .order_by(distance)
-            .limit(top_k)
-        )
-
-        if knowledge_source_id:
-            from neurocache.models.document import Document
-
-            stmt = stmt.join(Document).where(Document.knowledge_source_id == knowledge_source_id)
-
-        result = await db.execute(stmt)
-        return [(row.DocumentChunk, row.similarity) for row in result.all()]
-
-    @classmethod
     async def search_similar_for_user(
         cls,
         db: AsyncSession,
@@ -108,7 +73,6 @@ class DocumentChunk(Base):
         from neurocache.models.document import Document
 
         distance = cls.embedding.cosine_distance(query_embedding)
-
         stmt = (
             select(cls, (1 - distance).label("similarity"))
             .join(Document)
@@ -118,7 +82,6 @@ class DocumentChunk(Base):
             .order_by(distance)
             .limit(top_k)
         )
-
         result = await db.execute(stmt)
         return [(row.DocumentChunk, row.similarity) for row in result.all()]
 

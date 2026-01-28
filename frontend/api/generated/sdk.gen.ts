@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, SearchKnowledgeSourceData, SearchKnowledgeSourceErrors, SearchKnowledgeSourceResponses, StreamChatData, StreamChatErrors, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses } from './types.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, StreamChatData, StreamChatErrors, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -156,22 +156,6 @@ export const ingestDocument = <ThrowOnError extends boolean = false>(options: Op
 export const ingestAllDocuments = <ThrowOnError extends boolean = false>(options: Options<IngestAllDocumentsData, ThrowOnError>) => (options.client ?? client).post<IngestAllDocumentsResponses, IngestAllDocumentsErrors, ThrowOnError>({
     responseType: 'json',
     url: '/api/knowledge-sources/{source_id}/ingest-all',
-    ...options
-});
-
-/**
- * Search Knowledge Source
- *
- * Search for similar chunks within a knowledge source.
- *
- * Args:
- * source_id: The knowledge source ID to search within
- * query: The search query text
- * top_k: Number of results to return (default 5)
- */
-export const searchKnowledgeSource = <ThrowOnError extends boolean = false>(options: Options<SearchKnowledgeSourceData, ThrowOnError>) => (options.client ?? client).get<SearchKnowledgeSourceResponses, SearchKnowledgeSourceErrors, ThrowOnError>({
-    responseType: 'json',
-    url: '/api/knowledge-sources/{source_id}/search',
     ...options
 });
 

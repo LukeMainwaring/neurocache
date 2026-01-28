@@ -17,13 +17,10 @@ from neurocache.schemas.knowledge_source import (
     KnowledgeSourceCreateSchema,
     KnowledgeSourceListResponse,
     KnowledgeSourceSchema,
-    KnowledgeSourceStatus,
-    KnowledgeSourceType,
     KnowledgeSourceUpdateSchema,
 )
-from neurocache.services import ingestion as ingestion_service
-from neurocache.services.retrieval import search_similar_chunks
-from neurocache.services.vault_validator import validate_obsidian_vault
+from neurocache.services.knowledge_source import ingestion as ingestion_service
+from neurocache.services.knowledge_source import knowledge_source as knowledge_source_service
 
 logger = logging.getLogger(__name__)
 
@@ -50,17 +47,7 @@ async def create_knowledge_source(
     db: AsyncPostgresSessionDep,
 ) -> KnowledgeSourceSchema:
     """Create a new knowledge source and validate if it's an Obsidian vault."""
-    source = await KnowledgeSource.create(db, DEMO_USER_ID, source_data)
-
-    if source_data.source_type == KnowledgeSourceType.OBSIDIAN:
-        is_valid, error_message = await validate_obsidian_vault()
-        if is_valid:
-            source = await KnowledgeSource.update_status(db, source.id, DEMO_USER_ID, KnowledgeSourceStatus.CONNECTED)
-        else:
-            source = await KnowledgeSource.update_status(
-                db, source.id, DEMO_USER_ID, KnowledgeSourceStatus.ERROR, error_message
-            )
-    return source
+    return await knowledge_source_service.create_and_validate(source_data, db)
 
 
 @knowledge_source_router.get("/defaults")
@@ -137,30 +124,3 @@ async def ingest_all_documents(
         force_reindex: If True, re-ingest documents even if already indexed
     """
     return await ingestion_service.ingest_all_documents(db, openai_client, source_id, force_reindex)
-
-
-@knowledge_source_router.get("/{source_id}/search")
-async def search_knowledge_source(
-    source_id: uuid.UUID,
-    query: str,
-    db: AsyncPostgresSessionDep,
-    openai_client: OpenAIClientDep,
-    top_k: int = 5,
-) -> list[dict[str, str | float | int]]:
-    """Search for similar chunks within a knowledge source.
-
-    Args:
-        source_id: The knowledge source ID to search within
-        query: The search query text
-        top_k: Number of results to return (default 5)
-    """
-    results = await search_similar_chunks(db, openai_client, query, top_k, source_id)
-    return [
-        {
-            "chunk_id": chunk.id,
-            "content": chunk.content[:200] + "..." if len(chunk.content) > 200 else chunk.content,
-            "similarity": round(similarity, 4),
-            "chunk_index": chunk.chunk_index,
-        }
-        for chunk, similarity in results
-    ]

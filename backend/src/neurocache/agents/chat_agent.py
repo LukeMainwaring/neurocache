@@ -25,7 +25,7 @@ from neurocache.models.user import User as UserModel
 from neurocache.schemas.agent_type import AgentType
 from neurocache.schemas.message import UserMessage
 from neurocache.schemas.user import UserSchema
-from neurocache.services.retrieval import search_similar_chunks_for_user
+from neurocache.services.knowledge_source.retrieval import search_similar_chunks_for_user
 from neurocache.services.title_generator import generate_thread_title
 from neurocache.utils.message_serialization import RAGSource, prepare_messages_for_storage
 

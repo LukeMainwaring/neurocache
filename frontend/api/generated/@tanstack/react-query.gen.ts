@@ -4,8 +4,8 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
-import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listKnowledgeSources, listThreads, listUsers, type Options, searchKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization } from '../sdk.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, SearchKnowledgeSourceData, SearchKnowledgeSourceError, SearchKnowledgeSourceResponse, StreamChatData, StreamChatError, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
+import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listKnowledgeSources, listThreads, listUsers, type Options, streamChat, updateKnowledgeSource, updateMyPersonalization } from '../sdk.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, StreamChatData, StreamChatError, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
 
 /**
  * Stream Chat
@@ -252,31 +252,6 @@ export const ingestAllDocumentsMutation = (options?: Partial<Options<IngestAllDo
     };
     return mutationOptions;
 };
-
-export const searchKnowledgeSourceQueryKey = (options: Options<SearchKnowledgeSourceData>) => createQueryKey('searchKnowledgeSource', options);
-
-/**
- * Search Knowledge Source
- *
- * Search for similar chunks within a knowledge source.
- *
- * Args:
- * source_id: The knowledge source ID to search within
- * query: The search query text
- * top_k: Number of results to return (default 5)
- */
-export const searchKnowledgeSourceOptions = (options: Options<SearchKnowledgeSourceData>) => queryOptions<SearchKnowledgeSourceResponse, AxiosError<SearchKnowledgeSourceError>, SearchKnowledgeSourceResponse, ReturnType<typeof searchKnowledgeSourceQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await searchKnowledgeSource({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: searchKnowledgeSourceQueryKey(options)
-});
 
 export const listThreadsQueryKey = (options?: Options<ListThreadsData>) => createQueryKey('listThreads', options);
 
