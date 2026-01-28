@@ -4,6 +4,7 @@ export type RAGSource = {
   path: string;
   similarity: number;
   content?: string;
+  section_header?: string;
 };
 
 export type MessageMetadata = {

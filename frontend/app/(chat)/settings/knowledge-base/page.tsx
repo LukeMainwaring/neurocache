@@ -176,7 +176,7 @@ export default function KnowledgeBasePage() {
         documents_failed === 0
       ) {
         toast.success(
-          `Already up to date — ${documents_skipped} documents unchanged`,
+          `Already up to date — ${documents_skipped} documents unchanged`
         );
       } else {
         const parts: string[] = [];

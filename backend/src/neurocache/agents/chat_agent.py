@@ -145,13 +145,14 @@ def format_rag_context(
             prefix += f"\n[Section: {section_header}]"
 
         context_parts.append(f"{prefix}\n\n{chunk.content}")
-        sources.append(
-            {
-                "path": source_path,
-                "similarity": float(similarity),
-                "content": chunk.content,
-            }
-        )
+        source: RAGSource = {
+            "path": source_path,
+            "similarity": float(similarity),
+            "content": chunk.content,
+        }
+        if section_header:
+            source["section_header"] = section_header
+        sources.append(source)
     return "\n\n---\n\n".join(context_parts), sources
 
 
