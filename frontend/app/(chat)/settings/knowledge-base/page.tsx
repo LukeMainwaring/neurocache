@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderOpen, Loader2, Plus, Trash2 } from "lucide-react";
+import { FolderOpen, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { KnowledgeSourceSchema } from "@/api/generated/types.gen";
@@ -9,6 +9,7 @@ import {
   useDeleteKnowledgeSource,
   useKnowledgeSourceDefaults,
   useKnowledgeSources,
+  useRetryKnowledgeSource,
 } from "@/api/hooks/knowledge-sources";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,12 +50,14 @@ export default function KnowledgeBasePage() {
   const { data: defaultsData } = useKnowledgeSourceDefaults();
   const { createSource, isPending: isCreating } = useCreateKnowledgeSource();
   const { deleteSource } = useDeleteKnowledgeSource();
+  const { retrySource } = useRetryKnowledgeSource();
 
   const sources = sourcesData?.sources ?? [];
   const defaults = defaultsData?.obsidian;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
 
   // Form state
   const [name, setName] = useState("");
@@ -81,17 +84,46 @@ export default function KnowledgeBasePage() {
     }
 
     try {
-      await createSource({
+      const result = await createSource({
         name: name.trim(),
         source_type: "obsidian",
         file_path: filePath.trim(),
       });
       setIsDialogOpen(false);
       resetForm();
-      toast.success("Knowledge source added");
+      if (result.status === "error") {
+        toast.error(result.error_message ?? "Failed to connect vault");
+      } else {
+        const fileCount = result.config?.file_count as number | undefined;
+        const message = fileCount
+          ? `Connected! ${fileCount} markdown files found`
+          : "Knowledge source connected";
+        toast.success(message);
+      }
     } catch (error) {
       console.error("Failed to create knowledge source:", error);
       toast.error("Failed to add knowledge source");
+    }
+  }
+
+  async function handleRetry(id: string) {
+    setRetryingId(id);
+    try {
+      const result = await retrySource(id);
+      if (result.status === "error") {
+        toast.error(result.error_message ?? "Validation failed");
+      } else {
+        const fileCount = result.config?.file_count as number | undefined;
+        const message = fileCount
+          ? `Connected! ${fileCount} markdown files found`
+          : "Knowledge source connected";
+        toast.success(message);
+      }
+    } catch (error) {
+      console.error("Failed to retry knowledge source:", error);
+      toast.error("Failed to retry validation");
+    } finally {
+      setRetryingId(null);
     }
   }
 
@@ -233,6 +265,20 @@ export default function KnowledgeBasePage() {
                         {STATUS_LABELS[source.status]}
                       </span>
                     </div>
+                    {source.status === "error" && (
+                      <Button
+                        disabled={retryingId === source.id}
+                        onClick={() => handleRetry(source.id)}
+                        size="icon-sm"
+                        variant="ghost"
+                      >
+                        {retryingId === source.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="size-4" />
+                        )}
+                      </Button>
+                    )}
                     <Button
                       disabled={deletingId === source.id}
                       onClick={() => handleDelete(source.id)}
@@ -248,6 +294,21 @@ export default function KnowledgeBasePage() {
                   </div>
                 </div>
               </CardHeader>
+              {(source.status === "error" || source.status === "connected") && (
+                <CardContent className="pt-0">
+                  {source.status === "error" && source.error_message && (
+                    <p className="text-destructive text-sm">
+                      {source.error_message}
+                    </p>
+                  )}
+                  {source.status === "connected" &&
+                    !!source.config?.file_count && (
+                      <p className="text-muted-foreground text-sm">
+                        {Number(source.config.file_count)} markdown files found
+                      </p>
+                    )}
+                </CardContent>
+              )}
             </Card>
           ))}
         </div>

@@ -711,6 +711,36 @@ export type UpdateKnowledgeSourceResponses = {
 
 export type UpdateKnowledgeSourceResponse = UpdateKnowledgeSourceResponses[keyof UpdateKnowledgeSourceResponses];
 
+export type RetryKnowledgeSourceData = {
+    body?: never;
+    path: {
+        /**
+         * Source Id
+         */
+        source_id: string;
+    };
+    query?: never;
+    url: '/api/knowledge-sources/{source_id}/retry';
+};
+
+export type RetryKnowledgeSourceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RetryKnowledgeSourceError = RetryKnowledgeSourceErrors[keyof RetryKnowledgeSourceErrors];
+
+export type RetryKnowledgeSourceResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeSourceSchema;
+};
+
+export type RetryKnowledgeSourceResponse = RetryKnowledgeSourceResponses[keyof RetryKnowledgeSourceResponses];
+
 export type IngestDocumentData = {
     body?: never;
     path: {

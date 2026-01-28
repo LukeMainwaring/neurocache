@@ -4,8 +4,8 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
-import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listKnowledgeSources, listThreads, listUsers, type Options, streamChat, updateKnowledgeSource, updateMyPersonalization } from '../sdk.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, StreamChatData, StreamChatError, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
+import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listKnowledgeSources, listThreads, listUsers, type Options, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization } from '../sdk.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, StreamChatError, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
 
 /**
  * Stream Chat
@@ -194,6 +194,25 @@ export const updateKnowledgeSourceMutation = (options?: Partial<Options<UpdateKn
     const mutationOptions: UseMutationOptions<UpdateKnowledgeSourceResponse, AxiosError<UpdateKnowledgeSourceError>, Options<UpdateKnowledgeSourceData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await updateKnowledgeSource({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Retry Knowledge Source
+ *
+ * Re-validate an existing knowledge source connection.
+ */
+export const retryKnowledgeSourceMutation = (options?: Partial<Options<RetryKnowledgeSourceData>>): UseMutationOptions<RetryKnowledgeSourceResponse, AxiosError<RetryKnowledgeSourceError>, Options<RetryKnowledgeSourceData>> => {
+    const mutationOptions: UseMutationOptions<RetryKnowledgeSourceResponse, AxiosError<RetryKnowledgeSourceError>, Options<RetryKnowledgeSourceData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await retryKnowledgeSource({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

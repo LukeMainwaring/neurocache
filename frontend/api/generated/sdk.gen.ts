@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, StreamChatData, StreamChatErrors, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses } from './types.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, RetryKnowledgeSourceData, RetryKnowledgeSourceErrors, RetryKnowledgeSourceResponses, StreamChatData, StreamChatErrors, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -124,6 +124,17 @@ export const updateKnowledgeSource = <ThrowOnError extends boolean = false>(opti
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * Retry Knowledge Source
+ *
+ * Re-validate an existing knowledge source connection.
+ */
+export const retryKnowledgeSource = <ThrowOnError extends boolean = false>(options: Options<RetryKnowledgeSourceData, ThrowOnError>) => (options.client ?? client).post<RetryKnowledgeSourceResponses, RetryKnowledgeSourceErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/knowledge-sources/{source_id}/retry',
+    ...options
 });
 
 /**

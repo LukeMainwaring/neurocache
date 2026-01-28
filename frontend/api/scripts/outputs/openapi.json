@@ -301,6 +301,50 @@
         }
       }
     },
+    "/api/knowledge-sources/{source_id}/retry": {
+      "post": {
+        "tags": [
+          "knowledge-sources"
+        ],
+        "summary": "Retry Knowledge Source",
+        "description": "Re-validate an existing knowledge source connection.",
+        "operationId": "retryKnowledgeSource",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Source Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeSourceSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/knowledge-sources/{source_id}/ingest": {
       "post": {
         "tags": [

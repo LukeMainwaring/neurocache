@@ -90,6 +90,15 @@ async def delete_knowledge_source(
     await KnowledgeSource.delete(db, source_id, DEMO_USER_ID)
 
 
+@knowledge_source_router.post("/{source_id}/retry")
+async def retry_knowledge_source(
+    source_id: uuid.UUID,
+    db: AsyncPostgresSessionDep,
+) -> KnowledgeSourceSchema:
+    """Re-validate an existing knowledge source connection."""
+    return await knowledge_source_service.retry_validation(source_id, db)
+
+
 @knowledge_source_router.post("/{source_id}/ingest")
 async def ingest_document(
     source_id: uuid.UUID,
