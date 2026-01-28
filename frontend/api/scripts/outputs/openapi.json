@@ -404,7 +404,7 @@
           "knowledge-sources"
         ],
         "summary": "Ingest All Documents",
-        "description": "Ingest all markdown documents from a knowledge source.\n\nDiscovers all .md files in the vault (excluding system directories like .obsidian)\nand ingests them into the database with embeddings.\n\nArgs:\n    source_id: The knowledge source ID\n    force_reindex: If True, re-ingest documents even if already indexed",
+        "description": "Ingest all markdown documents from a knowledge source.\n\nDiscovers all .md files in the vault (excluding system directories like .obsidian)\nand ingests them into the database with embeddings. Manages source lifecycle\n(status transitions, timestamps, stats).\n\nArgs:\n    source_id: The knowledge source ID\n    force_reindex: If True, re-ingest documents even if already indexed",
         "operationId": "ingestAllDocuments",
         "parameters": [
           {

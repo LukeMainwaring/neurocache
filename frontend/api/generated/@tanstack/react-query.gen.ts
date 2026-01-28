@@ -252,7 +252,8 @@ export const ingestDocumentMutation = (options?: Partial<Options<IngestDocumentD
  * Ingest all markdown documents from a knowledge source.
  *
  * Discovers all .md files in the vault (excluding system directories like .obsidian)
- * and ingests them into the database with embeddings.
+ * and ingests them into the database with embeddings. Manages source lifecycle
+ * (status transitions, timestamps, stats).
  *
  * Args:
  * source_id: The knowledge source ID

@@ -3,6 +3,7 @@ import {
   createKnowledgeSourceMutation,
   deleteKnowledgeSourceMutation,
   getKnowledgeSourceDefaultsOptions,
+  ingestAllDocumentsMutation,
   listKnowledgeSourcesOptions,
   listKnowledgeSourcesQueryKey,
   retryKnowledgeSourceMutation,
@@ -76,6 +77,30 @@ export const useRetryKnowledgeSource = () => {
 
   return {
     retrySource,
+    ...mutationResult,
+  };
+};
+
+export const useSyncKnowledgeSource = () => {
+  const queryClient = useQueryClient();
+  const mutationResult = useMutation({
+    ...ingestAllDocumentsMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: listKnowledgeSourcesQueryKey(),
+      });
+    },
+  });
+
+  const syncSource = (sourceId: string) => {
+    return mutationResult.mutateAsync({
+      path: { source_id: sourceId },
+      query: { force_reindex: false },
+    });
+  };
+
+  return {
+    syncSource,
     ...mutationResult,
   };
 };

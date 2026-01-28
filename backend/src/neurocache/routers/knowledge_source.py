@@ -126,10 +126,11 @@ async def ingest_all_documents(
     """Ingest all markdown documents from a knowledge source.
 
     Discovers all .md files in the vault (excluding system directories like .obsidian)
-    and ingests them into the database with embeddings.
+    and ingests them into the database with embeddings. Manages source lifecycle
+    (status transitions, timestamps, stats).
 
     Args:
         source_id: The knowledge source ID
         force_reindex: If True, re-ingest documents even if already indexed
     """
-    return await ingestion_service.ingest_all_documents(db, openai_client, source_id, force_reindex)
+    return await knowledge_source_service.sync_documents(source_id, db, openai_client, force_reindex)

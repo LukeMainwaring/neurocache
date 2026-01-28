@@ -28,7 +28,8 @@
       "WebSearch",
       "Bash(pnpm tsc:*)",
       "Bash(pnpm format:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(pnpm generate-client:*)"
     ]
   }
 }

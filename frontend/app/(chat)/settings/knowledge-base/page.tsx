@@ -1,6 +1,13 @@
 "use client";
 
-import { FolderOpen, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
+import {
+  FolderOpen,
+  Loader2,
+  Play,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { KnowledgeSourceSchema } from "@/api/generated/types.gen";
@@ -10,6 +17,7 @@ import {
   useKnowledgeSourceDefaults,
   useKnowledgeSources,
   useRetryKnowledgeSource,
+  useSyncKnowledgeSource,
 } from "@/api/hooks/knowledge-sources";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +37,26 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+
+function formatRelativeTime(dateString: string): string {
+  const now = Date.now();
+  const then = new Date(dateString).getTime();
+  const seconds = Math.floor((now - then) / 1000);
+
+  if (seconds < 60) {
+    return "just now";
+  }
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  }
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  }
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
 
 const STATUS_LABELS: Record<KnowledgeSourceSchema["status"], string> = {
   pending: "Pending",
@@ -51,6 +79,7 @@ export default function KnowledgeBasePage() {
   const { createSource, isPending: isCreating } = useCreateKnowledgeSource();
   const { deleteSource } = useDeleteKnowledgeSource();
   const { retrySource } = useRetryKnowledgeSource();
+  const { syncSource } = useSyncKnowledgeSource();
 
   const sources = sourcesData?.sources ?? [];
   const defaults = defaultsData?.obsidian;
@@ -58,6 +87,7 @@ export default function KnowledgeBasePage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
   // Form state
   const [name, setName] = useState("");
@@ -124,6 +154,27 @@ export default function KnowledgeBasePage() {
       toast.error("Failed to retry validation");
     } finally {
       setRetryingId(null);
+    }
+  }
+
+  async function handleSync(id: string) {
+    setSyncingId(id);
+    try {
+      const result = await syncSource(id);
+      if (result.documents_created === 0 && result.documents_failed === 0) {
+        toast.success(
+          `Already up to date — ${result.documents_skipped} documents unchanged`,
+        );
+      } else {
+        toast.success(
+          `Synced! ${result.documents_created} new, ${result.documents_skipped} unchanged, ${result.documents_failed} failed`,
+        );
+      }
+    } catch (error) {
+      console.error("Failed to sync knowledge source:", error);
+      toast.error("Failed to sync knowledge source");
+    } finally {
+      setSyncingId(null);
     }
   }
 
@@ -294,19 +345,58 @@ export default function KnowledgeBasePage() {
                   </div>
                 </div>
               </CardHeader>
-              {(source.status === "error" || source.status === "connected") && (
+              {(source.status === "error" ||
+                source.status === "connected" ||
+                source.status === "syncing") && (
                 <CardContent className="pt-0">
                   {source.status === "error" && source.error_message && (
                     <p className="text-destructive text-sm">
                       {source.error_message}
                     </p>
                   )}
-                  {source.status === "connected" &&
-                    !!source.config?.file_count && (
-                      <p className="text-muted-foreground text-sm">
-                        {Number(source.config.file_count)} markdown files found
-                      </p>
-                    )}
+                  {(source.status === "connected" ||
+                    source.status === "syncing") && (
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        {source.config?.documents_indexed != null ? (
+                          <p className="text-muted-foreground text-sm">
+                            {Number(source.config.documents_indexed)} documents
+                            indexed
+                          </p>
+                        ) : (
+                          !!source.config?.file_count && (
+                            <p className="text-muted-foreground text-sm">
+                              {Number(source.config.file_count)} markdown files
+                              found
+                            </p>
+                          )
+                        )}
+                        <p className="text-muted-foreground text-xs">
+                          {source.last_synced_at
+                            ? `Last synced ${formatRelativeTime(source.last_synced_at)}`
+                            : "Never synced"}
+                        </p>
+                      </div>
+                      <Button
+                        disabled={
+                          source.status === "syncing" || syncingId === source.id
+                        }
+                        onClick={() => handleSync(source.id)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        {source.status === "syncing" ||
+                        syncingId === source.id ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <Play className="size-4" />
+                        )}
+                        {source.status === "syncing" || syncingId === source.id
+                          ? "Syncing..."
+                          : "Sync Now"}
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               )}
             </Card>
