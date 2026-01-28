@@ -11,7 +11,8 @@ from neurocache.services.embedding import generate_embedding
 logger = logging.getLogger(__name__)
 
 # TODO: decide if there should be a similarity threshold. if so, what should it be?
-DEFAULT_TOP_K = 5
+DEFAULT_TOP_K = 10
+RAG_SIMILARITY_THRESHOLD = 0.4  # Minimum similarity to include in the RAG context
 
 
 async def search_similar_chunks_for_user(
@@ -20,6 +21,7 @@ async def search_similar_chunks_for_user(
     query: str,
     user_id: str,
     top_k: int = DEFAULT_TOP_K,
+    similarity_threshold: float = RAG_SIMILARITY_THRESHOLD,
 ) -> list[tuple[DocumentChunk, float]]:
     """Search for document chunks within all of a user's knowledge sources.
 
@@ -28,13 +30,13 @@ async def search_similar_chunks_for_user(
         openai_client: OpenAI client for generating query embedding
         query: The search query text
         user_id: Filter to chunks from this user's knowledge sources
-        top_k: Number of results to return (default 5)
-
+        top_k: Maximum number of results to return
+        similarity_threshold: Minimum similarity score to include in the results
     Returns:
         List of (DocumentChunk, similarity_score) tuples, ordered by similarity descending.
     """
     query_embedding = await generate_embedding(openai_client, query)
-    return await DocumentChunk.search_similar_for_user(db, query_embedding, user_id, top_k)
+    return await DocumentChunk.search_similar_for_user(db, query_embedding, user_id, top_k, similarity_threshold)
 
 
 async def get_chunk_with_context(
