@@ -20,7 +20,7 @@ export function RAGSourcesDialog({ sources, trigger }: RAGSourcesDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Sources</DialogTitle>
           <DialogDescription>
@@ -43,7 +43,7 @@ export function RAGSourcesDialog({ sources, trigger }: RAGSourcesDialogProps) {
                 </span>
               </div>
               {source.content && (
-                <p className="line-clamp-4 text-muted-foreground text-sm">
+                <p className="max-h-48 overflow-y-auto text-muted-foreground text-sm">
                   {source.content}
                 </p>
               )}

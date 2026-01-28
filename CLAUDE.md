@@ -23,18 +23,20 @@ uv run pre-commit run --all-files
 # Create local database migration
 cd backend && ./scripts/create-db-revision-docker.sh "<migration_message>"
 
+# Apply pending migrations (ask user first)
+cd backend && ./scripts/migrate-docker.sh
 ```
 
 ### Frontend (TypeScript/Next.js)
 
 ```bash
 cd frontend && pnpm install
-cd frontend && pnpm dev             # start dev server with turbo
-cd frontend && pnpm build           # production build
 cd frontend && pnpm lint            # lint with ultracite
 cd frontend && pnpm format          # format with ultracite
 cd frontend && pnpm generate-client # regenerate API client from backend OpenAPI
 ```
+
+After making frontend code changes, run `pnpm format` to fix formatting. Use `pnpm lint` to check for errors. Do not run `pnpm build` for validation—it's slow and rarely catches issues that linting misses. The dev server (`pnpm dev`) is typically already running during development.
 
 ## Architecture
 
@@ -59,7 +61,7 @@ Key patterns:
 -   Keep route handlers thin: push business logic to `services/`, DB logic to `models/`
 -   Use modern Python syntax: `| None` over `Optional`, `list` over `List`
 -   When creating SQLAlchemy columns, prefer simple Python type inference and only use `mapped_column` when column-based attributes require more specific customization. Example: `name: Mapped[str | None]` instead of `name: Mapped[str | None] = mapped_column(String(255), nullable=True)`
--   After generating an alembic database migration, pause and ask if it looks okay before running the upgrade script.
+-   After generating an alembic database migration, pause and ask if it looks okay before running `migrate-docker.sh`. Never run downgrade scripts without explicit user request.
 -   Re-export convention for `__init__.py`:
     -   **Default:** Keep `__init__.py` empty; use deep imports (`from neurocache.models.thread import Thread`)
     -   **Exception — `models/`:** Re-export all models for Alembic autogenerate support
@@ -95,7 +97,7 @@ Key patterns:
 ## Additional Instructions
 
 -   This project uses Pydantic AI. LLM-friendly documentation for this library can be found at <https://ai.pydantic.dev/llms.txt>, which contains an overview and links to Markdown-formatted content.
--   Assume that Git operations for branches, commits, and pushes will be done manually. If executing a multi-step, comprehensive plan that involves successive commits, ask before making a commit.
+-   Assume that Git operations for branches, commits, and pushes will mostly be done manually. If executing a multi-step, comprehensive plan that involves successive commits, ask before making a commit.
 -   Do not make any changes until you have 95% confidence that you know what to build - ask me follow up questions until you have that confidence.
 
 -   Do not worry about running the pytest commands yet. I have not implemented unit tests and likely will not for a while
