@@ -43,9 +43,21 @@ export type BatchIngestResult = {
      */
     documents_created: number;
     /**
+     * Documents Updated
+     *
+     * Modified documents re-ingested
+     */
+    documents_updated: number;
+    /**
+     * Documents Deleted
+     *
+     * Removed documents cleaned up
+     */
+    documents_deleted: number;
+    /**
      * Documents Skipped
      *
-     * Already indexed, skipped
+     * Unchanged, skipped
      */
     documents_skipped: number;
     /**

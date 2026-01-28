@@ -91,7 +91,9 @@ class BatchIngestResult(BaseSchema):
 
     total_files_found: int = Field(description="Total .md files discovered")
     documents_created: int = Field(description="New documents successfully ingested")
-    documents_skipped: int = Field(description="Already indexed, skipped")
+    documents_updated: int = Field(description="Modified documents re-ingested")
+    documents_deleted: int = Field(description="Removed documents cleaned up")
+    documents_skipped: int = Field(description="Unchanged, skipped")
     documents_failed: int = Field(description="Failed to ingest")
     failed_files: list[BatchIngestFailure] = Field(default_factory=list)
     duration_seconds: float = Field(description="Total processing time")
