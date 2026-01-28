@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, computed_field
 
 from .base import BaseSchema
 
@@ -36,3 +36,20 @@ class DocumentChunkListResponse(BaseSchema):
     """Response schema for listing document chunks."""
 
     chunks: list[DocumentChunkSchema] = Field(description="List of document chunks")
+
+
+class ChunkData(BaseSchema):
+    """A chunk of text with its associated section metadata."""
+
+    content: str = Field(description="The actual text content")
+    section_header: str | None = Field(default=None, description="The header of the section")
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def chunk_metadata(self) -> dict[str, str] | None:
+        return {"section_header": self.section_header} if self.section_header else None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def token_count(self) -> int:
+        return len(self.content) // 4

@@ -176,7 +176,7 @@ export default function KnowledgeBasePage() {
         documents_failed === 0
       ) {
         toast.success(
-          `Already up to date — ${documents_skipped} documents unchanged`
+          `Already up to date — ${documents_skipped} documents unchanged`,
         );
       } else {
         const parts: string[] = [];
@@ -414,7 +414,7 @@ export default function KnowledgeBasePage() {
                       >
                         {source.status === "syncing" ||
                         syncingId === source.id ? (
-                          <Loader2 className="mr-2 size-4 animate-spin" />
+                          <Loader2 className="size-4 animate-spin" />
                         ) : (
                           <Play className="size-4" />
                         )}

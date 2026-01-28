@@ -118,6 +118,9 @@ def format_rag_context(
 ) -> tuple[str | None, list[RAGSource]]:
     """Format retrieved chunks into context for the prompt.
 
+    Reconstructs attribution prefixes from chunk metadata and document path
+    (the chunk content itself is stored without prefixes for clean embeddings).
+
     Args:
         chunks: List of (chunk, similarity) tuples from retrieval
 
@@ -133,9 +136,15 @@ def format_rag_context(
     sources: list[RAGSource] = []
 
     for chunk, similarity in relevant_chunks:
-        # Include source info for attribution
         source_path = chunk.document.relative_path if chunk.document else "Unknown"
-        context_parts.append(f"[From: {source_path}]\n{chunk.content}")
+
+        # Reconstruct attribution prefix from metadata
+        prefix = f"[Source: {source_path}]"
+        section_header = (chunk.chunk_metadata or {}).get("section_header")
+        if section_header:
+            prefix += f"\n[Section: {section_header}]"
+
+        context_parts.append(f"{prefix}\n\n{chunk.content}")
         sources.append(
             {
                 "path": source_path,

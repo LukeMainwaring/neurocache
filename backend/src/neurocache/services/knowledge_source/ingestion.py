@@ -20,6 +20,7 @@ from neurocache.schemas.document import (
     DocumentStatus,
     DocumentUpdateSchema,
 )
+from neurocache.schemas.document_chunk import ChunkData
 from neurocache.services.embedding import generate_embeddings_batch
 
 logger = logging.getLogger(__name__)
@@ -177,68 +178,61 @@ def split_section_with_overlap(
 
 def markdown_aware_chunk_text(
     text: str,
-    filename: str,
     target_size: int = TARGET_CHUNK_SIZE,
     max_size: int = MAX_CHUNK_SIZE,
     overlap: int = CHUNK_OVERLAP,
     min_size: int = MIN_CHUNK_SIZE,
-) -> list[str]:
-    """Chunk text respecting markdown structure with context injection.
+) -> list[ChunkData]:
+    """Chunk text respecting markdown structure.
 
     This function:
     1. Detects sections based on headers and date patterns
     2. Keeps small sections intact, splits large ones on paragraph breaks
-    3. Prepends context (filename, section header) to each chunk
+    3. Returns ChunkData with raw content and section metadata (no context prefixes)
     4. Merges orphan chunks that are too small
 
     Args:
         text: The full document text
-        filename: Source filename for context injection
         target_size: Target chunk size (used for small file detection)
         max_size: Maximum chunk size before splitting
         overlap: Characters of overlap when splitting large sections
         min_size: Minimum chunk size (smaller chunks get merged)
 
     Returns:
-        List of context-injected text chunks
+        List of ChunkData with raw content and section metadata
     """
     text = strip_frontmatter(text)
 
     # Small files: return as single chunk
     if len(text) <= target_size:
-        context = f"[Source: {filename}]\n\n"
-        return [context + text.strip()]
+        return [ChunkData(content=text.strip())]
 
     sections = detect_sections(text)
-    chunks: list[str] = []
+    chunks: list[ChunkData] = []
 
     for section_header, section_content, _ in sections:
-        # Build context prefix
-        if section_header:
-            context = f"[Source: {filename}]\n[Section: {section_header}]\n\n"
-        else:
-            context = f"[Source: {filename}]\n\n"
+        header = section_header or None
 
-        context_len = len(context)
-        available_size = max_size - context_len
-
-        if len(section_content) <= available_size:
+        if len(section_content) <= max_size:
             # Section fits in one chunk
-            chunks.append(context + section_content)
+            chunks.append(ChunkData(content=section_content, section_header=header))
         else:
             # Split section on paragraph breaks
             section_chunks = split_section_with_overlap(
-                section_content, max_size=available_size, overlap=overlap, min_size=min_size
+                section_content, max_size=max_size, overlap=overlap, min_size=min_size
             )
             for chunk_text in section_chunks:
-                chunks.append(context + chunk_text)
+                chunks.append(ChunkData(content=chunk_text, section_header=header))
 
     # Final pass: merge any orphan chunks that are too small
-    merged_chunks: list[str] = []
+    merged_chunks: list[ChunkData] = []
     for chunk in chunks:
-        if merged_chunks and len(chunk) < min_size:
-            # Merge with previous chunk
-            merged_chunks[-1] = merged_chunks[-1] + "\n\n" + chunk
+        if merged_chunks and len(chunk.content) < min_size:
+            # Merge with previous chunk, keep earlier chunk's section_header
+            merged_chunks[-1] = ChunkData(
+                content=merged_chunks[-1].content + "\n\n" + chunk.content,
+                section_header=merged_chunks[-1].section_header,
+            )
         else:
             merged_chunks.append(chunk)
 
@@ -296,20 +290,21 @@ async def ingest_document(
     )
     logger.info("Created document %s for %s", document.id, relative_path)
 
-    filename = Path(relative_path).name
-    chunks = markdown_aware_chunk_text(content, filename)
-    logger.info("Split document into %d chunks", len(chunks))
+    chunk_data_list = markdown_aware_chunk_text(content)
+    logger.info("Split document into %d chunks", len(chunk_data_list))
 
-    embeddings = await generate_embeddings_batch(openai_client, chunks)
+    # Embed only raw content (no context prefixes)
+    embeddings = await generate_embeddings_batch(openai_client, [cd.content for cd in chunk_data_list])
 
     # Create chunk records
-    for i, (chunk_text, embedding) in enumerate(zip(chunks, embeddings, strict=True)):
+    for i, (cd, embedding) in enumerate(zip(chunk_data_list, embeddings, strict=True)):
         chunk = DocumentChunk(
             document_id=document.id,
-            content=chunk_text,
+            content=cd.content,
             chunk_index=i,
             embedding=embedding,
-            token_count=len(chunk_text) // 4,  # Rough estimate
+            chunk_metadata=cd.chunk_metadata,
+            token_count=cd.token_count,
         )
         db.add(chunk)
 
@@ -318,11 +313,11 @@ async def ingest_document(
         document.id,
         DocumentUpdateSchema(
             status=DocumentStatus.INDEXED,
-            chunk_count=len(chunks),
+            chunk_count=len(chunk_data_list),
             indexed_at=datetime.now(timezone.utc),
         ),
     )
-    logger.info("Indexed document %s with %d chunks", document.id, len(chunks))
+    logger.info("Indexed document %s with %d chunks", document.id, len(chunk_data_list))
     return document
 
 
