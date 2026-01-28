@@ -3,8 +3,10 @@ import {
   createKnowledgeSourceMutation,
   deleteKnowledgeSourceMutation,
   getKnowledgeSourceDefaultsOptions,
+  ingestAllDocumentsMutation,
   listKnowledgeSourcesOptions,
   listKnowledgeSourcesQueryKey,
+  retryKnowledgeSourceMutation,
 } from "../generated/@tanstack/react-query.gen";
 import type { KnowledgeSourceCreateSchema } from "../generated/types.gen";
 
@@ -54,6 +56,51 @@ export const useDeleteKnowledgeSource = () => {
 
   return {
     deleteSource,
+    ...mutationResult,
+  };
+};
+
+export const useRetryKnowledgeSource = () => {
+  const queryClient = useQueryClient();
+  const mutationResult = useMutation({
+    ...retryKnowledgeSourceMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: listKnowledgeSourcesQueryKey(),
+      });
+    },
+  });
+
+  const retrySource = (sourceId: string) => {
+    return mutationResult.mutateAsync({ path: { source_id: sourceId } });
+  };
+
+  return {
+    retrySource,
+    ...mutationResult,
+  };
+};
+
+export const useSyncKnowledgeSource = () => {
+  const queryClient = useQueryClient();
+  const mutationResult = useMutation({
+    ...ingestAllDocumentsMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: listKnowledgeSourcesQueryKey(),
+      });
+    },
+  });
+
+  const syncSource = (sourceId: string) => {
+    return mutationResult.mutateAsync({
+      path: { source_id: sourceId },
+      query: { force_reindex: false },
+    });
+  };
+
+  return {
+    syncSource,
     ...mutationResult,
   };
 };

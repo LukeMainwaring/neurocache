@@ -114,6 +114,8 @@ class KnowledgeSource(Base):
         user_id: str,
         status: str,
         error_message: str | None = None,
+        config: dict[str, Any] | None = None,
+        last_synced_at: datetime | None = None,
     ) -> KnowledgeSourceSchema:
         """Update the status of a knowledge source."""
         source = await db.get(cls, id)
@@ -121,6 +123,10 @@ class KnowledgeSource(Base):
             raise NoKnowledgeSourceFound(f"Knowledge source with id {id} not found")
         source.status = status
         source.error_message = error_message
+        if config is not None:
+            source.config = config
+        if last_synced_at is not None:
+            source.last_synced_at = last_synced_at
         await db.flush()
         await db.refresh(source)
         return KnowledgeSourceSchema.model_validate(source)

@@ -711,6 +711,36 @@ export type UpdateKnowledgeSourceResponses = {
 
 export type UpdateKnowledgeSourceResponse = UpdateKnowledgeSourceResponses[keyof UpdateKnowledgeSourceResponses];
 
+export type RetryKnowledgeSourceData = {
+    body?: never;
+    path: {
+        /**
+         * Source Id
+         */
+        source_id: string;
+    };
+    query?: never;
+    url: '/api/knowledge-sources/{source_id}/retry';
+};
+
+export type RetryKnowledgeSourceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RetryKnowledgeSourceError = RetryKnowledgeSourceErrors[keyof RetryKnowledgeSourceErrors];
+
+export type RetryKnowledgeSourceResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeSourceSchema;
+};
+
+export type RetryKnowledgeSourceResponse = RetryKnowledgeSourceResponses[keyof RetryKnowledgeSourceResponses];
+
 export type IngestDocumentData = {
     body?: never;
     path: {
@@ -780,49 +810,6 @@ export type IngestAllDocumentsResponses = {
 };
 
 export type IngestAllDocumentsResponse = IngestAllDocumentsResponses[keyof IngestAllDocumentsResponses];
-
-export type SearchKnowledgeSourceData = {
-    body?: never;
-    path: {
-        /**
-         * Source Id
-         */
-        source_id: string;
-    };
-    query: {
-        /**
-         * Query
-         */
-        query: string;
-        /**
-         * Top K
-         */
-        top_k?: number;
-    };
-    url: '/api/knowledge-sources/{source_id}/search';
-};
-
-export type SearchKnowledgeSourceErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type SearchKnowledgeSourceError = SearchKnowledgeSourceErrors[keyof SearchKnowledgeSourceErrors];
-
-export type SearchKnowledgeSourceResponses = {
-    /**
-     * Response Searchknowledgesource
-     *
-     * Successful Response
-     */
-    200: Array<{
-        [key: string]: string | number | number;
-    }>;
-};
-
-export type SearchKnowledgeSourceResponse = SearchKnowledgeSourceResponses[keyof SearchKnowledgeSourceResponses];
 
 export type ListThreadsData = {
     body?: never;

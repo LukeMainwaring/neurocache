@@ -301,6 +301,50 @@
         }
       }
     },
+    "/api/knowledge-sources/{source_id}/retry": {
+      "post": {
+        "tags": [
+          "knowledge-sources"
+        ],
+        "summary": "Retry Knowledge Source",
+        "description": "Re-validate an existing knowledge source connection.",
+        "operationId": "retryKnowledgeSource",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Source Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeSourceSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/knowledge-sources/{source_id}/ingest": {
       "post": {
         "tags": [
@@ -360,7 +404,7 @@
           "knowledge-sources"
         ],
         "summary": "Ingest All Documents",
-        "description": "Ingest all markdown documents from a knowledge source.\n\nDiscovers all .md files in the vault (excluding system directories like .obsidian)\nand ingests them into the database with embeddings.\n\nArgs:\n    source_id: The knowledge source ID\n    force_reindex: If True, re-ingest documents even if already indexed",
+        "description": "Ingest all markdown documents from a knowledge source.\n\nDiscovers all .md files in the vault (excluding system directories like .obsidian)\nand ingests them into the database with embeddings. Manages source lifecycle\n(status transitions, timestamps, stats).\n\nArgs:\n    source_id: The knowledge source ID\n    force_reindex: If True, re-ingest documents even if already indexed",
         "operationId": "ingestAllDocuments",
         "parameters": [
           {
@@ -391,86 +435,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BatchIngestResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/knowledge-sources/{source_id}/search": {
-      "get": {
-        "tags": [
-          "knowledge-sources"
-        ],
-        "summary": "Search Knowledge Source",
-        "description": "Search for similar chunks within a knowledge source.\n\nArgs:\n    source_id: The knowledge source ID to search within\n    query: The search query text\n    top_k: Number of results to return (default 5)",
-        "operationId": "searchKnowledgeSource",
-        "parameters": [
-          {
-            "name": "source_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Source Id"
-            }
-          },
-          {
-            "name": "query",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Query"
-            }
-          },
-          {
-            "name": "top_k",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 5,
-              "title": "Top K"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "integer"
-                        }
-                      ]
-                    }
-                  },
-                  "title": "Response Searchknowledgesource"
                 }
               }
             }

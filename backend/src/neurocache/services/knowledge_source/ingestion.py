@@ -36,6 +36,9 @@ MAX_CHUNK_SIZE = 2000  # ceiling - never exceed this
 CHUNK_OVERLAP = 200  # characters of overlap between chunks
 MIN_CHUNK_SIZE = 300  # avoid creating orphan chunks smaller than this
 
+# Pattern to detect YAML frontmatter at the start of a file
+FRONTMATTER_PATTERN = re.compile(r"\A---\s*\n.*?\n---\s*\n?", re.DOTALL)
+
 # Pattern to detect date entries at start of line (e.g., "January 14, 2024" or "5/15/2019")
 DATE_PATTERN = re.compile(
     r"^(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}|"
@@ -45,6 +48,11 @@ DATE_PATTERN = re.compile(
 
 # Pattern to detect markdown headers
 HEADER_PATTERN = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
+
+
+def strip_frontmatter(text: str) -> str:
+    """Remove YAML frontmatter from the start of a document."""
+    return FRONTMATTER_PATTERN.sub("", text, count=1)
 
 
 def compute_content_hash(content: str) -> str:
@@ -59,6 +67,10 @@ def detect_sections(text: str) -> list[tuple[str, str, int]]:
     1. Markdown headers (# through ######)
     2. Date patterns at line start (e.g., "January 14, 2024" or "5/15/2019")
 
+    For header sections, the header line itself is excluded from section_content
+    since it's already captured in the section_header field (avoids duplication
+    when the header is injected as chunk context).
+
     Args:
         text: The full document text
 
@@ -66,18 +78,21 @@ def detect_sections(text: str) -> list[tuple[str, str, int]]:
         List of (section_header, section_content, start_position) tuples.
         If no sections are found, returns single entry with empty header.
     """
-    # Find all section boundaries (headers and dates)
-    boundaries: list[tuple[int, str]] = []
+    # Find all section boundaries
+    # Each boundary: (boundary_pos, content_start, header_text)
+    #   boundary_pos: where this section starts (used to end previous section)
+    #   content_start: where the actual body content begins (after header line for headers)
+    boundaries: list[tuple[int, int, str]] = []
 
-    # Find markdown headers
+    # Find markdown headers - content starts after the header line
     for match in HEADER_PATTERN.finditer(text):
         header_text = match.group(2).strip()
-        boundaries.append((match.start(), header_text))
+        boundaries.append((match.start(), match.end(), header_text))
 
-    # Find date entries
+    # Find date entries - date is part of the content itself
     for match in DATE_PATTERN.finditer(text):
         date_text = match.group(0).strip()
-        boundaries.append((match.start(), date_text))
+        boundaries.append((match.start(), match.start(), date_text))
 
     # Sort by position
     boundaries.sort(key=lambda x: x[0])
@@ -95,16 +110,16 @@ def detect_sections(text: str) -> list[tuple[str, str, int]]:
             sections.append(("", preamble, 0))
 
     # Extract each section
-    for i, (start_pos, header) in enumerate(boundaries):
-        # Find end of this section (start of next, or end of text)
+    for i, (boundary_pos, content_start, header) in enumerate(boundaries):
+        # End of this section is the start of the next boundary, or end of text
         if i + 1 < len(boundaries):
             end_pos = boundaries[i + 1][0]
         else:
             end_pos = len(text)
 
-        section_content = text[start_pos:end_pos].strip()
+        section_content = text[content_start:end_pos].strip()
         if section_content:
-            sections.append((header, section_content, start_pos))
+            sections.append((header, section_content, boundary_pos))
 
     return sections
 
@@ -134,9 +149,7 @@ def split_section_with_overlap(
 
     while start < len(content):
         end = start + max_size
-
         if end >= len(content):
-            # Last chunk
             final_chunk = content[start:].strip()
             if final_chunk:
                 # If this final chunk is too small, merge with previous
@@ -148,10 +161,10 @@ def split_section_with_overlap(
 
         # Try to find a paragraph break near the end
         chunk = content[start:end]
-        last_para = chunk.rfind("\n\n")
+        last_paragraph = chunk.rfind("\n\n")
 
-        if last_para > max_size // 2:
-            end = start + last_para + 2  # Include the newlines
+        if last_paragraph > max_size // 2:
+            end = start + last_paragraph + 2  # Include the newlines
 
         chunk_text = content[start:end].strip()
         if chunk_text:
@@ -189,6 +202,8 @@ def markdown_aware_chunk_text(
     Returns:
         List of context-injected text chunks
     """
+    text = strip_frontmatter(text)
+
     # Small files: return as single chunk
     if len(text) <= target_size:
         context = f"[Source: {filename}]\n\n"
@@ -230,19 +245,6 @@ def markdown_aware_chunk_text(
     return merged_chunks
 
 
-def extract_title_from_markdown(content: str) -> str | None:
-    """Extract title from markdown content.
-
-    Looks for first H1 heading or first line if no heading found.
-    """
-    lines = content.strip().split("\n")
-    for line in lines:
-        line = line.strip()
-        if line.startswith("# "):
-            return line[2:].strip()
-    return None
-
-
 async def ingest_document(
     db: AsyncSession,
     openai_client: AsyncOpenAI,
@@ -271,7 +273,6 @@ async def ingest_document(
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 
-    # Read file content and metadata
     content = file_path.read_text(encoding="utf-8")
     if not content.strip():
         raise ValueError(f"File is empty: {file_path}")
@@ -280,7 +281,7 @@ async def ingest_document(
     file_modified_at = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
 
     content_hash = compute_content_hash(content)
-    title = extract_title_from_markdown(content)
+    title = Path(relative_path).stem
 
     document = await Document.create(
         db,
@@ -295,12 +296,10 @@ async def ingest_document(
     )
     logger.info("Created document %s for %s", document.id, relative_path)
 
-    # Chunk the content with markdown-aware strategy
     filename = Path(relative_path).name
     chunks = markdown_aware_chunk_text(content, filename)
     logger.info("Split document into %d chunks", len(chunks))
 
-    # Generate embeddings in batch
     embeddings = await generate_embeddings_batch(openai_client, chunks)
 
     # Create chunk records
@@ -374,7 +373,6 @@ async def ingest_all_documents(
     """
     start_time = time.time()
 
-    # Discover all markdown files
     base_path = Path(VAULT_MOUNT_PATH)
     markdown_files = discover_markdown_files(base_path)
 
@@ -394,12 +392,10 @@ async def ingest_all_documents(
                     await Document.delete(db, existing_doc.id)
                     logger.info("Deleted existing document for re-indexing: %s", relative_path)
                 else:
-                    # Skip already indexed document
                     documents_skipped += 1
                     logger.debug("Skipping already indexed: %s", relative_path)
                     continue
 
-            # Ingest the document
             await ingest_document(db, openai_client, knowledge_source_id, relative_path)
             documents_created += 1
 

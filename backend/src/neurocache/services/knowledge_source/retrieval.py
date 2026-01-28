@@ -1,7 +1,6 @@
 """Retrieval service for semantic search over document chunks."""
 
 import logging
-import uuid
 
 from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,29 +12,6 @@ logger = logging.getLogger(__name__)
 
 # TODO: decide if there should be a similarity threshold. if so, what should it be?
 DEFAULT_TOP_K = 5
-
-
-async def search_similar_chunks(
-    db: AsyncSession,
-    openai_client: AsyncOpenAI,
-    query: str,
-    top_k: int = DEFAULT_TOP_K,
-    knowledge_source_id: uuid.UUID | None = None,
-) -> list[tuple[DocumentChunk, float]]:
-    """Search for document chunks most similar to the query.
-
-    Args:
-        db: Database session
-        openai_client: OpenAI client for generating query embedding
-        query: The search query text
-        top_k: Number of results to return (default 5)
-        knowledge_source_id: Optional filter to search within a specific knowledge source
-
-    Returns:
-        List of (DocumentChunk, similarity_score) tuples, ordered by similarity descending.
-    """
-    query_embedding = await generate_embedding(openai_client, query)
-    return await DocumentChunk.search_similar(db, query_embedding, top_k, knowledge_source_id)
 
 
 async def search_similar_chunks_for_user(

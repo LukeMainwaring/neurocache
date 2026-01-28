@@ -4,8 +4,8 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
-import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listKnowledgeSources, listThreads, listUsers, type Options, searchKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization } from '../sdk.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, SearchKnowledgeSourceData, SearchKnowledgeSourceError, SearchKnowledgeSourceResponse, StreamChatData, StreamChatError, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
+import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listKnowledgeSources, listThreads, listUsers, type Options, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization } from '../sdk.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, StreamChatError, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
 
 /**
  * Stream Chat
@@ -205,6 +205,25 @@ export const updateKnowledgeSourceMutation = (options?: Partial<Options<UpdateKn
 };
 
 /**
+ * Retry Knowledge Source
+ *
+ * Re-validate an existing knowledge source connection.
+ */
+export const retryKnowledgeSourceMutation = (options?: Partial<Options<RetryKnowledgeSourceData>>): UseMutationOptions<RetryKnowledgeSourceResponse, AxiosError<RetryKnowledgeSourceError>, Options<RetryKnowledgeSourceData>> => {
+    const mutationOptions: UseMutationOptions<RetryKnowledgeSourceResponse, AxiosError<RetryKnowledgeSourceError>, Options<RetryKnowledgeSourceData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await retryKnowledgeSource({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
  * Ingest Document
  *
  * Ingest a single document from a knowledge source.
@@ -233,7 +252,8 @@ export const ingestDocumentMutation = (options?: Partial<Options<IngestDocumentD
  * Ingest all markdown documents from a knowledge source.
  *
  * Discovers all .md files in the vault (excluding system directories like .obsidian)
- * and ingests them into the database with embeddings.
+ * and ingests them into the database with embeddings. Manages source lifecycle
+ * (status transitions, timestamps, stats).
  *
  * Args:
  * source_id: The knowledge source ID
@@ -252,31 +272,6 @@ export const ingestAllDocumentsMutation = (options?: Partial<Options<IngestAllDo
     };
     return mutationOptions;
 };
-
-export const searchKnowledgeSourceQueryKey = (options: Options<SearchKnowledgeSourceData>) => createQueryKey('searchKnowledgeSource', options);
-
-/**
- * Search Knowledge Source
- *
- * Search for similar chunks within a knowledge source.
- *
- * Args:
- * source_id: The knowledge source ID to search within
- * query: The search query text
- * top_k: Number of results to return (default 5)
- */
-export const searchKnowledgeSourceOptions = (options: Options<SearchKnowledgeSourceData>) => queryOptions<SearchKnowledgeSourceResponse, AxiosError<SearchKnowledgeSourceError>, SearchKnowledgeSourceResponse, ReturnType<typeof searchKnowledgeSourceQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await searchKnowledgeSource({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: searchKnowledgeSourceQueryKey(options)
-});
 
 export const listThreadsQueryKey = (options?: Options<ListThreadsData>) => createQueryKey('listThreads', options);
 

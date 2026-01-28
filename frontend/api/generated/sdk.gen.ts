@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, SearchKnowledgeSourceData, SearchKnowledgeSourceErrors, SearchKnowledgeSourceResponses, StreamChatData, StreamChatErrors, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses } from './types.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, RetryKnowledgeSourceData, RetryKnowledgeSourceErrors, RetryKnowledgeSourceResponses, StreamChatData, StreamChatErrors, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -127,6 +127,17 @@ export const updateKnowledgeSource = <ThrowOnError extends boolean = false>(opti
 });
 
 /**
+ * Retry Knowledge Source
+ *
+ * Re-validate an existing knowledge source connection.
+ */
+export const retryKnowledgeSource = <ThrowOnError extends boolean = false>(options: Options<RetryKnowledgeSourceData, ThrowOnError>) => (options.client ?? client).post<RetryKnowledgeSourceResponses, RetryKnowledgeSourceErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/knowledge-sources/{source_id}/retry',
+    ...options
+});
+
+/**
  * Ingest Document
  *
  * Ingest a single document from a knowledge source.
@@ -147,7 +158,8 @@ export const ingestDocument = <ThrowOnError extends boolean = false>(options: Op
  * Ingest all markdown documents from a knowledge source.
  *
  * Discovers all .md files in the vault (excluding system directories like .obsidian)
- * and ingests them into the database with embeddings.
+ * and ingests them into the database with embeddings. Manages source lifecycle
+ * (status transitions, timestamps, stats).
  *
  * Args:
  * source_id: The knowledge source ID
@@ -156,22 +168,6 @@ export const ingestDocument = <ThrowOnError extends boolean = false>(options: Op
 export const ingestAllDocuments = <ThrowOnError extends boolean = false>(options: Options<IngestAllDocumentsData, ThrowOnError>) => (options.client ?? client).post<IngestAllDocumentsResponses, IngestAllDocumentsErrors, ThrowOnError>({
     responseType: 'json',
     url: '/api/knowledge-sources/{source_id}/ingest-all',
-    ...options
-});
-
-/**
- * Search Knowledge Source
- *
- * Search for similar chunks within a knowledge source.
- *
- * Args:
- * source_id: The knowledge source ID to search within
- * query: The search query text
- * top_k: Number of results to return (default 5)
- */
-export const searchKnowledgeSource = <ThrowOnError extends boolean = false>(options: Options<SearchKnowledgeSourceData, ThrowOnError>) => (options.client ?? client).get<SearchKnowledgeSourceResponses, SearchKnowledgeSourceErrors, ThrowOnError>({
-    responseType: 'json',
-    url: '/api/knowledge-sources/{source_id}/search',
     ...options
 });
 

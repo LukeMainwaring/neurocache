@@ -34,8 +34,8 @@ export function RAGSourcesDialog({ sources, trigger }: RAGSourcesDialogProps) {
               className="rounded-lg border bg-muted/50 p-4"
               key={`${source.path}-${index}`}
             >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="truncate font-mono text-foreground text-sm">
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <span className="line-clamp-2 break-all font-mono text-foreground text-sm">
                   {source.path}
                 </span>
                 <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-muted-foreground text-xs">

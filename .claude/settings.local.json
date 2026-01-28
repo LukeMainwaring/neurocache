@@ -26,7 +26,10 @@
       "Bash(./scripts/create-db-revision-docker.sh:*)",
       "Bash(pnpm lint:*)",
       "WebSearch",
-      "Bash(pnpm tsc:*)"
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm format:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(pnpm generate-client:*)"
     ]
   }
 }
