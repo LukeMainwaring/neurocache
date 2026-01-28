@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from openai import AsyncOpenAI
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neurocache.models.document import Document
@@ -17,7 +16,9 @@ from neurocache.models.document_chunk import DocumentChunk
 from neurocache.schemas.document import (
     BatchIngestFailure,
     BatchIngestResult,
+    DocumentCreateSchema,
     DocumentStatus,
+    DocumentUpdateSchema,
 )
 from neurocache.services.embedding import generate_embeddings_batch
 
@@ -278,22 +279,20 @@ async def ingest_document(
     file_stat = file_path.stat()
     file_modified_at = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
 
-    # Create document record
     content_hash = compute_content_hash(content)
     title = extract_title_from_markdown(content)
 
-    document = Document(
-        id=uuid.uuid4(),
-        knowledge_source_id=knowledge_source_id,
-        relative_path=relative_path,
-        title=title,
-        content_hash=content_hash,
-        file_modified_at=file_modified_at,
-        status=DocumentStatus.PROCESSING,
+    document = await Document.create(
+        db,
+        DocumentCreateSchema(
+            knowledge_source_id=knowledge_source_id,
+            relative_path=relative_path,
+            title=title,
+            content_hash=content_hash,
+            file_modified_at=file_modified_at,
+            status=DocumentStatus.PROCESSING,
+        ),
     )
-    db.add(document)
-    await db.flush()  # Get the document ID
-
     logger.info("Created document %s for %s", document.id, relative_path)
 
     # Chunk the content with markdown-aware strategy
@@ -315,14 +314,16 @@ async def ingest_document(
         )
         db.add(chunk)
 
-    # Update document status
-    document.status = DocumentStatus.INDEXED
-    document.chunk_count = len(chunks)
-    document.indexed_at = datetime.now(timezone.utc)
-
-    await db.flush()
+    document = await Document.update(
+        db,
+        document.id,
+        DocumentUpdateSchema(
+            status=DocumentStatus.INDEXED,
+            chunk_count=len(chunks),
+            indexed_at=datetime.now(timezone.utc),
+        ),
+    )
     logger.info("Indexed document %s with %d chunks", document.id, len(chunks))
-
     return document
 
 
@@ -352,30 +353,6 @@ def discover_markdown_files(
         markdown_files.append(str(file_path.relative_to(base_path)))
 
     return sorted(markdown_files)
-
-
-async def get_existing_document(
-    db: AsyncSession,
-    knowledge_source_id: uuid.UUID,
-    relative_path: str,
-) -> Document | None:
-    """Check if document already exists for this source and path.
-
-    Args:
-        db: Database session
-        knowledge_source_id: The knowledge source ID
-        relative_path: Path relative to source root
-
-    Returns:
-        Document if exists, None otherwise
-    """
-    result = await db.execute(
-        select(Document).where(
-            Document.knowledge_source_id == knowledge_source_id,
-            Document.relative_path == relative_path,
-        )
-    )
-    return result.scalar_one_or_none()
 
 
 async def ingest_all_documents(
@@ -411,14 +388,10 @@ async def ingest_all_documents(
 
     for relative_path in markdown_files:
         try:
-            # Check if document already exists
-            existing_doc = await get_existing_document(db, knowledge_source_id, relative_path)
-
+            existing_doc = await Document.get_by_relative_path(db, knowledge_source_id, relative_path)
             if existing_doc:
                 if force_reindex:
-                    # Delete existing document (cascade removes chunks)
-                    await db.delete(existing_doc)
-                    await db.flush()
+                    await Document.delete(db, existing_doc.id)
                     logger.info("Deleted existing document for re-indexing: %s", relative_path)
                 else:
                     # Skip already indexed document
@@ -437,7 +410,6 @@ async def ingest_all_documents(
             logger.warning("Failed to ingest %s: %s", relative_path, error_msg)
 
     duration = time.time() - start_time
-
     logger.info(
         "Batch ingestion complete: %d created, %d skipped, %d failed in %.2fs",
         documents_created,
@@ -445,7 +417,6 @@ async def ingest_all_documents(
         documents_failed,
         duration,
     )
-
     return BatchIngestResult(
         total_files_found=total_files,
         documents_created=documents_created,

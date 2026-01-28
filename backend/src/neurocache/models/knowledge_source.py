@@ -74,7 +74,7 @@ class KnowledgeSource(Base):
             **source_create.model_dump(),
         )
         db.add(source)
-        await db.commit()
+        await db.flush()
         await db.refresh(source)
         return KnowledgeSourceSchema.model_validate(source)
 
@@ -93,7 +93,7 @@ class KnowledgeSource(Base):
         for field, value in source_update.model_dump(exclude_unset=True).items():
             if value is not None:
                 setattr(source, field, value)
-        await db.commit()
+        await db.flush()
         await db.refresh(source)
         return KnowledgeSourceSchema.model_validate(source)
 
@@ -104,7 +104,7 @@ class KnowledgeSource(Base):
         if source is None or source.user_id != user_id:
             raise NoKnowledgeSourceFound(f"Knowledge source with id {id} not found")
         await db.delete(source)
-        await db.commit()
+        await db.flush()
 
     @classmethod
     async def update_status(
@@ -121,6 +121,6 @@ class KnowledgeSource(Base):
             raise NoKnowledgeSourceFound(f"Knowledge source with id {id} not found")
         source.status = status
         source.error_message = error_message
-        await db.commit()
+        await db.flush()
         await db.refresh(source)
         return KnowledgeSourceSchema.model_validate(source)

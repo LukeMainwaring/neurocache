@@ -91,7 +91,7 @@ class Thread(Base):
         await db.execute(
             delete(cls).where(cls.thread_id == thread_id, cls.user_id == user_id, cls.agent_type == agent_type)
         )
-        await db.commit()
+        await db.flush()
 
     @classmethod
     async def update_title(cls, db: AsyncSession, thread_id: str, agent_type: str, title: str) -> None:

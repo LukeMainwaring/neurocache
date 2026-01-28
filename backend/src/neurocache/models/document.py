@@ -6,15 +6,24 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import DateTime, ForeignKey, Index, UniqueConstraint
+from fastapi import HTTPException
+from sqlalchemy import DateTime, ForeignKey, Index, UniqueConstraint, select
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from neurocache.models.base import Base
-from neurocache.schemas.document import DocumentStatus
+from neurocache.schemas.document import DocumentCreateSchema, DocumentStatus, DocumentUpdateSchema
 
 if TYPE_CHECKING:
     from neurocache.models.document_chunk import DocumentChunk
+
+
+class NoDocumentFound(HTTPException):
+    """Exception raised when a document is not found."""
+
+    def __init__(self, detail: str = "Document not found"):
+        super().__init__(status_code=404, detail=detail)
 
 
 class Document(Base):
@@ -48,3 +57,86 @@ class Document(Base):
         Index("ix_documents_knowledge_source_id", "knowledge_source_id"),
         Index("ix_documents_status", "status"),
     )
+
+    @classmethod
+    async def get_by_relative_path(
+        cls,
+        db: AsyncSession,
+        knowledge_source_id: uuid.UUID,
+        relative_path: str,
+    ) -> Document | None:
+        """Get a document by its knowledge source ID and relative path.
+
+        Args:
+            db: Database session
+            knowledge_source_id: The knowledge source ID
+            relative_path: Path relative to source root
+
+        Returns:
+            Document if exists, None otherwise
+        """
+        result = await db.execute(
+            select(Document).where(
+                Document.knowledge_source_id == knowledge_source_id,
+                Document.relative_path == relative_path,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    @classmethod
+    async def create(
+        cls,
+        db: AsyncSession,
+        document_create: DocumentCreateSchema,
+    ) -> Document:
+        """Create a new document.
+
+        Args:
+            db: Database session
+            document_create: Document creation schema
+
+        Returns:
+            The created Document instance
+        """
+        document = cls(
+            **document_create.model_dump(),
+        )
+        db.add(document)
+        await db.flush()
+        await db.refresh(document)
+        return document
+
+    @classmethod
+    async def update(
+        cls,
+        db: AsyncSession,
+        id: uuid.UUID,
+        document_update: DocumentUpdateSchema,
+    ) -> Document:
+        """Update a document.
+
+        Args:
+            db: Database session
+            id: Document ID
+            document_update: Document update schema
+
+        Returns:
+            The updated Document instance
+        """
+        document = await db.get(cls, id)
+        if document is None:
+            raise NoDocumentFound(f"Document with id {id} not found")
+        for field, value in document_update.model_dump(exclude_unset=True).items():
+            setattr(document, field, value)
+        await db.flush()
+        await db.refresh(document)
+        return document
+
+    @classmethod
+    async def delete(cls, db: AsyncSession, id: uuid.UUID) -> None:
+        """Delete a document."""
+        document = await db.get(cls, id)
+        if document is None:
+            raise NoDocumentFound(f"Document with id {id} not found")
+        await db.delete(document)
+        await db.flush()

@@ -47,6 +47,7 @@ class DocumentCreateSchema(BaseSchema):
     content_hash: str = Field(description="SHA-256 hash for change detection")
     file_modified_at: datetime | None = Field(default=None, description="Filesystem mtime")
     doc_metadata: dict[str, Any] | None = Field(default=None, description="Frontmatter, tags, links")
+    status: DocumentStatus = Field(default=DocumentStatus.PENDING, description="Indexing status")
 
 
 class DocumentUpdateSchema(BaseSchema):

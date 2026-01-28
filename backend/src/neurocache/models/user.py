@@ -55,7 +55,7 @@ class User(Base):
     ) -> UserSchema:
         user = cls(**user_create_schema.model_dump())
         db.add(user)
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
         return UserSchema.model_validate(user)
 
@@ -71,7 +71,7 @@ class User(Base):
             raise NoUserFound(f"User with id {id} not found")
         for field, value in user_update.model_dump(exclude_unset=True, exclude_none=True).items():
             setattr(user, field, value)
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
         return UserSchema.model_validate(user)
 
@@ -88,20 +88,17 @@ class User(Base):
             raise NoUserFound(f"User with id {id} not found")
         for field, value in personalization.model_dump(exclude_unset=True).items():
             setattr(user, field, value)
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
         return UserSchema.model_validate(user)
 
     @classmethod
-    async def delete(cls, db: AsyncSession, user_id: str, commit: bool = True) -> None:
+    async def delete(cls, db: AsyncSession, user_id: str) -> None:
         user = await db.get(cls, user_id)
         if user is None:
             raise NoUserFound(f"User with id {user_id} not found")
         await db.delete(user)
-        if commit:
-            await db.commit()
-        else:
-            await db.flush()
+        await db.flush()
 
     @classmethod
     async def exists(cls, db: AsyncSession, id: str) -> bool:
