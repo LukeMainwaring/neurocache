@@ -230,19 +230,6 @@ def markdown_aware_chunk_text(
     return merged_chunks
 
 
-def extract_title_from_markdown(content: str) -> str | None:
-    """Extract title from markdown content.
-
-    Looks for first H1 heading or first line if no heading found.
-    """
-    lines = content.strip().split("\n")
-    for line in lines:
-        line = line.strip()
-        if line.startswith("# "):
-            return line[2:].strip()
-    return None
-
-
 async def ingest_document(
     db: AsyncSession,
     openai_client: AsyncOpenAI,
@@ -280,7 +267,7 @@ async def ingest_document(
     file_modified_at = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
 
     content_hash = compute_content_hash(content)
-    title = extract_title_from_markdown(content)
+    title = Path(relative_path).stem
 
     document = await Document.create(
         db,
