@@ -690,10 +690,20 @@
             "title": "Documents Created",
             "description": "New documents successfully ingested"
           },
+          "documents_updated": {
+            "type": "integer",
+            "title": "Documents Updated",
+            "description": "Modified documents re-ingested"
+          },
+          "documents_deleted": {
+            "type": "integer",
+            "title": "Documents Deleted",
+            "description": "Removed documents cleaned up"
+          },
           "documents_skipped": {
             "type": "integer",
             "title": "Documents Skipped",
-            "description": "Already indexed, skipped"
+            "description": "Unchanged, skipped"
           },
           "documents_failed": {
             "type": "integer",
@@ -717,6 +727,8 @@
         "required": [
           "total_files_found",
           "documents_created",
+          "documents_updated",
+          "documents_deleted",
           "documents_skipped",
           "documents_failed",
           "duration_seconds"

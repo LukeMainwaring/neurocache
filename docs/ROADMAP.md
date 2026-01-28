@@ -4,8 +4,8 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 ## Current State
 
-- **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings, RAG vertical slice (single document ingestion, semantic search, context injection), markdown-aware chunking strategy, batch ingestion of all documents from a knowledge source
-- **Next Up**: Sync and refresh to keep the knowledge base current with file changes
+- **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings, RAG vertical slice (single document ingestion, semantic search, context injection), markdown-aware chunking strategy, batch ingestion of all documents from a knowledge source, sync lifecycle with manual re-sync UI and status tracking, change detection during sync (re-index modified files, clean up deleted files)
+- **Next Up**: Enhanced retrieval (cross-reference discovery, citations, hybrid search)
 
 ---
 
@@ -65,19 +65,29 @@ Scaled the ingestion pipeline to process all documents from a knowledge source a
 - Error handling: continues on single file failure, reports all failures at end
 - `BatchIngestResult` response with statistics (total_files_found, documents_created, documents_skipped, documents_failed, failed_files, duration_seconds)
 
----
+#### 2.6 Sync Lifecycle (Done)
 
-## Next Up
+Added manual sync with status tracking and service layer reorganization.
 
-### Phase 2.6: Sync and Refresh
+- `sync_documents()` service wrapping ingestion with lifecycle management (SYNCING -> CONNECTED/ERROR)
+- `last_synced_at` timestamp on KnowledgeSource model, set on successful sync
+- Document stats tracked in source config (documents_indexed, documents_failed)
+- Service layer reorganization: `services/knowledge_source/` package with ingestion, knowledge_source, vault_validator, and retrieval modules
+- Simplified router delegating to service layer
+- Frontend: Sync Now button with syncing state, document count display, last synced relative time, toast messages with sync results
+- Improved markdown parsing (cleaner frontmatter stripping, better title extraction)
 
-Keep the knowledge base current with file changes.
+#### 2.7 Change Detection (Done)
 
-- Manual re-sync endpoint/button
-- Track file modification times to detect changes
-- Compare content hash to identify modified files
-- Incremental updates (only re-embed changed files)
-- Handle deleted/renamed files
+Made sync detect modified and deleted files instead of blindly skipping existing documents.
+
+- Two-stage change detection: fast `file_modified_at` mtime comparison, then `content_hash` (SHA-256) if mtime differs
+- Modified files are deleted and re-ingested with fresh chunks and embeddings
+- After processing discovered files, DB records for files no longer on disk are cleaned up (cascade deletes chunks)
+- Renamed files handled implicitly as delete + create (no special rename logic)
+- `BatchIngestResult` extended with `documents_updated` and `documents_deleted` counters
+- `Document.get_all_by_source()` classmethod for comparing DB records against discovered files
+- Frontend toast messages show granular sync results (new, updated, removed, unchanged, failed)
 
 ---
 

@@ -64,7 +64,7 @@ async def sync_documents(
         result = await ingestion_service.ingest_all_documents(db, openai_client, source_id, force_reindex)
         config = {
             **(source.config or {}),
-            "documents_indexed": result.documents_created + result.documents_skipped,
+            "documents_indexed": result.documents_created + result.documents_updated + result.documents_skipped,
             "documents_failed": result.documents_failed,
         }
         await KnowledgeSource.update_status(

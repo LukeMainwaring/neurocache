@@ -29,7 +29,8 @@
       "Bash(pnpm tsc:*)",
       "Bash(pnpm format:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(pnpm generate-client:*)"
+      "Bash(pnpm generate-client:*)",
+      "Bash(gh pr view:*)"
     ]
   }
 }

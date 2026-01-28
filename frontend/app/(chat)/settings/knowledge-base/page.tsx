@@ -161,14 +161,41 @@ export default function KnowledgeBasePage() {
     setSyncingId(id);
     try {
       const result = await syncSource(id);
-      if (result.documents_created === 0 && result.documents_failed === 0) {
+      const {
+        documents_created,
+        documents_updated,
+        documents_deleted,
+        documents_skipped,
+        documents_failed,
+      } = result;
+
+      if (
+        documents_created === 0 &&
+        documents_updated === 0 &&
+        documents_deleted === 0 &&
+        documents_failed === 0
+      ) {
         toast.success(
-          `Already up to date — ${result.documents_skipped} documents unchanged`,
+          `Already up to date — ${documents_skipped} documents unchanged`
         );
       } else {
-        toast.success(
-          `Synced! ${result.documents_created} new, ${result.documents_skipped} unchanged, ${result.documents_failed} failed`,
-        );
+        const parts: string[] = [];
+        if (documents_created > 0) {
+          parts.push(`${documents_created} new`);
+        }
+        if (documents_updated > 0) {
+          parts.push(`${documents_updated} updated`);
+        }
+        if (documents_deleted > 0) {
+          parts.push(`${documents_deleted} removed`);
+        }
+        if (documents_skipped > 0) {
+          parts.push(`${documents_skipped} unchanged`);
+        }
+        if (documents_failed > 0) {
+          parts.push(`${documents_failed} failed`);
+        }
+        toast.success(`Synced! ${parts.join(", ")}`);
       }
     } catch (error) {
       console.error("Failed to sync knowledge source:", error);

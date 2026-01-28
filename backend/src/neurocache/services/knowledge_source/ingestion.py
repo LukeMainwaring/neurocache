@@ -354,6 +354,33 @@ def discover_markdown_files(
     return sorted(markdown_files)
 
 
+def _file_has_changed(existing_doc: Document, file_path: Path) -> tuple[bool, str | None]:
+    """Check if a file's content has changed since last ingestion.
+
+    Uses a two-stage check:
+    1. Fast: compare mtime — if unchanged, skip reading file
+    2. Slow: read file and compare content hash
+
+    Returns:
+        (has_changed, new_content_hash) — hash is None if unchanged
+    """
+    file_stat = file_path.stat()
+    current_mtime = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
+
+    # Fast check: if mtime is the same, content hasn't changed
+    if existing_doc.file_modified_at and current_mtime == existing_doc.file_modified_at:
+        return False, None
+
+    # mtime differs — read file and compare content hash
+    content = file_path.read_text(encoding="utf-8")
+    current_hash = compute_content_hash(content)
+
+    if current_hash == existing_doc.content_hash:
+        return False, None  # mtime changed but content is the same (e.g., touch)
+
+    return True, current_hash
+
+
 async def ingest_all_documents(
     db: AsyncSession,
     openai_client: AsyncOpenAI,
@@ -378,6 +405,7 @@ async def ingest_all_documents(
 
     total_files = len(markdown_files)
     documents_created = 0
+    documents_updated = 0
     documents_skipped = 0
     documents_failed = 0
     failed_files: list[BatchIngestFailure] = []
@@ -392,8 +420,17 @@ async def ingest_all_documents(
                     await Document.delete(db, existing_doc.id)
                     logger.info("Deleted existing document for re-indexing: %s", relative_path)
                 else:
-                    documents_skipped += 1
-                    logger.debug("Skipping already indexed: %s", relative_path)
+                    file_path = Path(VAULT_MOUNT_PATH) / relative_path
+                    changed, _ = _file_has_changed(existing_doc, file_path)
+                    if not changed:
+                        documents_skipped += 1
+                        logger.debug("Skipping unchanged: %s", relative_path)
+                        continue
+                    # Content changed — delete and re-ingest
+                    await Document.delete(db, existing_doc.id)
+                    logger.info("Re-indexing modified document: %s", relative_path)
+                    await ingest_document(db, openai_client, knowledge_source_id, relative_path)
+                    documents_updated += 1
                     continue
 
             await ingest_document(db, openai_client, knowledge_source_id, relative_path)
@@ -405,10 +442,22 @@ async def ingest_all_documents(
             failed_files.append(BatchIngestFailure(relative_path=relative_path, error=error_msg))
             logger.warning("Failed to ingest %s: %s", relative_path, error_msg)
 
+    # Detect deleted files — remove DB records for files no longer on disk
+    discovered_set = set(markdown_files)
+    all_docs = await Document.get_all_by_source(db, knowledge_source_id)
+    documents_deleted = 0
+    for doc in all_docs:
+        if doc.relative_path not in discovered_set:
+            await Document.delete(db, doc.id)
+            documents_deleted += 1
+            logger.info("Deleted document no longer on disk: %s", doc.relative_path)
+
     duration = time.time() - start_time
     logger.info(
-        "Batch ingestion complete: %d created, %d skipped, %d failed in %.2fs",
+        "Batch ingestion complete: %d created, %d updated, %d deleted, %d skipped, %d failed in %.2fs",
         documents_created,
+        documents_updated,
+        documents_deleted,
         documents_skipped,
         documents_failed,
         duration,
@@ -416,6 +465,8 @@ async def ingest_all_documents(
     return BatchIngestResult(
         total_files_found=total_files,
         documents_created=documents_created,
+        documents_updated=documents_updated,
+        documents_deleted=documents_deleted,
         documents_skipped=documents_skipped,
         documents_failed=documents_failed,
         failed_files=failed_files,
