@@ -4,8 +4,8 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 ## Current State
 
-- **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings, RAG vertical slice (single document ingestion, semantic search, context injection), markdown-aware chunking strategy, batch ingestion of all documents from a knowledge source
-- **Next Up**: Sync and refresh to keep the knowledge base current with file changes
+- **Working**: Chat with streaming, message persistence, thread management, auto-generated thread titles, user personalization settings, RAG vertical slice (single document ingestion, semantic search, context injection), markdown-aware chunking strategy, batch ingestion of all documents from a knowledge source, sync lifecycle with manual re-sync UI and status tracking
+- **Next Up**: Change detection during sync (re-index modified files, clean up deleted files)
 
 ---
 
@@ -65,19 +65,31 @@ Scaled the ingestion pipeline to process all documents from a knowledge source a
 - Error handling: continues on single file failure, reports all failures at end
 - `BatchIngestResult` response with statistics (total_files_found, documents_created, documents_skipped, documents_failed, failed_files, duration_seconds)
 
+#### 2.6 Sync Lifecycle (Done)
+
+Added manual sync with status tracking and service layer reorganization.
+
+- `sync_documents()` service wrapping ingestion with lifecycle management (SYNCING -> CONNECTED/ERROR)
+- `last_synced_at` timestamp on KnowledgeSource model, set on successful sync
+- Document stats tracked in source config (documents_indexed, documents_failed)
+- Service layer reorganization: `services/knowledge_source/` package with ingestion, knowledge_source, vault_validator, and retrieval modules
+- Simplified router delegating to service layer
+- Frontend: Sync Now button with syncing state, document count display, last synced relative time, toast messages with sync results
+- Improved markdown parsing (cleaner frontmatter stripping, better title extraction)
+
 ---
 
 ## Next Up
 
-### Phase 2.6: Sync and Refresh
+### Phase 2.7: Change Detection
 
-Keep the knowledge base current with file changes.
+Detect and handle file changes during sync so modified, deleted, and renamed files are properly re-indexed.
 
-- Manual re-sync endpoint/button
-- Track file modification times to detect changes
-- Compare content hash to identify modified files
-- Incremental updates (only re-embed changed files)
-- Handle deleted/renamed files
+- Compare stored `content_hash` against current file content to detect modifications
+- Compare stored `file_modified_at` against filesystem mtime as a fast pre-check
+- Re-ingest documents whose content has changed (delete old chunks, re-embed)
+- Detect deleted files (documents in DB but no longer on disk) and clean up their records and chunks
+- Handle renamed files (same content hash, different path)
 
 ---
 
