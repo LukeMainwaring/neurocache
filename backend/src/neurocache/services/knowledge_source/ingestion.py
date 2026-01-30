@@ -16,6 +16,7 @@ from neurocache.models.document_chunk import DocumentChunk
 from neurocache.schemas.document import (
     BatchIngestFailure,
     BatchIngestResult,
+    ContentType,
     DocumentCreateSchema,
     DocumentStatus,
     DocumentUpdateSchema,
@@ -54,6 +55,87 @@ HEADER_PATTERN = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 def strip_frontmatter(text: str) -> str:
     """Remove YAML frontmatter from the start of a document."""
     return FRONTMATTER_PATTERN.sub("", text, count=1)
+
+
+def parse_frontmatter(text: str) -> dict[str, str]:
+    """Parse YAML frontmatter from the start of a document.
+
+    Returns a dict of key-value pairs from the frontmatter.
+    Only handles simple key: value pairs (not nested structures).
+
+    Args:
+        text: The full document text
+
+    Returns:
+        Dict of frontmatter fields, empty if no frontmatter found
+    """
+    match = FRONTMATTER_PATTERN.match(text)
+    if not match:
+        return {}
+
+    frontmatter_block = match.group(0)
+    # Remove the --- delimiters
+    lines = frontmatter_block.strip().split("\n")[1:-1]
+
+    result: dict[str, str] = {}
+    for line in lines:
+        if ":" in line:
+            key, _, value = line.partition(":")
+            key = key.strip()
+            value = value.strip()
+            # Remove quotes if present
+            if value.startswith('"') and value.endswith('"'):
+                value = value[1:-1]
+            elif value.startswith("'") and value.endswith("'"):
+                value = value[1:-1]
+            result[key] = value
+
+    return result
+
+
+def detect_content_type(frontmatter: dict[str, str], relative_path: str) -> ContentType:
+    """Detect content type from frontmatter or file path.
+
+    Priority:
+    1. Explicit 'type' field in frontmatter
+    2. Path-based detection (e.g., "Books/" folder)
+    3. Default to personal_note
+
+    Args:
+        frontmatter: Parsed frontmatter dict
+        relative_path: Path relative to vault root
+
+    Returns:
+        Detected ContentType
+    """
+    fm_type = frontmatter.get("type", "").lower()
+
+    if fm_type == "book":
+        return ContentType.BOOK_NOTE
+    elif fm_type == "article":
+        return ContentType.ARTICLE
+
+    # Path-based detection as fallback
+    path_lower = relative_path.lower()
+    if "books/" in path_lower or "book notes/" in path_lower:
+        return ContentType.BOOK_NOTE
+    elif "articles/" in path_lower:
+        return ContentType.ARTICLE
+
+    return ContentType.PERSONAL_NOTE
+
+
+def extract_book_metadata(frontmatter: dict[str, str]) -> dict[str, str]:
+    """Extract book-specific metadata from frontmatter.
+
+    Args:
+        frontmatter: Parsed frontmatter dict
+
+    Returns:
+        Dict with book metadata fields (author, title, date_read, rating)
+    """
+    book_fields = ["author", "title", "date_read", "rating", "tags"]
+    return {k: v for k, v in frontmatter.items() if k in book_fields and v}
 
 
 def compute_content_hash(content: str) -> str:
@@ -277,14 +359,31 @@ async def ingest_document(
     content_hash = compute_content_hash(content)
     title = Path(relative_path).stem
 
+    frontmatter = parse_frontmatter(content)
+    content_type = detect_content_type(frontmatter, relative_path)
+
+    # Build doc_metadata from frontmatter
+    doc_metadata: dict[str, str] | None = None
+    if content_type == ContentType.BOOK_NOTE:
+        book_meta = extract_book_metadata(frontmatter)
+        if book_meta:
+            doc_metadata = book_meta
+            # Use frontmatter title if available (often more complete than filename)
+            if "title" in book_meta:
+                title = book_meta["title"]
+
+    logger.info("Detected content type '%s' for %s", content_type, relative_path)
+
     document = await Document.create(
         db,
         DocumentCreateSchema(
             knowledge_source_id=knowledge_source_id,
             relative_path=relative_path,
             title=title,
+            content_type=content_type,
             content_hash=content_hash,
             file_modified_at=file_modified_at,
+            doc_metadata=doc_metadata,
             status=DocumentStatus.PROCESSING,
         ),
     )

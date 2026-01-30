@@ -23,6 +23,7 @@ from neurocache.models.document_chunk import DocumentChunk
 from neurocache.models.thread import Thread
 from neurocache.models.user import User as UserModel
 from neurocache.schemas.agent_type import AgentType
+from neurocache.schemas.document import ContentType
 from neurocache.schemas.message import UserMessage
 from neurocache.schemas.user import UserSchema
 from neurocache.services.knowledge_source.retrieval import search_similar_chunks_for_user
@@ -113,6 +114,16 @@ def create_chat_agent() -> Agent[UserSchema, str]:
 # ============================================================================
 
 
+def _content_type_label(content_type: str | None) -> str:
+    """Return a human-readable label for a content type."""
+    labels: dict[str, str] = {
+        ContentType.PERSONAL_NOTE.value: "Personal Note",
+        ContentType.BOOK_NOTE.value: "Book Note",
+        ContentType.ARTICLE.value: "Article",
+    }
+    return labels.get(content_type, "Note") if content_type else "Note"
+
+
 def format_rag_context(
     relevant_chunks: list[tuple[DocumentChunk, float]],
 ) -> tuple[str | None, list[RAGSource]]:
@@ -120,6 +131,7 @@ def format_rag_context(
 
     Reconstructs attribution prefixes from chunk metadata and document path
     (the chunk content itself is stored without prefixes for clean embeddings).
+    Includes content type and book-specific metadata (author) when available.
 
     Args:
         chunks: List of (chunk, similarity) tuples from retrieval
@@ -136,23 +148,43 @@ def format_rag_context(
     sources: list[RAGSource] = []
 
     for chunk, similarity in relevant_chunks:
-        source_path = chunk.document.relative_path if chunk.document else "Unknown"
+        doc = chunk.document
+        source_path = doc.relative_path if doc else "Unknown"
+        content_type = doc.content_type if doc else None
+        doc_metadata = doc.doc_metadata if doc else None
 
-        # Reconstruct attribution prefix from metadata
-        prefix = f"[Source: {source_path}]"
+        # Build attribution prefix with content type
+        type_label = _content_type_label(content_type)
+        prefix = f"[Source: {source_path} ({type_label})]"
+
+        # Add author for book notes
+        if content_type == ContentType.BOOK_NOTE.value and doc_metadata:
+            author = doc_metadata.get("author")
+            if author:
+                prefix += f"\n[Author: {author}]"
+
+        # Add section header if available
         section_header = (chunk.chunk_metadata or {}).get("section_header")
         if section_header:
             prefix += f"\n[Section: {section_header}]"
 
         context_parts.append(f"{prefix}\n\n{chunk.content}")
+
+        # Build source metadata for frontend
         source: RAGSource = {
             "path": source_path,
             "similarity": float(similarity),
             "content": chunk.content,
         }
+        if content_type:
+            source["content_type"] = content_type
         if section_header:
             source["section_header"] = section_header
+        if content_type == ContentType.BOOK_NOTE.value and doc_metadata:
+            if doc_metadata.get("author"):
+                source["author"] = doc_metadata["author"]
         sources.append(source)
+
     return "\n\n---\n\n".join(context_parts), sources
 
 
@@ -174,12 +206,11 @@ async def retrieve_context(
         Tuple of (formatted_context, sources_metadata)
     """
     try:
+        # Document relationships are loaded by search_similar_chunks_for_user
+        # during content-type boosting
         relevant_chunks = await search_similar_chunks_for_user(db, openai_client, query, user_id)
         if not relevant_chunks:
             return None, []
-        # Load document relationships for source attribution
-        for chunk, _ in relevant_chunks:
-            await db.refresh(chunk, ["document"])
         return format_rag_context(relevant_chunks)
     except Exception:
         logger.exception("Error retrieving RAG context")

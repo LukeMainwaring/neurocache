@@ -20,6 +20,14 @@ class DocumentStatus(StrEnum):
     DELETED = "deleted"
 
 
+class ContentType(StrEnum):
+    """Type of content for tiered knowledge retrieval."""
+
+    PERSONAL_NOTE = "personal_note"
+    BOOK_NOTE = "book_note"
+    ARTICLE = "article"
+
+
 class DocumentSchema(BaseSchema):
     """Full document response schema."""
 
@@ -27,6 +35,9 @@ class DocumentSchema(BaseSchema):
     knowledge_source_id: uuid.UUID = Field(description="Parent knowledge source ID")
     relative_path: str = Field(description="Path relative to source root")
     title: str | None = Field(default=None, description="Extracted document title")
+    content_type: ContentType = Field(
+        default=ContentType.PERSONAL_NOTE, description="Content type for tiered retrieval"
+    )
     content_hash: str = Field(description="SHA-256 hash for change detection")
     file_modified_at: datetime | None = Field(default=None, description="Filesystem mtime")
     status: DocumentStatus = Field(description="Indexing status")
@@ -44,6 +55,9 @@ class DocumentCreateSchema(BaseSchema):
     knowledge_source_id: uuid.UUID = Field(description="Parent knowledge source ID")
     relative_path: str = Field(description="Path relative to source root")
     title: str | None = Field(default=None, description="Extracted document title")
+    content_type: ContentType = Field(
+        default=ContentType.PERSONAL_NOTE, description="Content type for tiered retrieval"
+    )
     content_hash: str = Field(description="SHA-256 hash for change detection")
     file_modified_at: datetime | None = Field(default=None, description="Filesystem mtime")
     doc_metadata: dict[str, Any] | None = Field(default=None, description="Frontmatter, tags, links")
@@ -54,6 +68,7 @@ class DocumentUpdateSchema(BaseSchema):
     """Schema for updating a document."""
 
     title: str | None = Field(default=None, description="Extracted document title")
+    content_type: ContentType | None = Field(default=None, description="Content type for tiered retrieval")
     content_hash: str | None = Field(default=None, description="SHA-256 hash for change detection")
     file_modified_at: datetime | None = Field(default=None, description="Filesystem mtime")
     status: DocumentStatus | None = Field(default=None, description="Indexing status")

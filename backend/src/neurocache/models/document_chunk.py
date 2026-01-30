@@ -59,6 +59,7 @@ class DocumentChunk(Base):
         user_id: str,
         top_k: int,
         similarity_threshold: float,
+        content_types: list[str] | None = None,
     ) -> list[tuple[DocumentChunk, float]]:
         """Search for chunks within all of a user's knowledge sources.
 
@@ -68,6 +69,7 @@ class DocumentChunk(Base):
             user_id: Filter to chunks from this user's knowledge sources
             top_k: Maximum number of results to return
             similarity_threshold: Minimum similarity score (0-1) to include
+            content_types: Optional list of content types to filter by
 
         Returns:
             List of (DocumentChunk, similarity_score) tuples, ordered by similarity descending.
@@ -83,9 +85,10 @@ class DocumentChunk(Base):
             .where(KnowledgeSource.user_id == user_id)
             .where(cls.embedding.is_not(None))
             .where(1 - distance >= similarity_threshold)
-            .order_by(distance)
-            .limit(top_k)
         )
+        if content_types:
+            stmt = stmt.where(Document.content_type.in_(content_types))
+        stmt = stmt.order_by(distance).limit(top_k)
         result = await db.execute(stmt)
         return [(row.DocumentChunk, row.similarity) for row in result.all()]
 

@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from neurocache.models.base import Base
-from neurocache.schemas.document import DocumentCreateSchema, DocumentStatus, DocumentUpdateSchema
+from neurocache.schemas.document import ContentType, DocumentCreateSchema, DocumentStatus, DocumentUpdateSchema
 
 if TYPE_CHECKING:
     from neurocache.models.document_chunk import DocumentChunk
@@ -37,6 +37,7 @@ class Document(Base):
     )
     relative_path: Mapped[str]
     title: Mapped[str | None]
+    content_type: Mapped[str] = mapped_column(default=ContentType.PERSONAL_NOTE)
     content_hash: Mapped[str]
     file_modified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(default=DocumentStatus.PENDING)
