@@ -11,6 +11,7 @@ dependencies = [
   "pgvector>=0.4.0",
   "psycopg[binary,pool]>=3.3.2",
   "pydantic-ai>=1.39.0",
+  "pymupdf>=1.26.7",
   "pydantic>=2.12.5",
   "python-json-logger>=4.0.0",
   "sqlalchemy[mypy]>=2.0.45",
@@ -35,7 +36,7 @@ markers = [
 strict = true
 
 [[tool.mypy.overrides]]
-module = "pgvector.*"
+module = ["pgvector.*", "pymupdf.*"]
 ignore_missing_imports = true
 
 [tool.ruff]

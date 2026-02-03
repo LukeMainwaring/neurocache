@@ -6,7 +6,7 @@ from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neurocache.models.document_chunk import DocumentChunk
-from neurocache.schemas.document import ContentType
+from neurocache.schemas.knowledge_source.document import ContentType
 from neurocache.services.embedding import generate_embedding
 
 logger = logging.getLogger(__name__)
@@ -14,9 +14,14 @@ logger = logging.getLogger(__name__)
 DEFAULT_TOP_K = 10
 RAG_SIMILARITY_THRESHOLD = 0.3  # Minimum similarity to include in the RAG context
 
-# Boost factor for personal notes when ranking mixed content types.
-# Personal notes get a slight boost so they rank higher when scores are close.
-PERSONAL_NOTE_BOOST = 1.02  # 2% boost for personal notes
+# Three-tier content type boosting for retrieval ranking.
+# Personal notes rank highest, then user's book notes, then raw book sources.
+CONTENT_TYPE_BOOSTS: dict[str, float] = {
+    ContentType.PERSONAL_NOTE.value: 1.04,  # 4% boost - user's own thoughts
+    ContentType.BOOK_NOTE.value: 1.02,  # 2% boost - user's book summaries
+    ContentType.ARTICLE.value: 1.01,  # 1% boost - curated articles
+    ContentType.BOOK_SOURCE.value: 1.00,  # baseline - raw PDF content
+}
 
 
 def apply_content_type_boost(
@@ -24,9 +29,11 @@ def apply_content_type_boost(
 ) -> list[tuple[DocumentChunk, float]]:
     """Apply content-type-aware boosting to similarity scores.
 
-    Personal notes get a slight boost so they rank higher than book notes
-    when similarity scores are close. This ensures personal context is
-    prioritized while still surfacing relevant book knowledge.
+    Uses three-tier boosting:
+    - Personal notes: 4% boost (user's own thoughts rank highest)
+    - Book notes: 2% boost (user's summaries of books)
+    - Articles: 1% boost (curated content)
+    - Book sources: baseline (raw PDF content as supporting evidence)
 
     Args:
         chunks: List of (chunk, similarity) tuples with documents loaded
@@ -37,11 +44,9 @@ def apply_content_type_boost(
     boosted: list[tuple[DocumentChunk, float]] = []
     for chunk, similarity in chunks:
         content_type = chunk.document.content_type if chunk.document else None
-        if content_type == ContentType.PERSONAL_NOTE.value:
-            # Boost personal notes, cap at 1.0
-            adjusted = min(similarity * PERSONAL_NOTE_BOOST, 1.0)
-        else:
-            adjusted = similarity
+        boost = CONTENT_TYPE_BOOSTS.get(content_type, 1.0) if content_type else 1.0
+        # Apply boost, cap at 1.0
+        adjusted = min(similarity * boost, 1.0)
         boosted.append((chunk, adjusted))
 
     # Re-sort by adjusted similarity

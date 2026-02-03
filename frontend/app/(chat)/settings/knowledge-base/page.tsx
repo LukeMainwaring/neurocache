@@ -126,7 +126,7 @@ export default function KnowledgeBasePage() {
       } else {
         const fileCount = result.config?.file_count as number | undefined;
         const message = fileCount
-          ? `Connected! ${fileCount} markdown files found`
+          ? `Connected! ${fileCount} files found`
           : "Knowledge source connected";
         toast.success(message);
       }
@@ -145,7 +145,7 @@ export default function KnowledgeBasePage() {
       } else {
         const fileCount = result.config?.file_count as number | undefined;
         const message = fileCount
-          ? `Connected! ${fileCount} markdown files found`
+          ? `Connected! ${fileCount} files found`
           : "Knowledge source connected";
         toast.success(message);
       }
@@ -337,7 +337,9 @@ export default function KnowledgeBasePage() {
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1.5">
                       <div
-                        className={`size-2 rounded-full ${STATUS_COLORS[source.status]}`}
+                        className={`size-2 rounded-full ${
+                          STATUS_COLORS[source.status]
+                        }`}
                       />
                       <span className="text-muted-foreground text-xs">
                         {STATUS_LABELS[source.status]}
@@ -393,14 +395,15 @@ export default function KnowledgeBasePage() {
                         ) : (
                           !!source.config?.file_count && (
                             <p className="text-muted-foreground text-sm">
-                              {Number(source.config.file_count)} markdown files
-                              found
+                              {Number(source.config.file_count)} files found
                             </p>
                           )
                         )}
                         <p className="text-muted-foreground text-xs">
                           {source.last_synced_at
-                            ? `Last synced ${formatRelativeTime(source.last_synced_at)}`
+                            ? `Last synced ${formatRelativeTime(
+                                source.last_synced_at
+                              )}`
                             : "Never synced"}
                         </p>
                       </div>

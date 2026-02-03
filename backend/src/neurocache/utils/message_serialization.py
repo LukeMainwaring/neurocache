@@ -5,8 +5,9 @@ from typing import Any
 from pydantic_ai.messages import ModelMessage, ModelMessagesTypeAdapter
 
 # Type alias for RAG source metadata
-# TODO: Replace with RAGSource pydantic schema once properties are more defined
-RAGSource = dict[str, str | float]
+# Contains: path, similarity, content, content_type, section_header, author,
+# page_number (for PDFs), chapter (for PDFs)
+RAGSource = dict[str, str | float | int]
 
 
 def prepare_messages_for_storage(

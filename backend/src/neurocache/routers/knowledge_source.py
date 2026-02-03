@@ -12,8 +12,8 @@ from neurocache.core.config import get_settings
 from neurocache.dependencies.db import AsyncPostgresSessionDep
 from neurocache.dependencies.openai import OpenAIClientDep
 from neurocache.models.knowledge_source import KnowledgeSource
-from neurocache.schemas.document import BatchIngestResult, DocumentSchema
-from neurocache.schemas.knowledge_source import (
+from neurocache.schemas.knowledge_source.document import BatchIngestResult, DocumentSchema
+from neurocache.schemas.knowledge_source.knowledge_source import (
     KnowledgeSourceCreateSchema,
     KnowledgeSourceListResponse,
     KnowledgeSourceSchema,

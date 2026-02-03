@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import Field
 
-from .base import BaseSchema
+from ..base import BaseSchema
 
 
 class KnowledgeSourceType(StrEnum):

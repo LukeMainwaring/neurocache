@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import Field, computed_field
 
-from .base import BaseSchema
+from ..base import BaseSchema
 
 
 class DocumentChunkSchema(BaseSchema):
@@ -43,11 +43,20 @@ class ChunkData(BaseSchema):
 
     content: str = Field(description="The actual text content")
     section_header: str | None = Field(default=None, description="The header of the section")
+    page_number: int | None = Field(default=None, description="PDF page number (1-indexed)")
+    chapter: str | None = Field(default=None, description="Chapter title from PDF TOC")
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def chunk_metadata(self) -> dict[str, str] | None:
-        return {"section_header": self.section_header} if self.section_header else None
+    def chunk_metadata(self) -> dict[str, str | int] | None:
+        metadata: dict[str, str | int] = {}
+        if self.section_header:
+            metadata["section_header"] = self.section_header
+        if self.page_number:
+            metadata["page_number"] = self.page_number
+        if self.chapter:
+            metadata["chapter"] = self.chapter
+        return metadata if metadata else None
 
     @computed_field  # type: ignore[prop-decorator]
     @property

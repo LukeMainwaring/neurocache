@@ -6,8 +6,8 @@ from openai import AsyncOpenAI
 
 from neurocache.dependencies.db import AsyncPostgresSessionDep
 from neurocache.models.knowledge_source import KnowledgeSource
-from neurocache.schemas.document import BatchIngestResult
-from neurocache.schemas.knowledge_source import (
+from neurocache.schemas.knowledge_source.document import BatchIngestResult
+from neurocache.schemas.knowledge_source.knowledge_source import (
     KnowledgeSourceCreateSchema,
     KnowledgeSourceSchema,
     KnowledgeSourceStatus,

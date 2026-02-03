@@ -23,7 +23,7 @@ from neurocache.models.document_chunk import DocumentChunk
 from neurocache.models.thread import Thread
 from neurocache.models.user import User as UserModel
 from neurocache.schemas.agent_type import AgentType
-from neurocache.schemas.document import ContentType
+from neurocache.schemas.knowledge_source.document import ContentType
 from neurocache.schemas.message import UserMessage
 from neurocache.schemas.user import UserSchema
 from neurocache.services.knowledge_source.retrieval import search_similar_chunks_for_user
@@ -119,6 +119,7 @@ def _content_type_label(content_type: str | None) -> str:
     labels: dict[str, str] = {
         ContentType.PERSONAL_NOTE.value: "Personal Note",
         ContentType.BOOK_NOTE.value: "Book Note",
+        ContentType.BOOK_SOURCE.value: "Book Source",
         ContentType.ARTICLE.value: "Article",
     }
     return labels.get(content_type, "Note") if content_type else "Note"
@@ -131,7 +132,8 @@ def format_rag_context(
 
     Reconstructs attribution prefixes from chunk metadata and document path
     (the chunk content itself is stored without prefixes for clean embeddings).
-    Includes content type and book-specific metadata (author) when available.
+    Includes content type, book-specific metadata (author), and PDF metadata
+    (page number, chapter) when available.
 
     Args:
         chunks: List of (chunk, similarity) tuples from retrieval
@@ -152,19 +154,30 @@ def format_rag_context(
         source_path = doc.relative_path if doc else "Unknown"
         content_type = doc.content_type if doc else None
         doc_metadata = doc.doc_metadata if doc else None
+        chunk_meta = chunk.chunk_metadata or {}
 
         # Build attribution prefix with content type
         type_label = _content_type_label(content_type)
         prefix = f"[Source: {source_path} ({type_label})]"
 
-        # Add author for book notes
-        if content_type == ContentType.BOOK_NOTE.value and doc_metadata:
+        # Add author for book notes and book sources
+        if content_type in (ContentType.BOOK_NOTE.value, ContentType.BOOK_SOURCE.value) and doc_metadata:
             author = doc_metadata.get("author")
             if author:
                 prefix += f"\n[Author: {author}]"
 
-        # Add section header if available
-        section_header = (chunk.chunk_metadata or {}).get("section_header")
+        # Add page number for book sources (PDFs)
+        page_number = chunk_meta.get("page_number")
+        if page_number:
+            prefix += f"\n[Page: {page_number}]"
+
+        # Add chapter for book sources (PDFs)
+        chapter = chunk_meta.get("chapter")
+        if chapter:
+            prefix += f"\n[Chapter: {chapter}]"
+
+        # Add section header if available (markdown documents)
+        section_header = chunk_meta.get("section_header")
         if section_header:
             prefix += f"\n[Section: {section_header}]"
 
@@ -180,7 +193,11 @@ def format_rag_context(
             source["content_type"] = content_type
         if section_header:
             source["section_header"] = section_header
-        if content_type == ContentType.BOOK_NOTE.value and doc_metadata:
+        if page_number:
+            source["page_number"] = page_number
+        if chapter:
+            source["chapter"] = chapter
+        if content_type in (ContentType.BOOK_NOTE.value, ContentType.BOOK_SOURCE.value) and doc_metadata:
             if doc_metadata.get("author"):
                 source["author"] = doc_metadata["author"]
         sources.append(source)

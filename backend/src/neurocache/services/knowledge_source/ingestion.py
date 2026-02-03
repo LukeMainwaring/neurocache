@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from neurocache.models.document import Document
 from neurocache.models.document_chunk import DocumentChunk
-from neurocache.schemas.document import (
+from neurocache.schemas.knowledge_source.document import (
     BatchIngestFailure,
     BatchIngestResult,
     ContentType,
@@ -21,8 +21,10 @@ from neurocache.schemas.document import (
     DocumentStatus,
     DocumentUpdateSchema,
 )
-from neurocache.schemas.document_chunk import ChunkData
+from neurocache.schemas.knowledge_source.document_chunk import ChunkData
 from neurocache.services.embedding import generate_embeddings_batch
+from neurocache.services.knowledge_source.pdf_chunker import chunk_pdf_pages
+from neurocache.services.knowledge_source.pdf_parser import extract_pdf_content
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,9 @@ VAULT_MOUNT_PATH = "/vault"
 
 # Directories to exclude during batch ingestion
 DEFAULT_EXCLUDE_DIRS = {".obsidian", ".smart-env", "copilot", ".git", ".trash"}
+
+# Top-level directory containing book PDFs and notes
+BOOKS_DIR = "Books"
 
 # Chunking config
 TARGET_CHUNK_SIZE = 1500  # target characters per chunk
@@ -93,21 +98,29 @@ def parse_frontmatter(text: str) -> dict[str, str]:
     return result
 
 
-def detect_content_type(frontmatter: dict[str, str], relative_path: str) -> ContentType:
+def detect_content_type(frontmatter: dict[str, str], relative_path: str, is_pdf: bool = False) -> ContentType:
     """Detect content type from frontmatter or file path.
 
     Priority:
-    1. Explicit 'type' field in frontmatter
-    2. Path-based detection (e.g., "Books/" folder)
-    3. Default to personal_note
+    1. PDF files in Books/ -> BOOK_SOURCE
+    2. Explicit 'type' field in frontmatter
+    3. Path-based detection (Books/ folder)
+    4. Default to personal_note
 
     Args:
         frontmatter: Parsed frontmatter dict
         relative_path: Path relative to vault root
+        is_pdf: Whether the file is a PDF
 
     Returns:
         Detected ContentType
     """
+    in_books_dir = relative_path.startswith(f"{BOOKS_DIR}/")
+
+    # PDFs in Books/ are book sources
+    if is_pdf:
+        return ContentType.BOOK_SOURCE if in_books_dir else ContentType.PERSONAL_NOTE
+
     fm_type = frontmatter.get("type", "").lower()
 
     if fm_type == "book":
@@ -116,10 +129,9 @@ def detect_content_type(frontmatter: dict[str, str], relative_path: str) -> Cont
         return ContentType.ARTICLE
 
     # Path-based detection as fallback
-    path_lower = relative_path.lower()
-    if "books/" in path_lower or "book notes/" in path_lower:
+    if in_books_dir:
         return ContentType.BOOK_NOTE
-    elif "articles/" in path_lower:
+    elif relative_path.startswith("Articles/"):
         return ContentType.ARTICLE
 
     return ContentType.PERSONAL_NOTE
@@ -389,35 +401,48 @@ async def ingest_document(
     )
     logger.info("Created document %s for %s", document.id, relative_path)
 
-    chunk_data_list = markdown_aware_chunk_text(content)
-    logger.info("Split document into %d chunks", len(chunk_data_list))
+    try:
+        chunk_data_list = markdown_aware_chunk_text(content)
+        logger.info("Split document into %d chunks", len(chunk_data_list))
 
-    # Embed only raw content (no context prefixes)
-    embeddings = await generate_embeddings_batch(openai_client, [cd.content for cd in chunk_data_list])
+        # Embed only raw content (no context prefixes)
+        embeddings = await generate_embeddings_batch(openai_client, [cd.content for cd in chunk_data_list])
 
-    # Create chunk records
-    for i, (cd, embedding) in enumerate(zip(chunk_data_list, embeddings, strict=True)):
-        chunk = DocumentChunk(
-            document_id=document.id,
-            content=cd.content,
-            chunk_index=i,
-            embedding=embedding,
-            chunk_metadata=cd.chunk_metadata,
-            token_count=cd.token_count,
+        # Create chunk records
+        for i, (cd, embedding) in enumerate(zip(chunk_data_list, embeddings, strict=True)):
+            chunk = DocumentChunk(
+                document_id=document.id,
+                content=cd.content,
+                chunk_index=i,
+                embedding=embedding,
+                chunk_metadata=cd.chunk_metadata,
+                token_count=cd.token_count,
+            )
+            db.add(chunk)
+
+        document = await Document.update(
+            db,
+            document.id,
+            DocumentUpdateSchema(
+                status=DocumentStatus.INDEXED,
+                chunk_count=len(chunk_data_list),
+                indexed_at=datetime.now(timezone.utc),
+            ),
         )
-        db.add(chunk)
+        logger.info("Indexed document %s with %d chunks", document.id, len(chunk_data_list))
+        return document
 
-    document = await Document.update(
-        db,
-        document.id,
-        DocumentUpdateSchema(
-            status=DocumentStatus.INDEXED,
-            chunk_count=len(chunk_data_list),
-            indexed_at=datetime.now(timezone.utc),
-        ),
-    )
-    logger.info("Indexed document %s with %d chunks", document.id, len(chunk_data_list))
-    return document
+    except Exception as e:
+        # Update document status to ERROR on failure
+        await Document.update(
+            db,
+            document.id,
+            DocumentUpdateSchema(
+                status=DocumentStatus.ERROR,
+                error_message=str(e)[:500],  # Truncate long error messages
+            ),
+        )
+        raise
 
 
 def discover_markdown_files(
@@ -446,6 +471,243 @@ def discover_markdown_files(
         markdown_files.append(str(file_path.relative_to(base_path)))
 
     return sorted(markdown_files)
+
+
+def discover_pdf_files(
+    base_path: Path,
+    exclude_dirs: set[str] | None = None,
+) -> list[str]:
+    """Find PDF files in the Books/ directory.
+
+    Only searches within the top-level Books/ directory.
+    PDFs outside this directory are ignored.
+
+    Args:
+        base_path: Root directory to search
+        exclude_dirs: Directory names to skip (defaults to DEFAULT_EXCLUDE_DIRS)
+
+    Returns:
+        List of relative paths to PDF files
+    """
+    if exclude_dirs is None:
+        exclude_dirs = DEFAULT_EXCLUDE_DIRS
+
+    books_path = base_path / BOOKS_DIR
+    if not books_path.exists():
+        return []
+
+    pdf_files: list[str] = []
+
+    for file_path in books_path.rglob("*.pdf"):
+        parts = file_path.relative_to(base_path).parts
+        # Check if any parent directory should be excluded
+        if any(part in exclude_dirs for part in parts[:-1]):
+            continue
+        pdf_files.append(str(file_path.relative_to(base_path)))
+
+    return sorted(pdf_files)
+
+
+def _get_book_folder(relative_path: str) -> str | None:
+    """Extract the book folder name from a path.
+
+    For a path like "Books/AI Engineering/notes.md", returns "Books/AI Engineering".
+
+    Args:
+        relative_path: Path relative to vault root
+
+    Returns:
+        Book folder path or None if not in Books/ directory
+    """
+    parts = Path(relative_path).parts
+
+    # Must be in Books/ with at least a book title subfolder
+    if len(parts) >= 3 and parts[0] == BOOKS_DIR:
+        return f"{BOOKS_DIR}/{parts[1]}"
+
+    return None
+
+
+async def _auto_link_book_documents(
+    db: AsyncSession,
+    knowledge_source_id: uuid.UUID,
+    document: Document,
+) -> None:
+    """Link a document to other documents in the same book folder.
+
+    PDFs get linked to book notes and vice versa when they share
+    the same book folder (e.g., "Books/AI Engineering/").
+
+    Args:
+        db: Database session
+        knowledge_source_id: Knowledge source ID
+        document: The document to link
+    """
+    book_folder = _get_book_folder(document.relative_path)
+    if not book_folder:
+        return
+
+    # Find other documents in the same book folder
+    all_docs = await Document.get_all_by_source(db, knowledge_source_id)
+
+    for other_doc in all_docs:
+        if other_doc.id == document.id:
+            continue
+
+        other_folder = _get_book_folder(other_doc.relative_path)
+        if other_folder != book_folder:
+            continue
+
+        # Link PDF to book note (and vice versa)
+        is_current_pdf = document.relative_path.lower().endswith(".pdf")
+        is_other_pdf = other_doc.relative_path.lower().endswith(".pdf")
+
+        if is_current_pdf != is_other_pdf:
+            # Store the link in doc_metadata
+            current_metadata = document.doc_metadata or {}
+            current_metadata["linked_document_id"] = str(other_doc.id)
+            await Document.update(
+                db,
+                document.id,
+                DocumentUpdateSchema(doc_metadata=current_metadata),
+            )
+
+            # Also link the other document back
+            other_metadata = other_doc.doc_metadata or {}
+            other_metadata["linked_document_id"] = str(document.id)
+            await Document.update(
+                db,
+                other_doc.id,
+                DocumentUpdateSchema(doc_metadata=other_metadata),
+            )
+
+            logger.info(
+                "Auto-linked documents: %s <-> %s",
+                document.relative_path,
+                other_doc.relative_path,
+            )
+            break  # Only link to one document
+
+
+async def ingest_pdf_document(
+    db: AsyncSession,
+    openai_client: AsyncOpenAI,
+    knowledge_source_id: uuid.UUID,
+    relative_path: str,
+) -> Document:
+    """Ingest a PDF document from a knowledge source.
+
+    Extracts text from the PDF, chunks it respecting chapter boundaries,
+    generates embeddings, and stores in the database.
+
+    Args:
+        db: Database session
+        openai_client: OpenAI client for embeddings
+        knowledge_source_id: The knowledge source this document belongs to
+        relative_path: Path relative to the knowledge source root
+
+    Returns:
+        The created Document record
+
+    Raises:
+        FileNotFoundError: If the file doesn't exist
+        ValueError: If the PDF is password-protected or has no extractable text
+    """
+    file_path = Path(VAULT_MOUNT_PATH) / relative_path
+
+    if not file_path.exists():
+        raise FileNotFoundError(f"PDF file not found: {file_path}")
+
+    file_stat = file_path.stat()
+    file_modified_at = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
+
+    # Extract PDF content
+    pages = extract_pdf_content(file_path)
+
+    # Compute hash from extracted text for change detection
+    all_text = "\n".join(p.text for p in pages)
+    content_hash = compute_content_hash(all_text)
+    title = Path(relative_path).stem
+
+    # Detect content type (will be BOOK_SOURCE for PDFs in book directories)
+    content_type = detect_content_type({}, relative_path, is_pdf=True)
+
+    logger.info("Detected content type '%s' for PDF %s", content_type, relative_path)
+
+    document = await Document.create(
+        db,
+        DocumentCreateSchema(
+            knowledge_source_id=knowledge_source_id,
+            relative_path=relative_path,
+            title=title,
+            content_type=content_type,
+            content_hash=content_hash,
+            file_modified_at=file_modified_at,
+            status=DocumentStatus.PROCESSING,
+        ),
+    )
+    logger.info("Created PDF document %s for %s", document.id, relative_path)
+
+    try:
+        # Chunk the PDF content
+        chunk_data_list = chunk_pdf_pages(pages)
+        logger.info("Split PDF into %d chunks", len(chunk_data_list))
+
+        if not chunk_data_list:
+            # No chunks created (empty PDF)
+            document = await Document.update(
+                db,
+                document.id,
+                DocumentUpdateSchema(
+                    status=DocumentStatus.INDEXED,
+                    chunk_count=0,
+                    indexed_at=datetime.now(timezone.utc),
+                ),
+            )
+            return document
+
+        # Generate embeddings
+        embeddings = await generate_embeddings_batch(openai_client, [cd.content for cd in chunk_data_list])
+
+        # Create chunk records
+        for i, (cd, embedding) in enumerate(zip(chunk_data_list, embeddings, strict=True)):
+            chunk = DocumentChunk(
+                document_id=document.id,
+                content=cd.content,
+                chunk_index=i,
+                embedding=embedding,
+                chunk_metadata=cd.chunk_metadata,
+                token_count=cd.token_count,
+            )
+            db.add(chunk)
+
+        document = await Document.update(
+            db,
+            document.id,
+            DocumentUpdateSchema(
+                status=DocumentStatus.INDEXED,
+                chunk_count=len(chunk_data_list),
+                indexed_at=datetime.now(timezone.utc),
+            ),
+        )
+        logger.info("Indexed PDF document %s with %d chunks", document.id, len(chunk_data_list))
+
+        # Auto-link to book notes in the same folder
+        await _auto_link_book_documents(db, knowledge_source_id, document)
+
+        return document
+
+    except Exception as e:
+        # Update document status to ERROR on failure
+        await Document.update(
+            db,
+            document.id,
+            DocumentUpdateSchema(
+                status=DocumentStatus.ERROR,
+                error_message=str(e)[:500],  # Truncate long error messages
+            ),
+        )
+        raise
 
 
 def _file_has_changed(existing_doc: Document, file_path: Path) -> tuple[bool, str | None]:
@@ -481,7 +743,7 @@ async def ingest_all_documents(
     knowledge_source_id: uuid.UUID,
     force_reindex: bool = False,
 ) -> BatchIngestResult:
-    """Ingest all markdown documents from a knowledge source.
+    """Ingest all documents (markdown and PDF) from a knowledge source.
 
     Args:
         db: Database session
@@ -496,16 +758,24 @@ async def ingest_all_documents(
 
     base_path = Path(VAULT_MOUNT_PATH)
     markdown_files = discover_markdown_files(base_path)
+    pdf_files = discover_pdf_files(base_path)
 
-    total_files = len(markdown_files)
+    # Combine all files for tracking
+    all_files = markdown_files + pdf_files
+    total_files = len(all_files)
     documents_created = 0
     documents_updated = 0
     documents_skipped = 0
     documents_failed = 0
     failed_files: list[BatchIngestFailure] = []
 
-    logger.info("Discovered %d markdown files to process", total_files)
+    logger.info(
+        "Discovered %d markdown files and %d PDF files to process",
+        len(markdown_files),
+        len(pdf_files),
+    )
 
+    # Process markdown files
     for relative_path in markdown_files:
         try:
             existing_doc = await Document.get_by_relative_path(db, knowledge_source_id, relative_path)
@@ -536,8 +806,41 @@ async def ingest_all_documents(
             failed_files.append(BatchIngestFailure(relative_path=relative_path, error=error_msg))
             logger.warning("Failed to ingest %s: %s", relative_path, error_msg)
 
+    # Process PDF files
+    for relative_path in pdf_files:
+        try:
+            existing_doc = await Document.get_by_relative_path(db, knowledge_source_id, relative_path)
+            if existing_doc:
+                if force_reindex:
+                    await Document.delete(db, existing_doc.id)
+                    logger.info("Deleted existing PDF for re-indexing: %s", relative_path)
+                else:
+                    file_path = Path(VAULT_MOUNT_PATH) / relative_path
+                    # For PDFs, just check mtime (content hash would require re-extracting)
+                    file_stat = file_path.stat()
+                    current_mtime = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
+                    if existing_doc.file_modified_at and current_mtime == existing_doc.file_modified_at:
+                        documents_skipped += 1
+                        logger.debug("Skipping unchanged PDF: %s", relative_path)
+                        continue
+                    # mtime changed — delete and re-ingest
+                    await Document.delete(db, existing_doc.id)
+                    logger.info("Re-indexing modified PDF: %s", relative_path)
+                    await ingest_pdf_document(db, openai_client, knowledge_source_id, relative_path)
+                    documents_updated += 1
+                    continue
+
+            await ingest_pdf_document(db, openai_client, knowledge_source_id, relative_path)
+            documents_created += 1
+
+        except Exception as e:
+            documents_failed += 1
+            error_msg = str(e)
+            failed_files.append(BatchIngestFailure(relative_path=relative_path, error=error_msg))
+            logger.warning("Failed to ingest PDF %s: %s", relative_path, error_msg)
+
     # Detect deleted files — remove DB records for files no longer on disk
-    discovered_set = set(markdown_files)
+    discovered_set = set(all_files)
     all_docs = await Document.get_all_by_source(db, knowledge_source_id)
     documents_deleted = 0
     for doc in all_docs:
