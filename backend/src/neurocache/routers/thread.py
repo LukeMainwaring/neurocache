@@ -8,6 +8,7 @@ from neurocache.models.message import Message
 from neurocache.models.thread import Thread
 from neurocache.schemas.agent_type import AgentType
 from neurocache.schemas.thread import (
+    ThreadDeleteResponse,
     ThreadListResponse,
     ThreadMessagesResponse,
     ThreadSummary,
@@ -53,11 +54,13 @@ async def get_thread_messages(
 
 
 @thread_router.delete("/{thread_id}")
-async def delete_thread(db: AsyncPostgresSessionDep, thread_id: str, user_id: AuthenticatedUser) -> dict[str, str]:
+async def delete_thread(
+    db: AsyncPostgresSessionDep, thread_id: str, user_id: AuthenticatedUser
+) -> ThreadDeleteResponse:
     """Delete a thread and all its messages."""
     thread = await Thread.get_for_user(db, thread_id, user_id, AgentType.CHAT.value)
     if not thread:
         raise HTTPException(status_code=404, detail="Thread not found")
     await Thread.delete_for_user(db, thread_id, user_id, AgentType.CHAT.value)
     logger.info(f"Deleted thread {thread_id} for user {user_id}")
-    return {"message": "Thread deleted successfully"}
+    return ThreadDeleteResponse(message="Thread deleted successfully")

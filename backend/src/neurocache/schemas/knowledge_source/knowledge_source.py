@@ -62,3 +62,16 @@ class KnowledgeSourceListResponse(BaseSchema):
     """Response schema for listing knowledge sources."""
 
     sources: list[KnowledgeSourceSchema] = Field(description="List of knowledge sources")
+
+
+class ObsidianDefaults(BaseSchema):
+    """Default values for Obsidian vault configuration."""
+
+    name: str | None = Field(default=None, description="Default vault name")
+    file_path: str | None = Field(default=None, description="Default vault path")
+
+
+class KnowledgeSourceDefaults(BaseSchema):
+    """Default values for creating knowledge sources."""
+
+    obsidian: ObsidianDefaults = Field(description="Obsidian vault defaults")

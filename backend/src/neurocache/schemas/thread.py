@@ -55,3 +55,9 @@ class ThreadMessagesResponse(BaseSchema):
 
     thread_id: str
     messages: list[dict[str, Any]]
+
+
+class ThreadDeleteResponse(BaseSchema):
+    """Response for successful thread delete operations."""
+
+    message: str

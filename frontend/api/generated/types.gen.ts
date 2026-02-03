@@ -79,6 +79,13 @@ export type BatchIngestResult = {
 };
 
 /**
+ * ContentType
+ *
+ * Type of content for tiered knowledge retrieval.
+ */
+export type ContentType = 'personal_note' | 'book_note' | 'book_source' | 'article';
+
+/**
  * DocumentSchema
  *
  * Full document response schema.
@@ -108,6 +115,10 @@ export type DocumentSchema = {
      * Extracted document title
      */
     title?: string | null;
+    /**
+     * Content type for tiered retrieval
+     */
+    content_type?: ContentType;
     /**
      * Content Hash
      *
@@ -213,6 +224,18 @@ export type KnowledgeSourceCreateSchema = {
      * Local filesystem path
      */
     file_path?: string | null;
+};
+
+/**
+ * KnowledgeSourceDefaults
+ *
+ * Default values for creating knowledge sources.
+ */
+export type KnowledgeSourceDefaults = {
+    /**
+     * Obsidian vault defaults
+     */
+    obsidian: ObsidianDefaults;
 };
 
 /**
@@ -347,6 +370,38 @@ export type MessageMetadata = {
      * Should Send
      */
     should_send?: boolean | null;
+};
+
+/**
+ * ObsidianDefaults
+ *
+ * Default values for Obsidian vault configuration.
+ */
+export type ObsidianDefaults = {
+    /**
+     * Name
+     *
+     * Default vault name
+     */
+    name?: string | null;
+    /**
+     * File Path
+     *
+     * Default vault path
+     */
+    file_path?: string | null;
+};
+
+/**
+ * ThreadDeleteResponse
+ *
+ * Response for successful thread delete operations.
+ */
+export type ThreadDeleteResponse = {
+    /**
+     * Message
+     */
+    message: string;
 };
 
 /**
@@ -622,15 +677,9 @@ export type GetKnowledgeSourceDefaultsData = {
 
 export type GetKnowledgeSourceDefaultsResponses = {
     /**
-     * Response Getknowledgesourcedefaults
-     *
      * Successful Response
      */
-    200: {
-        [key: string]: {
-            [key: string]: string | null;
-        };
-    };
+    200: KnowledgeSourceDefaults;
 };
 
 export type GetKnowledgeSourceDefaultsResponse = GetKnowledgeSourceDefaultsResponses[keyof GetKnowledgeSourceDefaultsResponses];
@@ -892,13 +941,9 @@ export type DeleteThreadError = DeleteThreadErrors[keyof DeleteThreadErrors];
 
 export type DeleteThreadResponses = {
     /**
-     * Response Deletethread
-     *
      * Successful Response
      */
-    200: {
-        [key: string]: string;
-    };
+    200: ThreadDeleteResponse;
 };
 
 export type DeleteThreadResponse = DeleteThreadResponses[keyof DeleteThreadResponses];
