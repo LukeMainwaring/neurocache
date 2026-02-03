@@ -15,9 +15,11 @@ from neurocache.models.knowledge_source import KnowledgeSource
 from neurocache.schemas.knowledge_source.document import BatchIngestResult, DocumentSchema
 from neurocache.schemas.knowledge_source.knowledge_source import (
     KnowledgeSourceCreateSchema,
+    KnowledgeSourceDefaults,
     KnowledgeSourceListResponse,
     KnowledgeSourceSchema,
     KnowledgeSourceUpdateSchema,
+    ObsidianDefaults,
 )
 from neurocache.services.knowledge_source import ingestion as ingestion_service
 from neurocache.services.knowledge_source import knowledge_source as knowledge_source_service
@@ -51,15 +53,14 @@ async def create_knowledge_source(
 
 
 @knowledge_source_router.get("/defaults")
-async def get_knowledge_source_defaults() -> dict[str, dict[str, str | None]]:
+async def get_knowledge_source_defaults() -> KnowledgeSourceDefaults:
     """Return default values for creating a knowledge source."""
-
-    return {
-        "obsidian": {
-            "name": config.OBSIDIAN_VAULT_NAME,
-            "file_path": config.OBSIDIAN_VAULT_PATH,
-        }
-    }
+    return KnowledgeSourceDefaults(
+        obsidian=ObsidianDefaults(
+            name=config.OBSIDIAN_VAULT_NAME,
+            file_path=config.OBSIDIAN_VAULT_PATH,
+        )
+    )
 
 
 @knowledge_source_router.get("/{source_id}")

@@ -96,28 +96,3 @@ async def search_similar_chunks_for_user(
         chunks = apply_content_type_boost(chunks)
 
     return chunks
-
-
-async def get_chunk_with_context(
-    db: AsyncSession,
-    chunk_id: int,
-) -> dict[str, str | None]:
-    """Get a chunk along with its document context for citation.
-
-    Args:
-        db: Database session
-        chunk_id: The chunk ID to retrieve
-
-    Returns:
-        Dict with chunk content and document metadata for citation
-    """
-    chunk = await DocumentChunk.get_with_context(db, chunk_id)
-
-    if not chunk:
-        return {"content": None, "title": None, "path": None}
-
-    return {
-        "content": chunk.content,
-        "title": chunk.document.title,
-        "path": chunk.document.relative_path,
-    }

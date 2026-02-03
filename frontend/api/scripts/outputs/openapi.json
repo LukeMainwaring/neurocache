@@ -143,21 +143,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "type": "object"
-                  },
-                  "type": "object",
-                  "title": "Response Getknowledgesourcedefaults"
+                  "$ref": "#/components/schemas/KnowledgeSourceDefaults"
                 }
               }
             }
@@ -542,11 +528,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "title": "Response Deletethread"
+                  "$ref": "#/components/schemas/ThreadDeleteResponse"
                 }
               }
             }
@@ -736,6 +718,17 @@
         "title": "BatchIngestResult",
         "description": "Result of a batch ingestion operation."
       },
+      "ContentType": {
+        "type": "string",
+        "enum": [
+          "personal_note",
+          "book_note",
+          "book_source",
+          "article"
+        ],
+        "title": "ContentType",
+        "description": "Type of content for tiered knowledge retrieval."
+      },
       "DocumentSchema": {
         "properties": {
           "id": {
@@ -766,6 +759,11 @@
             ],
             "title": "Title",
             "description": "Extracted document title"
+          },
+          "content_type": {
+            "$ref": "#/components/schemas/ContentType",
+            "description": "Content type for tiered retrieval",
+            "default": "personal_note"
           },
           "content_hash": {
             "type": "string",
@@ -928,6 +926,20 @@
         ],
         "title": "KnowledgeSourceCreateSchema",
         "description": "Schema for creating a knowledge source."
+      },
+      "KnowledgeSourceDefaults": {
+        "properties": {
+          "obsidian": {
+            "$ref": "#/components/schemas/ObsidianDefaults",
+            "description": "Obsidian vault defaults"
+          }
+        },
+        "type": "object",
+        "required": [
+          "obsidian"
+        ],
+        "title": "KnowledgeSourceDefaults",
+        "description": "Default values for creating knowledge sources."
       },
       "KnowledgeSourceListResponse": {
         "properties": {
@@ -1128,6 +1140,51 @@
         },
         "type": "object",
         "title": "MessageMetadata"
+      },
+      "ObsidianDefaults": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Default vault name"
+          },
+          "file_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Path",
+            "description": "Default vault path"
+          }
+        },
+        "type": "object",
+        "title": "ObsidianDefaults",
+        "description": "Default values for Obsidian vault configuration."
+      },
+      "ThreadDeleteResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ThreadDeleteResponse",
+        "description": "Response for successful thread delete operations."
       },
       "ThreadListResponse": {
         "properties": {
