@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from neurocache.core.config import get_settings
-from neurocache.services.knowledge_source.ingestion import discover_markdown_files
+from neurocache.services.knowledge_source.ingestion import discover_markdown_files, discover_pdf_files
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +51,13 @@ async def validate_obsidian_vault(
         return False, "Not a valid Obsidian vault (missing .obsidian directory)", 0
 
     markdown_files = discover_markdown_files(container_path)
-    file_count = len(markdown_files)
+    pdf_files = discover_pdf_files(container_path)
+    file_count = len(markdown_files) + len(pdf_files)
 
     logger.info(
-        "Validated Obsidian vault at %s (%d markdown files)",
+        "Validated Obsidian vault at %s (%d markdown files, %d PDF files)",
         VAULT_CONTAINER_PATH,
-        file_count,
+        len(markdown_files),
+        len(pdf_files),
     )
     return True, None, file_count

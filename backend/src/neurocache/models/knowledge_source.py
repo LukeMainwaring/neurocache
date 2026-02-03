@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from neurocache.models.base import Base
-from neurocache.schemas.knowledge_source import (
+from neurocache.schemas.knowledge_source.knowledge_source import (
     KnowledgeSourceCreateSchema,
     KnowledgeSourceSchema,
     KnowledgeSourceStatus,

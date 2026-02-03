@@ -13,7 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from neurocache.models.base import Base
-from neurocache.schemas.document import ContentType, DocumentCreateSchema, DocumentStatus, DocumentUpdateSchema
+from neurocache.schemas.knowledge_source.document import (
+    ContentType,
+    DocumentCreateSchema,
+    DocumentStatus,
+    DocumentUpdateSchema,
+)
 
 if TYPE_CHECKING:
     from neurocache.models.document_chunk import DocumentChunk

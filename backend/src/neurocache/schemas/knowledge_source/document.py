@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import Field
 
-from .base import BaseSchema
+from ..base import BaseSchema
 
 
 class DocumentStatus(StrEnum):
@@ -25,6 +25,7 @@ class ContentType(StrEnum):
 
     PERSONAL_NOTE = "personal_note"
     BOOK_NOTE = "book_note"
+    BOOK_SOURCE = "book_source"
     ARTICLE = "article"
 
 
