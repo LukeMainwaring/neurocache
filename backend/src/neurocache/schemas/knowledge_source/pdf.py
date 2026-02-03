@@ -16,6 +16,6 @@ class TOCEntry(BaseSchema):
 class PageContent(BaseSchema):
     """Extracted content from a single PDF page."""
 
-    page_number: int = Field(description="1-indexed page number")
+    page_number: int | None = Field(description="Printed page number, or None for front matter")
     text: str = Field(description="Extracted text content")
     chapter: str | None = Field(default=None, description="Chapter title if available from TOC")

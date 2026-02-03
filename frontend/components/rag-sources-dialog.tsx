@@ -49,7 +49,7 @@ export function RAGSourcesDialog({ sources, trigger }: RAGSourcesDialogProps) {
               )}
               {source.chapter && (
                 <p className="mb-2 text-muted-foreground text-xs italic">
-                  {source.chapter}, (page: {source.page_number})
+                  {source.chapter}, (page: {source.page_number || "N/A"})
                 </p>
               )}
               {source.content && (

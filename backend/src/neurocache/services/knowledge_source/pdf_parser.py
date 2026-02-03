@@ -33,7 +33,7 @@ def extract_toc(doc: pymupdf.Document) -> list[TOCEntry]:
     return toc_entries
 
 
-def get_chapter_for_page(toc: list[TOCEntry], page_number: int) -> str | None:
+def get_chapter_for_page(toc: list[TOCEntry], page_number: int | None) -> str | None:
     """Look up the chapter title for a given page number.
 
     Finds the most recent top-level chapter (level 1) that starts
@@ -41,12 +41,12 @@ def get_chapter_for_page(toc: list[TOCEntry], page_number: int) -> str | None:
 
     Args:
         toc: List of TOC entries
-        page_number: 1-indexed page number to look up
+        page_number: Printed page number to look up, or None for front matter
 
     Returns:
         Chapter title or None if no TOC or page is before first chapter
     """
-    if not toc:
+    if not toc or page_number is None:
         return None
 
     # Filter to top-level chapters only (level 1)
@@ -102,9 +102,19 @@ def extract_pdf_content(file_path: Path) -> list[PageContent]:
         page = doc[page_num]
         text = page.get_text()
 
-        # 1-indexed page number
-        page_number = page_num + 1
-        chapter = get_chapter_for_page(toc, page_number)
+        # Try to get the printed page label (e.g., "84", "xii")
+        # Only use numeric labels; front matter (Roman numerals, etc.) gets None
+        page_label = page.get_label()
+        page_number: int | None = None
+        if page_label:
+            try:
+                page_number = int(page_label)
+            except ValueError:
+                # Non-numeric label (Roman numerals, etc.) - front matter
+                pass
+
+        # Look up chapter using display page number (skip for front matter)
+        chapter = get_chapter_for_page(toc, page_number) if page_number else None
 
         pages.append(
             PageContent(

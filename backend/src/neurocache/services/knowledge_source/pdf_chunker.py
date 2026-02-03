@@ -96,7 +96,7 @@ def chunk_pdf_pages(pages: list[PageContent]) -> list[ChunkData]:
     # Process each chapter group
     for chapter, chapter_pages in chapter_groups.items():
         # Track page boundaries for proper metadata
-        page_texts: list[tuple[int, str]] = []
+        page_texts: list[tuple[int | None, str]] = []
         for page in chapter_pages:
             if page.text.strip():
                 page_texts.append((page.page_number, page.text))
@@ -106,10 +106,10 @@ def chunk_pdf_pages(pages: list[PageContent]) -> list[ChunkData]:
 
         # Concatenate all text in chapter with page markers
         combined_text = ""
-        page_starts: list[tuple[int, int]] = []  # (page_number, char_offset)
+        page_starts: list[tuple[int | None, int]] = []  # (page_number, char_offset)
 
-        for page_number, text in page_texts:
-            page_starts.append((page_number, len(combined_text)))
+        for page_num, text in page_texts:
+            page_starts.append((page_num, len(combined_text)))
             combined_text += text + "\n\n"
 
         combined_text = combined_text.strip()
@@ -121,18 +121,18 @@ def chunk_pdf_pages(pages: list[PageContent]) -> list[ChunkData]:
         for chunk_text in text_chunks:
             # Find which page this chunk starts on
             chunk_start = combined_text.find(chunk_text)
-            page_number = page_starts[0][0]  # Default to first page
+            chunk_page: int | None = page_starts[0][0]  # Default to first page
 
             for pn, offset in page_starts:
                 if offset <= chunk_start:
-                    page_number = pn
+                    chunk_page = pn
                 else:
                     break
 
             chunks.append(
                 ChunkData(
                     content=chunk_text,
-                    page_number=page_number,
+                    page_number=chunk_page,
                     chapter=chapter,
                 )
             )
