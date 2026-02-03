@@ -47,6 +47,11 @@ export function RAGSourcesDialog({ sources, trigger }: RAGSourcesDialogProps) {
                   Section: {source.section_header}
                 </p>
               )}
+              {source.chapter && (
+                <p className="mb-2 text-muted-foreground text-xs italic">
+                  {source.chapter}, (page: {source.page_number})
+                </p>
+              )}
               {source.content && (
                 <p className="max-h-48 overflow-y-auto break-words text-muted-foreground text-sm">
                   {source.content}

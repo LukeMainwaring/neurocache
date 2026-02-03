@@ -5,6 +5,8 @@ export type RAGSource = {
   similarity: number;
   content?: string;
   section_header?: string;
+  page_number?: number;
+  chapter?: string;
 };
 
 export type MessageMetadata = {
