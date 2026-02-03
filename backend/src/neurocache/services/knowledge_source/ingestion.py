@@ -384,7 +384,7 @@ async def ingest_document(
             if "title" in book_meta:
                 title = book_meta["title"]
 
-    logger.info("Detected content type '%s' for %s", content_type, relative_path)
+    logger.info(f"Detected content type '{content_type}' for {relative_path}")
 
     document = await Document.create(
         db,
@@ -399,11 +399,11 @@ async def ingest_document(
             status=DocumentStatus.PROCESSING,
         ),
     )
-    logger.info("Created document %s for %s", document.id, relative_path)
+    logger.info(f"Created document {document.id} for {relative_path}")
 
     try:
         chunk_data_list = markdown_aware_chunk_text(content)
-        logger.info("Split document into %d chunks", len(chunk_data_list))
+        logger.info(f"Split document into {len(chunk_data_list)} chunks")
 
         # Embed only raw content (no context prefixes)
         embeddings = await generate_embeddings_batch(openai_client, [cd.content for cd in chunk_data_list])
@@ -429,7 +429,7 @@ async def ingest_document(
                 indexed_at=datetime.now(timezone.utc),
             ),
         )
-        logger.info("Indexed document %s with %d chunks", document.id, len(chunk_data_list))
+        logger.info(f"Indexed document {document.id} with {len(chunk_data_list)} chunks")
         return document
 
     except Exception as e:
@@ -581,11 +581,7 @@ async def _auto_link_book_documents(
                 DocumentUpdateSchema(doc_metadata=other_metadata),
             )
 
-            logger.info(
-                "Auto-linked documents: %s <-> %s",
-                document.relative_path,
-                other_doc.relative_path,
-            )
+            logger.info(f"Auto-linked documents: {document.relative_path} <-> {other_doc.relative_path}")
             break  # Only link to one document
 
 
@@ -632,7 +628,7 @@ async def ingest_pdf_document(
     # Detect content type (will be BOOK_SOURCE for PDFs in book directories)
     content_type = detect_content_type({}, relative_path, is_pdf=True)
 
-    logger.info("Detected content type '%s' for PDF %s", content_type, relative_path)
+    logger.info(f"Detected content type '{content_type}' for PDF {relative_path}")
 
     document = await Document.create(
         db,
@@ -646,12 +642,12 @@ async def ingest_pdf_document(
             status=DocumentStatus.PROCESSING,
         ),
     )
-    logger.info("Created PDF document %s for %s", document.id, relative_path)
+    logger.info(f"Created PDF document {document.id} for {relative_path}")
 
     try:
         # Chunk the PDF content
         chunk_data_list = chunk_pdf_pages(pages)
-        logger.info("Split PDF into %d chunks", len(chunk_data_list))
+        logger.info(f"Split PDF into {len(chunk_data_list)} chunks")
 
         if not chunk_data_list:
             # No chunks created (empty PDF)
@@ -690,7 +686,7 @@ async def ingest_pdf_document(
                 indexed_at=datetime.now(timezone.utc),
             ),
         )
-        logger.info("Indexed PDF document %s with %d chunks", document.id, len(chunk_data_list))
+        logger.info(f"Indexed PDF document {document.id} with {len(chunk_data_list)} chunks")
 
         # Auto-link to book notes in the same folder
         await _auto_link_book_documents(db, knowledge_source_id, document)
@@ -769,11 +765,7 @@ async def ingest_all_documents(
     documents_failed = 0
     failed_files: list[BatchIngestFailure] = []
 
-    logger.info(
-        "Discovered %d markdown files and %d PDF files to process",
-        len(markdown_files),
-        len(pdf_files),
-    )
+    logger.info(f"Discovered {len(markdown_files)} markdown files and {len(pdf_files)} PDF files to process")
 
     # Process markdown files
     for relative_path in markdown_files:
@@ -782,17 +774,17 @@ async def ingest_all_documents(
             if existing_doc:
                 if force_reindex:
                     await Document.delete(db, existing_doc.id)
-                    logger.info("Deleted existing document for re-indexing: %s", relative_path)
+                    logger.info(f"Deleted existing document for re-indexing: {relative_path}")
                 else:
                     file_path = Path(VAULT_MOUNT_PATH) / relative_path
                     changed, _ = _file_has_changed(existing_doc, file_path)
                     if not changed:
                         documents_skipped += 1
-                        logger.debug("Skipping unchanged: %s", relative_path)
+                        logger.debug(f"Skipping unchanged: {relative_path}")
                         continue
                     # Content changed — delete and re-ingest
                     await Document.delete(db, existing_doc.id)
-                    logger.info("Re-indexing modified document: %s", relative_path)
+                    logger.info(f"Re-indexing modified document: {relative_path}")
                     await ingest_document(db, openai_client, knowledge_source_id, relative_path)
                     documents_updated += 1
                     continue
@@ -804,7 +796,7 @@ async def ingest_all_documents(
             documents_failed += 1
             error_msg = str(e)
             failed_files.append(BatchIngestFailure(relative_path=relative_path, error=error_msg))
-            logger.warning("Failed to ingest %s: %s", relative_path, error_msg)
+            logger.warning(f"Failed to ingest {relative_path}: {error_msg}")
 
     # Process PDF files
     for relative_path in pdf_files:
@@ -813,7 +805,7 @@ async def ingest_all_documents(
             if existing_doc:
                 if force_reindex:
                     await Document.delete(db, existing_doc.id)
-                    logger.info("Deleted existing PDF for re-indexing: %s", relative_path)
+                    logger.info(f"Deleted existing PDF for re-indexing: {relative_path}")
                 else:
                     file_path = Path(VAULT_MOUNT_PATH) / relative_path
                     # For PDFs, just check mtime (content hash would require re-extracting)
@@ -821,11 +813,11 @@ async def ingest_all_documents(
                     current_mtime = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
                     if existing_doc.file_modified_at and current_mtime == existing_doc.file_modified_at:
                         documents_skipped += 1
-                        logger.debug("Skipping unchanged PDF: %s", relative_path)
+                        logger.debug(f"Skipping unchanged PDF: {relative_path}")
                         continue
                     # mtime changed — delete and re-ingest
                     await Document.delete(db, existing_doc.id)
-                    logger.info("Re-indexing modified PDF: %s", relative_path)
+                    logger.info(f"Re-indexing modified PDF: {relative_path}")
                     await ingest_pdf_document(db, openai_client, knowledge_source_id, relative_path)
                     documents_updated += 1
                     continue
@@ -837,7 +829,7 @@ async def ingest_all_documents(
             documents_failed += 1
             error_msg = str(e)
             failed_files.append(BatchIngestFailure(relative_path=relative_path, error=error_msg))
-            logger.warning("Failed to ingest PDF %s: %s", relative_path, error_msg)
+            logger.warning(f"Failed to ingest PDF {relative_path}: {error_msg}")
 
     # Detect deleted files — remove DB records for files no longer on disk
     discovered_set = set(all_files)
@@ -847,17 +839,11 @@ async def ingest_all_documents(
         if doc.relative_path not in discovered_set:
             await Document.delete(db, doc.id)
             documents_deleted += 1
-            logger.info("Deleted document no longer on disk: %s", doc.relative_path)
+            logger.info(f"Deleted document no longer on disk: {doc.relative_path}")
 
     duration = time.time() - start_time
     logger.info(
-        "Batch ingestion complete: %d created, %d updated, %d deleted, %d skipped, %d failed in %.2fs",
-        documents_created,
-        documents_updated,
-        documents_deleted,
-        documents_skipped,
-        documents_failed,
-        duration,
+        f"Batch ingestion complete: {documents_created} created, {documents_updated} updated, {documents_deleted} deleted, {documents_skipped} skipped, {documents_failed} failed in {duration:.2f}s"
     )
     return BatchIngestResult(
         total_files_found=total_files,

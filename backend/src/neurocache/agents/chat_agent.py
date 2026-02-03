@@ -270,7 +270,7 @@ async def chat_agent_stream(
     # Augment user prompt with context if available
     if rag_context:
         augmented_prompt = f"{original_user_query}\n\n---\nRelevant information from your notes:\n\n{rag_context}"
-        logger.info("RAG: Augmented prompt with context: %s", augmented_prompt)
+        logger.info(f"RAG: Augmented prompt with context: {augmented_prompt}")
     else:
         augmented_prompt = original_user_query
         logger.info("RAG: No relevant context found")

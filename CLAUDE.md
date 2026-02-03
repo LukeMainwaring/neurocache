@@ -45,27 +45,16 @@ After making frontend code changes, run `pnpm format` to fix formatting. Use `pn
 FastAPI Python backend using async patterns throughout.
 
 -   **`src/neurocache/app.py`**: FastAPI application entry point with CORS and logging middleware
--   **`src/neurocache/routers/`**: API routes organized by domain (chat, thread, user, health)
+-   **`src/neurocache/routers/`**: API routes by domain (chat, threads, users, knowledge sources, health)
 -   **`src/neurocache/agents/`**: Pydantic AI agents - `chat_agent.py` contains the main conversational agent
--   **`src/neurocache/models/`**: SQLAlchemy async models (Thread, Message, User)
--   **`src/neurocache/schemas/`**: Pydantic models for request/response validation
+-   **`src/neurocache/models/`**: SQLAlchemy async models with CRUD classmethods (User, Thread, Message, KnowledgeSource, Document)
+-   **`src/neurocache/schemas/`**: Pydantic schemas for API contracts, enums, and domain types
+-   **`src/neurocache/services/`**: Business logic (embeddings, RAG retrieval, document ingestion, title generation)
 -   **`src/neurocache/core/config.py`**: Settings via pydantic-settings (reads from `.env`)
 -   **`src/neurocache/migrations/`**: Alembic migrations for PostgreSQL
+-   **`src/neurocache/dependencies/`**: FastAPI dependency injection (db sessions, OpenAI client, auth)
 
-Key patterns:
-
--   All database operations are async using `AsyncSession`
--   Agents stream responses as SSE in Vercel AI SDK v1 format
--   Messages stored as JSONB, threads have composite primary key (thread_id, agent_type)
--   Type hints required on all functions
--   Keep route handlers thin: push business logic to `services/`, DB logic to `models/`
--   Use modern Python syntax: `| None` over `Optional`, `list` over `List`
--   When creating SQLAlchemy columns, prefer simple Python type inference and only use `mapped_column` when column-based attributes require more specific customization. Example: `name: Mapped[str | None]` instead of `name: Mapped[str | None] = mapped_column(String(255), nullable=True)`
--   After generating an alembic database migration, pause and ask if it looks okay before running `migrate-docker.sh`. Never run downgrade scripts without explicit user request.
--   Re-export convention for `__init__.py`:
-    -   **Default:** Keep `__init__.py` empty; use deep imports (`from neurocache.models.thread import Thread`)
-    -   **Exception — `models/`:** Re-export all models for Alembic autogenerate support
-    -   **Exception — `routers/`:** Re-export routers for clean aggregation in `main.py`
+See `.claude/rules/backend/code-conventions.md` for code style and conventions.
 
 ### Frontend (`frontend/`)
 
