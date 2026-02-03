@@ -60,6 +60,7 @@ Key patterns:
 -   Type hints required on all functions
 -   Keep route handlers thin: push business logic to `services/`, DB logic to `models/`
 -   Use modern Python syntax: `| None` over `Optional`, `list` over `List`
+-   Use f-strings for logging: `logger.info(f"Created {item.id}")` not `logger.info("Created %s", item.id)`
 -   When creating SQLAlchemy columns, prefer simple Python type inference and only use `mapped_column` when column-based attributes require more specific customization. Example: `name: Mapped[str | None]` instead of `name: Mapped[str | None] = mapped_column(String(255), nullable=True)`
 -   After generating an alembic database migration, pause and ask if it looks okay before running `migrate-docker.sh`. Never run downgrade scripts without explicit user request.
 -   Re-export convention for `__init__.py`:

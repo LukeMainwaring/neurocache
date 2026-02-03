@@ -83,7 +83,7 @@ async def generate_embeddings_batch(openai_client: AsyncOpenAI, texts: list[str]
     if current_batch:
         batches.append(current_batch)
 
-    logger.info("Embedding %d texts in %d batches", len(texts), len(batches))
+    logger.info(f"Embedding {len(texts)} texts in {len(batches)} batches")
 
     # Process each batch and collect results
     all_embeddings: list[list[float]] = []

@@ -55,9 +55,6 @@ async def validate_obsidian_vault(
     file_count = len(markdown_files) + len(pdf_files)
 
     logger.info(
-        "Validated Obsidian vault at %s (%d markdown files, %d PDF files)",
-        VAULT_CONTAINER_PATH,
-        len(markdown_files),
-        len(pdf_files),
+        f"Validated Obsidian vault at {VAULT_CONTAINER_PATH} ({len(markdown_files)} markdown files, {len(pdf_files)} PDF files)"
     )
     return True, None, file_count

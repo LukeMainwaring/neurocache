@@ -60,15 +60,15 @@ async def generate_thread_title(
             async with get_async_sqlalchemy_session() as db:
                 await Thread.update_title(db, thread_id, agent_type, title)
                 await db.commit()
-            logger.info("Generated title for thread %s: %s", thread_id, title)
+            logger.info(f"Generated title for thread {thread_id}: {title}")
 
     except Exception:
-        logger.exception("Failed to generate title for thread %s", thread_id)
+        logger.exception(f"Failed to generate title for thread {thread_id}")
         fallback = _create_fallback_title(user_message)
         try:
             async with get_async_sqlalchemy_session() as db:
                 await Thread.update_title(db, thread_id, agent_type, fallback)
                 await db.commit()
-            logger.info("Used fallback title for thread %s: %s", thread_id, fallback)
+            logger.info(f"Used fallback title for thread {thread_id}: {fallback}")
         except Exception:
-            logger.exception("Failed to save fallback title for thread %s", thread_id)
+            logger.exception(f"Failed to save fallback title for thread {thread_id}")

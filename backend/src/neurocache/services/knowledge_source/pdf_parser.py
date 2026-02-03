@@ -133,10 +133,6 @@ def extract_pdf_content(file_path: Path) -> list[PageContent]:
             f"PDF appears to be scanned with no extractable text: {file_path}. OCR is not currently supported."
         )
 
-    logger.info(
-        "Extracted %d pages from PDF, TOC has %d entries",
-        len(pages),
-        len(toc),
-    )
+    logger.info(f"Extracted {len(pages)} pages from PDF, TOC has {len(toc)} entries")
 
     return pages

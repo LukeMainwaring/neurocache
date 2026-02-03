@@ -151,10 +151,6 @@ def chunk_pdf_pages(pages: list[PageContent]) -> list[ChunkData]:
         else:
             merged_chunks.append(chunk)
 
-    logger.info(
-        "Chunked PDF into %d chunks from %d pages",
-        len(merged_chunks),
-        len(pages),
-    )
+    logger.info(f"Chunked PDF into {len(merged_chunks)} chunks from {len(pages)} pages")
 
     return merged_chunks
