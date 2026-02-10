@@ -12,6 +12,7 @@ import logging
 import uuid
 from collections.abc import AsyncGenerator
 
+import logfire
 from openai import AsyncOpenAI
 from pydantic_ai import Agent, ModelSettings, RunContext
 from pydantic_ai.models.openai import OpenAIChatModel
@@ -29,6 +30,9 @@ from neurocache.schemas.user import UserSchema
 from neurocache.services.knowledge_source.retrieval import search_similar_chunks_for_user
 from neurocache.services.title_generator import generate_thread_title
 from neurocache.utils.message_serialization import RAGSource, prepare_messages_for_storage
+
+logfire.configure()
+logfire.instrument_pydantic_ai()
 
 logger = logging.getLogger(__name__)
 
