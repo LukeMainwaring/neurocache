@@ -1,8 +1,6 @@
 import logging
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 
 from neurocache.dependencies.auth.auth import AuthenticatedUser
 from neurocache.dependencies.db import AsyncPostgresSessionDep
@@ -15,7 +13,7 @@ from neurocache.schemas.thread import (
     ThreadMessagesResponse,
     ThreadSummary,
 )
-from neurocache.utils.message_serialization import deserialize_messages
+from neurocache.utils.message_serialization import messages_to_frontend
 
 logger = logging.getLogger(__name__)
 
@@ -48,27 +46,8 @@ async def get_thread_messages(
     thread = await Thread.get_for_user(db, thread_id, user_id, AgentType.CHAT.value)
     if not thread:
         raise HTTPException(status_code=404, detail="Thread not found")
-    # Get raw messages, deserialize to ModelMessages, convert to UIMessages
     raw = await Message.get_history(db, thread_id, AgentType.CHAT.value)
-    model_messages = deserialize_messages(raw)
-    ui_messages = VercelAIAdapter.dump_messages(model_messages)
-    frontend_messages: list[dict[str, Any]] = [msg.model_dump(mode="json", by_alias=True) for msg in ui_messages]
-
-    # Re-attach RAG source metadata from raw storage onto user messages
-    raw_request_idx = 0
-    for fm in frontend_messages:
-        if fm["role"] == "user":
-            # Walk raw messages to find the next request with rag_sources
-            while raw_request_idx < len(raw) and raw[raw_request_idx].get("kind") != "request":
-                raw_request_idx += 1
-            if raw_request_idx < len(raw):
-                rag_sources = raw[raw_request_idx].get("rag_sources")
-                if rag_sources:
-                    fm.setdefault("metadata", {})
-                    if fm["metadata"] is None:
-                        fm["metadata"] = {}
-                    fm["metadata"]["ragSources"] = rag_sources
-                raw_request_idx += 1
+    frontend_messages = messages_to_frontend(raw)
 
     return ThreadMessagesResponse(thread_id=thread_id, messages=frontend_messages)
 

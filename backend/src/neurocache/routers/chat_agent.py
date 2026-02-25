@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
-from pydantic_ai.ui.vercel_ai.request_types import TextUIPart, UIMessage
 from starlette.requests import Request
 from starlette.responses import Response
 
@@ -27,28 +26,11 @@ from neurocache.models.thread import Thread
 from neurocache.models.user import User as UserModel
 from neurocache.schemas.agent_type import AgentType
 from neurocache.services.title_generator import generate_thread_title
-from neurocache.utils.message_serialization import prepare_messages_for_storage
+from neurocache.utils.message_serialization import extract_latest_user_text, prepare_messages_for_storage
 
 logger = logging.getLogger(__name__)
 
 chat_router = APIRouter(prefix="/chat", tags=["chat"])
-
-
-def _extract_latest_user_text(messages: list[UIMessage]) -> str:
-    """Extract text content from the last user message.
-
-    Args:
-        messages: List of UIMessage objects from the parsed request
-
-    Returns:
-        The text content of the last user message, or empty string if not found
-    """
-    for msg in reversed(messages):
-        if msg.role == "user":
-            for part in msg.parts:
-                if isinstance(part, TextUIPart):
-                    return part.text
-    return ""
 
 
 @chat_router.post("/stream")
@@ -70,7 +52,7 @@ async def stream_chat(
     # Setup deps
     user = await UserModel.get(db, user_id)
 
-    user_query = _extract_latest_user_text(run_input.messages)
+    user_query = extract_latest_user_text(run_input.messages)
 
     # RAG retrieval
     openai_client = get_openai_client()
