@@ -1,8 +1,15 @@
-"""Utilities for serializing/deserializing Pydantic AI ModelMessage objects."""
+"""Utilities for serializing/deserializing Pydantic AI ModelMessage objects.
+
+Handles the round-trip between Pydantic AI ModelMessage format (used by agents),
+storage format (JSONB dicts in PostgreSQL), and frontend format (Vercel AI UIMessage).
+Also manages RAG source metadata attachment across all three formats.
+"""
 
 from typing import Any
 
 from pydantic_ai.messages import ModelMessage, ModelMessagesTypeAdapter
+from pydantic_ai.ui.vercel_ai import VercelAIAdapter
+from pydantic_ai.ui.vercel_ai.request_types import TextUIPart, UIMessage
 
 # Type alias for RAG source metadata
 # Contains: path, similarity, content, content_type, section_header, author,
@@ -10,20 +17,45 @@ from pydantic_ai.messages import ModelMessage, ModelMessagesTypeAdapter
 RAGSource = dict[str, str | float | int]
 
 
-def prepare_messages_for_storage(
-    messages: list[ModelMessage],
-    original_query: str,
-    rag_sources: list[RAGSource],
-) -> list[dict[str, Any]]:
-    """Prepare messages for storage with original query and RAG sources.
+# ============================================================================
+# Request Parsing
+# ============================================================================
 
-    Converts Pydantic AI messages to storage format, replacing the augmented
-    query with the original and adding RAG sources as a simple extra field.
+
+def extract_latest_user_text(messages: list[UIMessage]) -> str:
+    """Extract text content from the last user message in a Vercel AI request.
 
     Args:
-        messages: List of Pydantic AI messages from result.new_messages()
-        original_query: The user's original query before RAG augmentation
-        rag_sources: List of source metadata from RAG retrieval
+        messages: List of UIMessage objects from the parsed request
+
+    Returns:
+        The text content of the last user message, or empty string if not found
+    """
+    for msg in reversed(messages):
+        if msg.role == "user":
+            for part in msg.parts:
+                if isinstance(part, TextUIPart):
+                    return part.text
+    return ""
+
+
+# ============================================================================
+# Storage Serialization (write path)
+# ============================================================================
+
+
+def prepare_messages_for_storage(
+    messages: list[ModelMessage],
+    rag_sources: list[RAGSource] | None = None,
+) -> list[dict[str, Any]]:
+    """Prepare messages for storage with optional RAG source metadata.
+
+    Converts Pydantic AI messages to storage format and attaches RAG sources
+    to the last user request message for frontend display.
+
+    Args:
+        messages: List of Pydantic AI messages (full conversation from result.all_messages())
+        rag_sources: Optional list of source metadata from RAG retrieval
 
     Returns:
         List of serialized message dicts ready for storage
@@ -33,21 +65,19 @@ def prepare_messages_for_storage(
     if not serialized:
         return serialized
 
-    # First message is user request - replace augmented content with original
-    first_msg = serialized[0]
-    if first_msg.get("kind") == "request":
-        parts = first_msg.get("parts", [])
-        if isinstance(parts, list):
-            for part in parts:
-                if isinstance(part, dict) and part.get("part_kind") == "user-prompt":
-                    part["content"] = original_query
-                    break
-
-        # Add RAG sources as simple extra field
-        if rag_sources:
-            first_msg["rag_sources"] = rag_sources
+    # Attach RAG sources to the last user request message
+    if rag_sources:
+        for msg in reversed(serialized):
+            if msg.get("kind") == "request":
+                msg["rag_sources"] = rag_sources
+                break
 
     return serialized
+
+
+# ============================================================================
+# Storage Deserialization (read path)
+# ============================================================================
 
 
 def deserialize_messages(message_data: list[dict[str, Any]]) -> list[ModelMessage]:
@@ -62,10 +92,44 @@ def deserialize_messages(message_data: list[dict[str, Any]]) -> list[ModelMessag
     Returns:
         List of ModelMessage objects (ModelRequest or ModelResponse)
     """
-    # Strip extra fields we added (rag_sources) before deserializing
     cleaned: list[dict[str, Any]] = []
     for msg in message_data:
         clean_msg = {k: v for k, v in msg.items() if k != "rag_sources"}
         cleaned.append(clean_msg)
 
     return ModelMessagesTypeAdapter.validate_python(cleaned)
+
+
+def messages_to_frontend(raw_messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Convert stored messages to frontend-compatible Vercel AI UIMessage format.
+
+    Deserializes raw storage dicts → ModelMessages → UIMessages, then re-attaches
+    RAG source metadata (stored as an extra field on request messages) onto the
+    corresponding frontend user messages.
+
+    Args:
+        raw_messages: List of raw message dicts from database JSONB column
+
+    Returns:
+        List of frontend-compatible message dicts with RAG metadata attached
+    """
+    model_messages = deserialize_messages(raw_messages)
+    ui_messages = VercelAIAdapter.dump_messages(model_messages)
+    frontend_messages: list[dict[str, Any]] = [msg.model_dump(mode="json", by_alias=True) for msg in ui_messages]
+
+    # Re-attach RAG source metadata from raw storage onto user messages
+    raw_request_idx = 0
+    for fm in frontend_messages:
+        if fm["role"] == "user":
+            while raw_request_idx < len(raw_messages) and raw_messages[raw_request_idx].get("kind") != "request":
+                raw_request_idx += 1
+            if raw_request_idx < len(raw_messages):
+                rag_sources = raw_messages[raw_request_idx].get("rag_sources")
+                if rag_sources:
+                    fm.setdefault("metadata", {})
+                    if fm["metadata"] is None:
+                        fm["metadata"] = {}
+                    fm["metadata"]["ragSources"] = rag_sources
+                raw_request_idx += 1
+
+    return frontend_messages

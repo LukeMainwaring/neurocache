@@ -359,20 +359,6 @@ export type KnowledgeSourceUpdateSchema = {
 };
 
 /**
- * MessageMetadata
- */
-export type MessageMetadata = {
-    /**
-     * Original Llm Response
-     */
-    original_llm_response?: string | null;
-    /**
-     * Should Send
-     */
-    should_send?: boolean | null;
-};
-
-/**
  * ObsidianDefaults
  *
  * Default values for Obsidian vault configuration.
@@ -465,25 +451,6 @@ export type ThreadSummary = {
      * Updated At
      */
     updated_at: string;
-};
-
-/**
- * UserMessage
- */
-export type UserMessage = {
-    /**
-     * Thread Id
-     */
-    thread_id: string;
-    metadata?: MessageMetadata;
-    /**
-     * Role
-     */
-    role?: 'user';
-    /**
-     * Content
-     */
-    content: string;
 };
 
 /**
@@ -589,20 +556,11 @@ export type ValidationError = {
 };
 
 export type StreamChatData = {
-    body: UserMessage;
+    body?: never;
     path?: never;
     query?: never;
     url: '/api/chat/stream';
 };
-
-export type StreamChatErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type StreamChatError = StreamChatErrors[keyof StreamChatErrors];
 
 export type StreamChatResponses = {
     /**

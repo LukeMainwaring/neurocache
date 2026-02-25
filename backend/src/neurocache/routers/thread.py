@@ -13,7 +13,7 @@ from neurocache.schemas.thread import (
     ThreadMessagesResponse,
     ThreadSummary,
 )
-from neurocache.utils.message_transformation import transform_messages_for_frontend
+from neurocache.utils.message_serialization import messages_to_frontend
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +46,8 @@ async def get_thread_messages(
     thread = await Thread.get_for_user(db, thread_id, user_id, AgentType.CHAT.value)
     if not thread:
         raise HTTPException(status_code=404, detail="Thread not found")
-    # Get messages and transform to frontend-compatible format
-    messages = await Message.get_history(db, thread_id, AgentType.CHAT.value)
-    frontend_messages = transform_messages_for_frontend(messages)
+    raw = await Message.get_history(db, thread_id, AgentType.CHAT.value)
+    frontend_messages = messages_to_frontend(raw)
 
     return ThreadMessagesResponse(thread_id=thread_id, messages=frontend_messages)
 

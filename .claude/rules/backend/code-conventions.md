@@ -22,7 +22,10 @@ Python/FastAPI conventions for the neurocache backend.
 ## Data Patterns
 
 - Messages stored as JSONB, threads have composite primary key (thread_id, agent_type)
-- Agents stream responses as SSE in Vercel AI SDK v1 format
+- RAG source metadata stored as extra field on request messages for frontend display
+- Agents stream responses via `VercelAIAdapter.dispatch_request()` (Vercel AI SDK format)
+- Message persistence handled via `on_complete` callback using append-only `Message.save_history()`
+- Pass RAG/retrieval context as runtime `instructions` parameter, not as augmented user prompt
 
 ## Pydantic
 
