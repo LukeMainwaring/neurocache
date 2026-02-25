@@ -5,23 +5,25 @@ import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
 import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listKnowledgeSources, listThreads, listUsers, type Options, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization } from '../sdk.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, StreamChatError, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
 
 /**
  * Stream Chat
  *
  * Chat agent streaming endpoint.
  *
- * Provides general conversational interaction with the user's knowledge base.
+ * Uses VercelAIAdapter to handle Vercel AI SDK protocol natively.
  *
  * Args:
- * message: User message containing query and thread_id
+ * request: Raw Starlette request (body consumed by adapter)
+ * db: Database session
+ * user_id: Authenticated user ID
  *
  * Returns:
- * Server-Sent Events stream of agent responses
+ * Streaming response in Vercel AI Data Stream Protocol format
  */
-export const streamChatMutation = (options?: Partial<Options<StreamChatData>>): UseMutationOptions<unknown, AxiosError<StreamChatError>, Options<StreamChatData>> => {
-    const mutationOptions: UseMutationOptions<unknown, AxiosError<StreamChatError>, Options<StreamChatData>> = {
+export const streamChatMutation = (options?: Partial<Options<StreamChatData>>): UseMutationOptions<unknown, AxiosError<DefaultError>, Options<StreamChatData>> => {
+    const mutationOptions: UseMutationOptions<unknown, AxiosError<DefaultError>, Options<StreamChatData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await streamChat({
                 ...options,

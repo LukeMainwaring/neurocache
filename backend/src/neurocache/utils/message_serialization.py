@@ -12,18 +12,16 @@ RAGSource = dict[str, str | float | int]
 
 def prepare_messages_for_storage(
     messages: list[ModelMessage],
-    original_query: str,
-    rag_sources: list[RAGSource],
+    rag_sources: list[RAGSource] | None = None,
 ) -> list[dict[str, Any]]:
-    """Prepare messages for storage with original query and RAG sources.
+    """Prepare messages for storage with optional RAG source metadata.
 
-    Converts Pydantic AI messages to storage format, replacing the augmented
-    query with the original and adding RAG sources as a simple extra field.
+    Converts Pydantic AI messages to storage format and attaches RAG sources
+    to the last user request message for frontend display.
 
     Args:
-        messages: List of Pydantic AI messages from result.new_messages()
-        original_query: The user's original query before RAG augmentation
-        rag_sources: List of source metadata from RAG retrieval
+        messages: List of Pydantic AI messages (full conversation from result.all_messages())
+        rag_sources: Optional list of source metadata from RAG retrieval
 
     Returns:
         List of serialized message dicts ready for storage
@@ -33,19 +31,12 @@ def prepare_messages_for_storage(
     if not serialized:
         return serialized
 
-    # First message is user request - replace augmented content with original
-    first_msg = serialized[0]
-    if first_msg.get("kind") == "request":
-        parts = first_msg.get("parts", [])
-        if isinstance(parts, list):
-            for part in parts:
-                if isinstance(part, dict) and part.get("part_kind") == "user-prompt":
-                    part["content"] = original_query
-                    break
-
-        # Add RAG sources as simple extra field
-        if rag_sources:
-            first_msg["rag_sources"] = rag_sources
+    # Attach RAG sources to the last user request message
+    if rag_sources:
+        for msg in reversed(serialized):
+            if msg.get("kind") == "request":
+                msg["rag_sources"] = rag_sources
+                break
 
     return serialized
 

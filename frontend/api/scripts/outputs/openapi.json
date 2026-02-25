@@ -11,34 +11,14 @@
           "chat"
         ],
         "summary": "Stream Chat",
-        "description": "Chat agent streaming endpoint.\n\nProvides general conversational interaction with the user's knowledge base.\n\nArgs:\n    message: User message containing query and thread_id\n\nReturns:\n    Server-Sent Events stream of agent responses",
+        "description": "Chat agent streaming endpoint.\n\nUses VercelAIAdapter to handle Vercel AI SDK protocol natively.\n\nArgs:\n    request: Raw Starlette request (body consumed by adapter)\n    db: Database session\n    user_id: Authenticated user ID\n\nReturns:\n    Streaming response in Vercel AI Data Stream Protocol format",
         "operationId": "streamChat",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserMessage"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -1113,34 +1093,6 @@
         "title": "KnowledgeSourceUpdateSchema",
         "description": "Schema for updating a knowledge source."
       },
-      "MessageMetadata": {
-        "properties": {
-          "original_llm_response": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Original Llm Response"
-          },
-          "should_send": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Should Send"
-          }
-        },
-        "type": "object",
-        "title": "MessageMetadata"
-      },
       "ObsidianDefaults": {
         "properties": {
           "name": {
@@ -1268,33 +1220,6 @@
         ],
         "title": "ThreadSummary",
         "description": "Summary of a thread for list view.\n\nCompatible with frontend sidebar expectations."
-      },
-      "UserMessage": {
-        "properties": {
-          "thread_id": {
-            "type": "string",
-            "title": "Thread Id"
-          },
-          "metadata": {
-            "$ref": "#/components/schemas/MessageMetadata"
-          },
-          "role": {
-            "type": "string",
-            "const": "user",
-            "title": "Role",
-            "default": "user"
-          },
-          "content": {
-            "type": "string",
-            "title": "Content"
-          }
-        },
-        "type": "object",
-        "required": [
-          "thread_id",
-          "content"
-        ],
-        "title": "UserMessage"
       },
       "UserPersonalizationUpdateSchema": {
         "properties": {
