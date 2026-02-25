@@ -98,19 +98,13 @@ def build_chat_instructions(ctx: RunContext[UserSchema]) -> str:
     return "\n\n".join(sections)
 
 
-def create_chat_agent() -> Agent[UserSchema, str]:
-    """Create chat agent for general conversation.
+_model = OpenAIChatModel(model_name=config.AGENT_MODEL, settings=ModelSettings(temperature=config.AGENT_TEMPERATURE))
 
-    Returns:
-        Agent configured with User dependencies and chat instructions
-    """
-    model = OpenAIChatModel(model_name=config.AGENT_MODEL, settings=ModelSettings(temperature=config.AGENT_TEMPERATURE))
-
-    return Agent(
-        model=model,
-        deps_type=UserSchema,
-        instructions=build_chat_instructions,
-    )
+chat_agent = Agent(
+    model=_model,
+    deps_type=UserSchema,
+    instructions=build_chat_instructions,
+)
 
 
 # ============================================================================
@@ -291,8 +285,7 @@ async def chat_agent_stream(
         yield f"data: {json.dumps({'type': 'text-start', 'id': text_block_id})}\n\n"
 
         # Run chat agent with streaming
-        agent = create_chat_agent()
-        async with agent.run_stream(
+        async with chat_agent.run_stream(
             user_prompt=augmented_prompt,
             message_history=original_message_history,
             deps=user,

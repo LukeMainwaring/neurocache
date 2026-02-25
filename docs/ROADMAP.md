@@ -88,6 +88,14 @@ User isolation, usage tracking, admin dashboard. Only relevant for productioniza
 
 CI/CD, monitoring, production deployment. Handle when/if the app goes public.
 
+### Live Web Search
+
+Use Pydantic AI's built-in `WebSearchTool` to supplement knowledge base answers with live web results. Would let the agent blend personal notes with current external information.
+
+### Model Upgrades & Reasoning
+
+Experiment with reasoning models and tune `ModelSettings` (e.g., `openai_reasoning_effort`) once the core chat and RAG flow is working well. Just a config change — no architectural work needed.
+
 ### Data Export
 
 Conversation and knowledge base export. Low priority for personal use.
