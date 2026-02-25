@@ -46,10 +46,11 @@ FastAPI Python backend using async patterns throughout.
 
 -   **`src/neurocache/app.py`**: FastAPI application entry point with CORS and logging middleware
 -   **`src/neurocache/routers/`**: API routes by domain (chat, threads, users, knowledge sources, health)
--   **`src/neurocache/agents/`**: Pydantic AI agents - `chat_agent.py` contains the main conversational agent
+-   **`src/neurocache/agents/`**: Pydantic AI agents — `chat_agent.py` defines the agent, system prompt, RAG retrieval, and context formatting
 -   **`src/neurocache/models/`**: SQLAlchemy async models with CRUD classmethods (User, Thread, Message, KnowledgeSource, Document)
 -   **`src/neurocache/schemas/`**: Pydantic schemas for API contracts, enums, and domain types
 -   **`src/neurocache/services/`**: Business logic (embeddings, RAG retrieval, document ingestion, title generation)
+-   **`src/neurocache/utils/message_serialization.py`**: Message format round-trip: storage serialization, frontend conversion via `VercelAIAdapter.dump_messages()`, RAG source metadata attachment
 -   **`src/neurocache/core/config.py`**: Settings via pydantic-settings (reads from `.env`)
 -   **`src/neurocache/migrations/`**: Alembic migrations for PostgreSQL
 -   **`src/neurocache/dependencies/`**: FastAPI dependency injection (db sessions, OpenAI client, auth)
@@ -77,11 +78,11 @@ Key patterns:
 
 ### Data Flow
 
-1. Frontend `useChat` sends streaming messages to `/api/chat` route; non-streaming calls use TanStack Query hooks from `api/hooks/`
-2. Route proxies to backend `/api/chat/stream`
-3. Backend's chat agent processes with Pydantic AI
-4. Response streams back as SSE, stored in PostgreSQL
-5. Frontend renders streamed chunks in real-time
+1. Frontend `useChat` sends full message array to `/api/chat` route; non-streaming calls use TanStack Query hooks from `api/hooks/`
+2. Route proxies raw request body to backend `/api/chat/stream`
+3. Backend uses `VercelAIAdapter.dispatch_request()` to parse the request, run RAG retrieval, inject context as runtime `instructions`, execute the chat agent, and stream the response
+4. `on_complete` callback persists conversation to PostgreSQL and triggers title generation for new threads
+5. Frontend renders streamed chunks in real-time; on finish, refetches messages from DB for RAG source metadata
 
 ## Additional Instructions
 
