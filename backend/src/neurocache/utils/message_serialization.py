@@ -65,12 +65,17 @@ def prepare_messages_for_storage(
     if not serialized:
         return serialized
 
-    # Attach RAG sources to the last user request message
+    # Attach RAG sources to the last user-prompt request message.
+    # With tool use, result.all_messages() may contain tool-return requests
+    # (kind="request" with part_kind="tool-return") — we need the actual
+    # user message (kind="request" with a "user-prompt" part).
     if rag_sources:
         for msg in reversed(serialized):
             if msg.get("kind") == "request":
-                msg["rag_sources"] = rag_sources
-                break
+                parts = msg.get("parts", [])
+                if any(p.get("part_kind") == "user-prompt" for p in parts):
+                    msg["rag_sources"] = rag_sources
+                    break
 
     return serialized
 

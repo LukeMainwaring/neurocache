@@ -13,11 +13,8 @@ from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 from starlette.requests import Request
 from starlette.responses import Response
 
-from neurocache.agents.chat_agent import (
-    chat_agent,
-    format_rag_instructions,
-    retrieve_context,
-)
+from neurocache.agents.chat_agent import chat_agent
+from neurocache.agents.deps import AgentDeps
 from neurocache.dependencies.auth.auth import AuthenticatedUser
 from neurocache.dependencies.db import AsyncPostgresSessionDep
 from neurocache.dependencies.openai import get_openai_client
@@ -51,19 +48,16 @@ async def stream_chat(
 
     # Setup deps
     user = await UserModel.get(db, user_id)
-
     user_query = extract_latest_user_text(run_input.messages)
 
-    # RAG retrieval
     openai_client = get_openai_client()
-    rag_context, rag_sources = await retrieve_context(db, openai_client, user_query, user_id)
-    rag_instructions = format_rag_instructions(rag_context) if rag_context else None
+    deps = AgentDeps(user=user, db=db, openai_client=openai_client)
 
     async def on_complete(result):  # type: ignore[no-untyped-def]
         # Save the full conversation: all_messages() includes the adapter's
         # converted history + new response. save_history is append-only (counts
         # existing DB rows, inserts only messages at indexes beyond that).
-        all_msgs = prepare_messages_for_storage(result.all_messages(), rag_sources)
+        all_msgs = prepare_messages_for_storage(result.all_messages(), deps.rag_sources)
         await Thread.get_or_create(db, thread_id, AgentType.CHAT.value, user_id)
         await Message.save_history(db, thread_id, AgentType.CHAT.value, all_msgs)
 
@@ -85,7 +79,6 @@ async def stream_chat(
     return await VercelAIAdapter.dispatch_request(
         request,
         agent=chat_agent,
-        deps=user,
-        instructions=rag_instructions,
+        deps=deps,
         on_complete=on_complete,
     )
