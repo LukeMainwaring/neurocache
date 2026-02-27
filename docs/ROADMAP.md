@@ -8,13 +8,14 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 - **Chat**: Streaming responses, message persistence, thread management, auto-generated titles
 - **Personalization**: User-specific context (custom instructions, occupation, about) injected into system prompt
-- **RAG / Knowledge Base**: Document ingestion from Obsidian vaults, markdown-aware chunking, semantic search via pgvector, context injection into chat
+- **RAG / Knowledge Base**: Document ingestion from Obsidian vaults, markdown-aware chunking, semantic search via pgvector, agentic retrieval via tool use
 
   - Batch ingestion of all markdown files from a knowledge source
   - Sync lifecycle with manual re-sync UI and status tracking
   - Change detection during sync (re-index modified files, clean up deleted files)
+  - Agent-driven `search_knowledge_base` tool — agent decides when to search, can refine queries, and search multiple times per turn
 
-**Next Up:** Enhanced retrieval (cross-reference discovery, citations, hybrid search)
+**Next Up:** Web search tool, MCP server, enhanced retrieval (hybrid search, cross-reference discovery, citations)
 
 ---
 
@@ -27,6 +28,10 @@ User-specific context (custom instructions, nickname, occupation, about) stored 
 ### Phase 2: RAG Vertical Slice
 
 End-to-end RAG pipeline: pgvector storage with HNSW indexing, OpenAI embeddings, markdown-aware chunking that respects document structure, semantic retrieval integrated into the chat agent. Batch ingestion discovers all markdown files in an Obsidian vault, with sync lifecycle management and change detection (mtime + content hash) to keep the index up to date.
+
+### Phase 2.5: Agentic RAG via Tool Use
+
+Converted RAG from a pre-fetch step into a Pydantic AI tool (`search_knowledge_base`) the agent invokes on demand. Introduced shared `AgentDeps` dataclass and `agents/tools/` module pattern. The agent now decides whether retrieval is needed, can reformulate queries, and can search multiple times per turn. This is the architectural prerequisite for web search, write-back, MCP tools, and other future agent capabilities.
 
 ---
 

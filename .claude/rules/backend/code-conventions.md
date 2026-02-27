@@ -25,7 +25,7 @@ Python/FastAPI conventions for the neurocache backend.
 - RAG source metadata stored as extra field on request messages for frontend display
 - Agents stream responses via `VercelAIAdapter.dispatch_request()` (Vercel AI SDK format)
 - Message persistence handled via `on_complete` callback using append-only `Message.save_history()`
-- Pass RAG/retrieval context as runtime `instructions` parameter, not as augmented user prompt
+- RAG retrieval is agentic: the agent calls `search_knowledge_base` tool on demand (not pre-fetched). Tool modules live in `agents/tools/` and register via `register_*_tools()` functions
 
 ## Pydantic
 
