@@ -46,7 +46,7 @@ FastAPI Python backend using async patterns throughout.
 
 -   **`src/neurocache/app.py`**: FastAPI application entry point with CORS and logging middleware
 -   **`src/neurocache/routers/`**: API routes by domain (chat, threads, users, knowledge sources, health)
--   **`src/neurocache/agents/`**: Pydantic AI agents — `chat_agent.py` defines the agent, system prompt, RAG retrieval, and context formatting
+-   **`src/neurocache/agents/`**: Pydantic AI agents — `chat_agent.py` defines the agent and system prompt; `deps.py` defines shared `AgentDeps`; `tools/` contains agent tools (e.g., `knowledge_base_tools.py` for RAG search)
 -   **`src/neurocache/models/`**: SQLAlchemy async models with CRUD classmethods (User, Thread, Message, KnowledgeSource, Document)
 -   **`src/neurocache/schemas/`**: Pydantic schemas for API contracts, enums, and domain types
 -   **`src/neurocache/services/`**: Business logic (embeddings, RAG retrieval, document ingestion, title generation)
@@ -80,7 +80,7 @@ Key patterns:
 
 1. Frontend `useChat` sends full message array to `/api/chat` route; non-streaming calls use TanStack Query hooks from `api/hooks/`
 2. Route proxies raw request body to backend `/api/chat/stream`
-3. Backend uses `VercelAIAdapter.dispatch_request()` to parse the request, run RAG retrieval, inject context as runtime `instructions`, execute the chat agent, and stream the response
+3. Backend uses `VercelAIAdapter.dispatch_request()` to parse the request and execute the chat agent, which decides whether to call the `search_knowledge_base` tool for RAG retrieval, then streams the response
 4. `on_complete` callback persists conversation to PostgreSQL and triggers title generation for new threads
 5. Frontend renders streamed chunks in real-time; on finish, refetches messages from DB for RAG source metadata
 

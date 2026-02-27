@@ -10,13 +10,12 @@ Claude Desktop and ChatGPT now have memory, file upload, MCP, and web search. Wh
 
 ## Quick Wins (1-2 sessions each)
 
-### 1. Agentic RAG via Tool Use
+### ~~1. Agentic RAG via Tool Use~~ DONE
 
-**The architectural unlock.** Today, RAG runs as a single pre-fetch before the agent sees the message. Convert `retrieve_context()` into a Pydantic AI `@tool` the agent invokes on demand. The agent decides WHEN to search, can refine queries, and can search multiple times per turn.
+**The architectural unlock.** Converted pre-fetch RAG into a `search_knowledge_base` Pydantic AI tool the agent invokes on demand. The agent decides WHEN to search, can refine queries, and can search multiple times per turn. Shared `AgentDeps` dataclass accumulates RAG source metadata across tool calls for storage/frontend display.
 
-- **Files**: `agents/chat_agent.py`, `routers/chat.py`, `services/knowledge_source/retrieval.py`
-- **Learning**: Pydantic AI tool registration, function-calling, agent autonomy
-- **Moat**: HIGH -- Claude Desktop cannot iteratively search your vault
+- **Files changed**: `agents/deps.py` (new), `agents/tools/knowledge_base_tools.py` (new), `agents/chat_agent.py`, `routers/chat_agent.py`, `utils/message_serialization.py`
+- **Learned**: Pydantic AI tool registration, function-calling, agent autonomy, `RunContext` deps pattern
 - **Prerequisite for**: web search, write-back, MCP tools, cross-reference discovery
 
 ### 2. Web Search Tool
@@ -123,18 +122,18 @@ Different agents for different tasks: research agent (deep multi-query search), 
 ## Suggested Build Order
 
 ```
-#1 Agentic RAG ──→ #2 Web Search ──→ #4 MCP Server
-     (tool use)       (free win)      (differentiator)
-         │
-         └──→ #5 Hybrid Search  OR  #6 Write-Back
-              (retrieval depth)     (growth loop)
-                      │
-                      └──→ #8 Conversation-to-Knowledge Pipeline
-                           (the full loop: read → chat → write → read)
+#1 Agentic RAG ✅ ──→ #2 Web Search ──→ #4 MCP Server
+     (done)              (free win)      (differentiator)
+                              │
+                              └──→ #5 Hybrid Search  OR  #6 Write-Back
+                                   (retrieval depth)     (growth loop)
+                                           │
+                                           └──→ #8 Conversation-to-Knowledge Pipeline
+                                                (the full loop: read → chat → write → read)
 ```
 
-**Priority 1**: Agentic RAG (#1) -- the architectural inflection point. Everything else depends on tool use.
-**Priority 2**: Web Search (#2) -- nearly free once #1 exists, immediate daily utility.
+**Priority 1**: ~~Agentic RAG (#1)~~ DONE
+**Priority 2**: Web Search (#2) -- nearly free now that tool use exists, immediate daily utility.
 **Priority 3**: MCP Server (#4) -- biggest differentiator vs. Claude Desktop.
 **Priority 4**: Hybrid Search (#5) or Write-Back (#6) -- pick based on curiosity (IR fundamentals vs. agent autonomy).
 **Stretch**: Temporal tracking (#10) and knowledge gaps (#11) are the most unique ideas with no commercial equivalent.
