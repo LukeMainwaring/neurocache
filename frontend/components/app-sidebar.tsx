@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -61,15 +62,20 @@ export function AppSidebar() {
           <SidebarMenu>
             <div className="flex flex-row items-center justify-between">
               <Link
-                className="flex flex-row items-center gap-3"
+                className="flex flex-row items-center gap-1.5 rounded-md px-2 py-1 hover:bg-muted"
                 href="/"
                 onClick={() => {
                   setOpenMobile(false);
                 }}
               >
-                <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                  Neurocache
-                </span>
+                <Image
+                  alt="Neurocache logo"
+                  className="rounded-sm"
+                  height={28}
+                  src="/images/neurocache-logo.png"
+                  width={28}
+                />
+                <span className="font-semibold text-lg">Neurocache</span>
               </Link>
               <div className="flex flex-row gap-1">
                 <Tooltip>
