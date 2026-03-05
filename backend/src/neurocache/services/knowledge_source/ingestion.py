@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pymupdf
 from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +18,7 @@ from neurocache.schemas.knowledge_source.document import (
     BOOKS_DIR,
     BatchIngestFailure,
     BatchIngestResult,
+    BookPdfPreview,
     BookSchema,
     ContentType,
     DocumentCreateSchema,
@@ -835,3 +837,115 @@ async def ingest_all_documents(
         failed_files=failed_files,
         duration_seconds=round(duration, 2),
     )
+
+
+def preview_book_pdf(pdf_bytes: bytes, filename: str) -> BookPdfPreview:
+    """Parse PDF metadata for preview before upload confirmation.
+
+    Opens the PDF from bytes in memory, extracts title/author from PDF metadata,
+    and returns a preview with page count.
+
+    Args:
+        pdf_bytes: Raw PDF file content
+        filename: Original filename
+
+    Returns:
+        BookPdfPreview with extracted metadata
+
+    Raises:
+        ValueError: If the PDF is encrypted or has no extractable text
+    """
+    doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+
+    if doc.is_encrypted:
+        doc.close()
+        raise ValueError("PDF is password-protected and cannot be processed")
+
+    # Check for extractable text (sample first few pages)
+    has_text = False
+    for page_num in range(min(3, doc.page_count)):
+        if doc[page_num].get_text().strip():
+            has_text = True
+            break
+
+    if not has_text:
+        doc.close()
+        raise ValueError("PDF has no extractable text (may be scanned/image-only)")
+
+    metadata = doc.metadata or {}
+    title = metadata.get("title", "").strip() or Path(filename).stem
+    author = metadata.get("author", "").strip() or None
+    page_count = doc.page_count
+
+    doc.close()
+
+    return BookPdfPreview(
+        title=title,
+        author=author,
+        page_count=page_count,
+        filename=filename,
+    )
+
+
+async def upload_book_pdf(
+    db: AsyncSession,
+    knowledge_source_id: uuid.UUID,
+    pdf_bytes: bytes,
+    filename: str,
+    title: str,
+    author: str | None,
+) -> tuple[str, bool]:
+    """Save a PDF to the vault and scaffold notes.
+
+    Writes the PDF to /vault/Books/{title}/{filename} and scaffolds a Notes.md
+    file if one doesn't exist. Does NOT create a Document record or run ingestion —
+    those are handled by ingest_pdf_document() separately.
+
+    Args:
+        db: Database session
+        knowledge_source_id: Parent knowledge source ID
+        pdf_bytes: Raw PDF content
+        filename: Original PDF filename
+        title: User-edited book title (used as folder name)
+        author: User-edited author (used in Notes.md frontmatter)
+
+    Returns:
+        Tuple of (relative_path, whether Notes.md was created)
+
+    Raises:
+        ValueError: If a document already exists at this path
+    """
+    # Sanitize the title for use as a folder name
+    safe_title = title.strip().replace("/", "-").replace("\\", "-")
+    book_dir = Path(VAULT_MOUNT_PATH) / BOOKS_DIR / safe_title
+    pdf_path = book_dir / filename
+    relative_path = f"{BOOKS_DIR}/{safe_title}/{filename}"
+
+    # Check for duplicate
+    existing = await Document.get_by_relative_path(db, knowledge_source_id, relative_path)
+    if existing:
+        raise ValueError(f"A document already exists at {relative_path}")
+
+    # Create directory and write PDF
+    book_dir.mkdir(parents=True, exist_ok=True)
+    pdf_path.write_bytes(pdf_bytes)
+    logger.info(f"Saved PDF to {pdf_path}")
+
+    # Scaffold Notes.md if it doesn't exist
+    notes_path = book_dir / "Notes.md"
+    notes_created = False
+    if not notes_path.exists():
+        frontmatter_lines = [
+            "---",
+            f'title: "{safe_title}"',
+            "type: book",
+        ]
+        if author:
+            frontmatter_lines.append(f'author: "{author}"')
+        frontmatter_lines.extend(["---", "", f"# {safe_title}", "", ""])
+
+        notes_path.write_text("\n".join(frontmatter_lines), encoding="utf-8")
+        notes_created = True
+        logger.info(f"Scaffolded Notes.md at {notes_path}")
+
+    return relative_path, notes_created

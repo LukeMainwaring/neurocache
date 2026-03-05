@@ -79,6 +79,34 @@ export type BatchIngestResult = {
 };
 
 /**
+ * Body_previewBookPdf
+ */
+export type BodyPreviewBookPdf = {
+    /**
+     * File
+     */
+    file: Blob | File;
+};
+
+/**
+ * Body_uploadBookPdf
+ */
+export type BodyUploadBookPdf = {
+    /**
+     * File
+     */
+    file: Blob | File;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Author
+     */
+    author?: string | null;
+};
+
+/**
  * BookDocumentSummary
  *
  * Summary of a single document within a book (note or PDF).
@@ -127,6 +155,38 @@ export type BookListResponse = {
 };
 
 /**
+ * BookPdfPreview
+ *
+ * Parsed metadata from a PDF before upload confirmation.
+ */
+export type BookPdfPreview = {
+    /**
+     * Title
+     *
+     * Title from PDF metadata or filename
+     */
+    title: string;
+    /**
+     * Author
+     *
+     * Author from PDF metadata
+     */
+    author?: string | null;
+    /**
+     * Page Count
+     *
+     * Number of pages in the PDF
+     */
+    page_count: number;
+    /**
+     * Filename
+     *
+     * Original filename
+     */
+    filename: string;
+};
+
+/**
  * BookSchema
  *
  * A book grouped from its Books/ subfolder documents.
@@ -162,6 +222,26 @@ export type BookSchema = {
      * Component documents (note + PDF)
      */
     documents: Array<BookDocumentSummary>;
+};
+
+/**
+ * BookUploadResponse
+ *
+ * Response after uploading and saving a PDF book.
+ */
+export type BookUploadResponse = {
+    /**
+     * Relative Path
+     *
+     * Vault-relative path where the PDF was saved
+     */
+    relative_path: string;
+    /**
+     * Notes Created
+     *
+     * Whether a Notes.md scaffold was created
+     */
+    notes_created: boolean;
 };
 
 /**
@@ -945,6 +1025,66 @@ export type IngestAllDocumentsResponses = {
 };
 
 export type IngestAllDocumentsResponse = IngestAllDocumentsResponses[keyof IngestAllDocumentsResponses];
+
+export type PreviewBookPdfData = {
+    body: BodyPreviewBookPdf;
+    path: {
+        /**
+         * Source Id
+         */
+        source_id: string;
+    };
+    query?: never;
+    url: '/api/knowledge-sources/{source_id}/preview-book';
+};
+
+export type PreviewBookPdfErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PreviewBookPdfError = PreviewBookPdfErrors[keyof PreviewBookPdfErrors];
+
+export type PreviewBookPdfResponses = {
+    /**
+     * Successful Response
+     */
+    200: BookPdfPreview;
+};
+
+export type PreviewBookPdfResponse = PreviewBookPdfResponses[keyof PreviewBookPdfResponses];
+
+export type UploadBookPdfData = {
+    body: BodyUploadBookPdf;
+    path: {
+        /**
+         * Source Id
+         */
+        source_id: string;
+    };
+    query?: never;
+    url: '/api/knowledge-sources/{source_id}/upload-book';
+};
+
+export type UploadBookPdfErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UploadBookPdfError = UploadBookPdfErrors[keyof UploadBookPdfErrors];
+
+export type UploadBookPdfResponses = {
+    /**
+     * Successful Response
+     */
+    200: BookUploadResponse;
+};
+
+export type UploadBookPdfResponse = UploadBookPdfResponses[keyof UploadBookPdfResponses];
 
 export type ListThreadsData = {
     body?: never;

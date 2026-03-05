@@ -82,7 +82,7 @@ async def add_request_context(request: Request, call_next: Callable[[Request], A
         request_json = await request.json()
     except starlette.requests.ClientDisconnect:
         logger.warning("Client disconnected during request body JSON parsing", exc_info=True)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         pass
 
     token = log_context_var.set(RequestLogContext(request_id=uuid.uuid4(), request=request, request_json=request_json))

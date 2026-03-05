@@ -155,3 +155,19 @@ class BookListResponse(BaseSchema):
     """Response for listing books from a knowledge source."""
 
     books: list[BookSchema] = Field(description="Books grouped by subfolder")
+
+
+class BookPdfPreview(BaseSchema):
+    """Parsed metadata from a PDF before upload confirmation."""
+
+    title: str = Field(description="Title from PDF metadata or filename")
+    author: str | None = Field(default=None, description="Author from PDF metadata")
+    page_count: int = Field(description="Number of pages in the PDF")
+    filename: str = Field(description="Original filename")
+
+
+class BookUploadResponse(BaseSchema):
+    """Response after uploading and saving a PDF book."""
+
+    relative_path: str = Field(description="Vault-relative path where the PDF was saved")
+    notes_created: bool = Field(description="Whether a Notes.md scaffold was created")

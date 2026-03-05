@@ -4,8 +4,8 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
-import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listBooks, listKnowledgeSources, listThreads, listUsers, type Options, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization } from '../sdk.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListBooksData, ListBooksError, ListBooksResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
+import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listBooks, listKnowledgeSources, listThreads, listUsers, type Options, previewBookPdf, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization, uploadBookPdf } from '../sdk.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListBooksData, ListBooksError, ListBooksResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, PreviewBookPdfData, PreviewBookPdfError, PreviewBookPdfResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse, UploadBookPdfData, UploadBookPdfError, UploadBookPdfResponse } from '../types.gen';
 
 /**
  * Stream Chat
@@ -278,6 +278,44 @@ export const ingestAllDocumentsMutation = (options?: Partial<Options<IngestAllDo
     const mutationOptions: UseMutationOptions<IngestAllDocumentsResponse, AxiosError<IngestAllDocumentsError>, Options<IngestAllDocumentsData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await ingestAllDocuments({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Preview Book Pdf
+ *
+ * Parse PDF metadata for preview before upload confirmation.
+ */
+export const previewBookPdfMutation = (options?: Partial<Options<PreviewBookPdfData>>): UseMutationOptions<PreviewBookPdfResponse, AxiosError<PreviewBookPdfError>, Options<PreviewBookPdfData>> => {
+    const mutationOptions: UseMutationOptions<PreviewBookPdfResponse, AxiosError<PreviewBookPdfError>, Options<PreviewBookPdfData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await previewBookPdf({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Upload Book Pdf
+ *
+ * Upload a PDF book, save to vault, and trigger background ingestion.
+ */
+export const uploadBookPdfMutation = (options?: Partial<Options<UploadBookPdfData>>): UseMutationOptions<UploadBookPdfResponse, AxiosError<UploadBookPdfError>, Options<UploadBookPdfData>> => {
+    const mutationOptions: UseMutationOptions<UploadBookPdfResponse, AxiosError<UploadBookPdfError>, Options<UploadBookPdfData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await uploadBookPdf({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

@@ -5,9 +5,12 @@ import {
   getKnowledgeSourceDefaultsOptions,
   ingestAllDocumentsMutation,
   listBooksOptions,
+  listBooksQueryKey,
   listKnowledgeSourcesOptions,
   listKnowledgeSourcesQueryKey,
+  previewBookPdfMutation,
   retryKnowledgeSourceMutation,
+  uploadBookPdfMutation,
 } from "../generated/@tanstack/react-query.gen";
 import type { KnowledgeSourceCreateSchema } from "../generated/types.gen";
 
@@ -87,6 +90,40 @@ export const useKnowledgeSourceBooks = (sourceId: string, enabled: boolean) => {
     ...listBooksOptions({ path: { source_id: sourceId } }),
     enabled,
   });
+};
+
+export const usePreviewBook = (sourceId: string) => {
+  const mutation = useMutation({
+    ...previewBookPdfMutation({ path: { source_id: sourceId } }),
+  });
+
+  const previewBook = (file: File) =>
+    mutation.mutateAsync({
+      path: { source_id: sourceId },
+      body: { file },
+    });
+
+  return { previewBook, ...mutation };
+};
+
+export const useUploadBook = (sourceId: string) => {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    ...uploadBookPdfMutation({ path: { source_id: sourceId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: listBooksQueryKey({ path: { source_id: sourceId } }),
+      });
+    },
+  });
+
+  const uploadBook = (file: File, title: string, author?: string | null) =>
+    mutation.mutateAsync({
+      path: { source_id: sourceId },
+      body: { file, title, author },
+    });
+
+  return { uploadBook, ...mutation };
 };
 
 export const useSyncKnowledgeSource = () => {

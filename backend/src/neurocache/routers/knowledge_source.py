@@ -6,13 +6,19 @@ This module provides REST API endpoints for knowledge source CRUD operations.
 import logging
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, UploadFile
 
 from neurocache.core.config import get_settings
-from neurocache.dependencies.db import AsyncPostgresSessionDep
+from neurocache.dependencies.db import AsyncPostgresSessionDep, AsyncSessionMakerDep
 from neurocache.dependencies.openai import OpenAIClientDep
 from neurocache.models.knowledge_source import KnowledgeSource
-from neurocache.schemas.knowledge_source.document import BatchIngestResult, BookListResponse, DocumentSchema
+from neurocache.schemas.knowledge_source.document import (
+    BatchIngestResult,
+    BookListResponse,
+    BookPdfPreview,
+    BookUploadResponse,
+    DocumentSchema,
+)
 from neurocache.schemas.knowledge_source.knowledge_source import (
     KnowledgeSourceCreateSchema,
     KnowledgeSourceDefaults,
@@ -144,3 +150,74 @@ async def ingest_all_documents(
         force_reindex: If True, re-ingest documents even if already indexed
     """
     return await knowledge_source_service.sync_documents(source_id, db, openai_client, force_reindex)
+
+
+MAX_PDF_SIZE_MB = 50
+
+
+@knowledge_source_router.post("/{source_id}/preview-book")
+async def preview_book_pdf(
+    source_id: uuid.UUID,
+    file: UploadFile,
+) -> BookPdfPreview:
+    """Parse PDF metadata for preview before upload confirmation."""
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+
+    pdf_bytes = await file.read()
+    if not pdf_bytes:
+        raise HTTPException(status_code=400, detail="File is empty")
+
+    if len(pdf_bytes) > MAX_PDF_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=400, detail=f"File exceeds {MAX_PDF_SIZE_MB}MB limit")
+
+    try:
+        return ingestion_service.preview_book_pdf(pdf_bytes, file.filename)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+
+
+@knowledge_source_router.post("/{source_id}/upload-book")
+async def upload_book_pdf(
+    source_id: uuid.UUID,
+    file: UploadFile,
+    title: str = Form(...),
+    author: str | None = Form(default=None),
+    *,
+    db: AsyncPostgresSessionDep,
+    session_maker: AsyncSessionMakerDep,
+    openai_client: OpenAIClientDep,
+    background_tasks: BackgroundTasks,
+) -> BookUploadResponse:
+    """Upload a PDF book, save to vault, and trigger background ingestion."""
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+
+    pdf_bytes = await file.read()
+    if not pdf_bytes:
+        raise HTTPException(status_code=400, detail="File is empty")
+
+    if len(pdf_bytes) > MAX_PDF_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=400, detail=f"File exceeds {MAX_PDF_SIZE_MB}MB limit")
+
+    try:
+        relative_path, notes_created = await ingestion_service.upload_book_pdf(
+            db, source_id, pdf_bytes, file.filename, title, author
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+
+    # Trigger background ingestion with its own DB session
+    async def _ingest_in_background() -> None:
+        async with session_maker.new_async_session() as bg_db:
+            try:
+                await ingestion_service.ingest_pdf_document(bg_db, openai_client, source_id, relative_path)
+            except Exception:
+                logger.exception(f"Background ingestion failed for {relative_path}")
+
+    background_tasks.add_task(_ingest_in_background)
+
+    return BookUploadResponse(
+        relative_path=relative_path,
+        notes_created=notes_created,
+    )

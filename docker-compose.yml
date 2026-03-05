@@ -37,8 +37,8 @@ services:
     volumes:
       # Mount source code for hot reload
       - ./backend/src:/app/src
-      # Mount configured Obsidian vault read-only
-      - ${OBSIDIAN_VAULT_PATH}:/vault:ro
+      # Mount configured Obsidian vault (read-write for PDF upload + notes scaffolding)
+      - ${OBSIDIAN_VAULT_PATH}:/vault
     depends_on:
       postgres:
         condition: service_healthy
