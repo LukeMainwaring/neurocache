@@ -201,7 +201,7 @@ async def upload_book_pdf(
         raise HTTPException(status_code=400, detail=f"File exceeds {MAX_PDF_SIZE_MB}MB limit")
 
     try:
-        relative_path, notes_created = await ingestion_service.upload_book_pdf(
+        pdf_relative_path, notes_relative_path = await ingestion_service.upload_book_pdf(
             db, source_id, pdf_bytes, file.filename, title, author
         )
     except ValueError as e:
@@ -211,13 +211,15 @@ async def upload_book_pdf(
     async def _ingest_in_background() -> None:
         async with session_maker.new_async_session() as bg_db:
             try:
-                await ingestion_service.ingest_pdf_document(bg_db, openai_client, source_id, relative_path)
+                if notes_relative_path:
+                    await ingestion_service.ingest_document(bg_db, openai_client, source_id, notes_relative_path)
+                await ingestion_service.ingest_pdf_document(bg_db, openai_client, source_id, pdf_relative_path)
             except Exception:
-                logger.exception(f"Background ingestion failed for {relative_path}")
+                logger.exception(f"Background ingestion failed for {pdf_relative_path}")
 
     background_tasks.add_task(_ingest_in_background)
 
     return BookUploadResponse(
-        relative_path=relative_path,
-        notes_created=notes_created,
+        relative_path=pdf_relative_path,
+        notes_created=notes_relative_path is not None,
     )

@@ -89,6 +89,13 @@ export const useKnowledgeSourceBooks = (sourceId: string, enabled: boolean) => {
   return useQuery({
     ...listBooksOptions({ path: { source_id: sourceId } }),
     enabled,
+    refetchInterval: (query) => {
+      const books = query.state.data?.books;
+      const hasProcessing = books?.some((book) =>
+        book.documents.some((d) => d.status === "processing")
+      );
+      return hasProcessing ? 3000 : false;
+    },
   });
 };
 
@@ -111,9 +118,11 @@ export const useUploadBook = (sourceId: string) => {
   const mutation = useMutation({
     ...uploadBookPdfMutation({ path: { source_id: sourceId } }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: listBooksQueryKey({ path: { source_id: sourceId } }),
-      });
+      // Invalidate immediately, then again after a delay to catch
+      // background-created documents (ingestion starts after response)
+      const queryKey = listBooksQueryKey({ path: { source_id: sourceId } });
+      queryClient.invalidateQueries({ queryKey });
+      setTimeout(() => queryClient.invalidateQueries({ queryKey }), 2000);
     },
   });
 

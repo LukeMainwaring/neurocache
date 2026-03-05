@@ -894,12 +894,12 @@ async def upload_book_pdf(
     filename: str,
     title: str,
     author: str | None,
-) -> tuple[str, bool]:
+) -> tuple[str, str | None]:
     """Save a PDF to the vault and scaffold notes.
 
     Writes the PDF to /vault/Books/{title}/{filename} and scaffolds a Notes.md
     file if one doesn't exist. Does NOT create a Document record or run ingestion —
-    those are handled by ingest_pdf_document() separately.
+    those are handled by ingest_pdf_document() and ingest_document() separately.
 
     Args:
         db: Database session
@@ -910,7 +910,7 @@ async def upload_book_pdf(
         author: User-edited author (used in Notes.md frontmatter)
 
     Returns:
-        Tuple of (relative_path, whether Notes.md was created)
+        Tuple of (pdf_relative_path, notes_relative_path or None if not created)
 
     Raises:
         ValueError: If a document already exists at this path
@@ -933,7 +933,7 @@ async def upload_book_pdf(
 
     # Scaffold Notes.md if it doesn't exist
     notes_path = book_dir / "Notes.md"
-    notes_created = False
+    notes_relative_path: str | None = None
     if not notes_path.exists():
         frontmatter_lines = [
             "---",
@@ -945,7 +945,7 @@ async def upload_book_pdf(
         frontmatter_lines.extend(["---", "", f"# {safe_title}", "", ""])
 
         notes_path.write_text("\n".join(frontmatter_lines), encoding="utf-8")
-        notes_created = True
+        notes_relative_path = f"{BOOKS_DIR}/{safe_title}/Notes.md"
         logger.info(f"Scaffolded Notes.md at {notes_path}")
 
-    return relative_path, notes_created
+    return relative_path, notes_relative_path
