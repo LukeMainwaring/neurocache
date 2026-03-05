@@ -855,29 +855,24 @@ def preview_book_pdf(pdf_bytes: bytes, filename: str) -> BookPdfPreview:
     Raises:
         ValueError: If the PDF is encrypted or has no extractable text
     """
-    doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+    with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:
+        if doc.is_encrypted:
+            raise ValueError("PDF is password-protected and cannot be processed")
 
-    if doc.is_encrypted:
-        doc.close()
-        raise ValueError("PDF is password-protected and cannot be processed")
+        # Check for extractable text (sample first few pages)
+        has_text = False
+        for page_num in range(min(3, doc.page_count)):
+            if doc[page_num].get_text().strip():
+                has_text = True
+                break
 
-    # Check for extractable text (sample first few pages)
-    has_text = False
-    for page_num in range(min(3, doc.page_count)):
-        if doc[page_num].get_text().strip():
-            has_text = True
-            break
+        if not has_text:
+            raise ValueError("PDF has no extractable text (may be scanned/image-only)")
 
-    if not has_text:
-        doc.close()
-        raise ValueError("PDF has no extractable text (may be scanned/image-only)")
-
-    metadata = doc.metadata or {}
-    title = metadata.get("title", "").strip() or Path(filename).stem
-    author = metadata.get("author", "").strip() or None
-    page_count = doc.page_count
-
-    doc.close()
+        metadata = doc.metadata or {}
+        title = metadata.get("title", "").strip() or Path(filename).stem
+        author = metadata.get("author", "").strip() or None
+        page_count = doc.page_count
 
     return BookPdfPreview(
         title=title,
@@ -917,9 +912,11 @@ async def upload_book_pdf(
     """
     # Sanitize the title for use as a folder name
     safe_title = title.strip().replace("/", "-").replace("\\", "-")
+    # Strip directory components from filename to prevent path traversal
+    safe_filename = Path(filename).name
     book_dir = Path(VAULT_MOUNT_PATH) / BOOKS_DIR / safe_title
-    pdf_path = book_dir / filename
-    relative_path = f"{BOOKS_DIR}/{safe_title}/{filename}"
+    pdf_path = book_dir / safe_filename
+    relative_path = f"{BOOKS_DIR}/{safe_title}/{safe_filename}"
 
     # Check for duplicate
     existing = await Document.get_by_relative_path(db, knowledge_source_id, relative_path)
@@ -935,13 +932,15 @@ async def upload_book_pdf(
     notes_path = book_dir / "Notes.md"
     notes_relative_path: str | None = None
     if not notes_path.exists():
+        escaped_title = safe_title.replace('"', '\\"')
         frontmatter_lines = [
             "---",
-            f'title: "{safe_title}"',
+            f'title: "{escaped_title}"',
             "type: book",
         ]
         if author:
-            frontmatter_lines.append(f'author: "{author}"')
+            escaped_author = author.replace('"', '\\"')
+            frontmatter_lines.append(f'author: "{escaped_author}"')
         frontmatter_lines.extend(["---", "", f"# {safe_title}", "", ""])
 
         notes_path.write_text("\n".join(frontmatter_lines), encoding="utf-8")

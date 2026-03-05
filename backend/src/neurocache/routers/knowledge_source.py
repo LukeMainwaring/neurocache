@@ -155,12 +155,8 @@ async def ingest_all_documents(
 MAX_PDF_SIZE_MB = 50
 
 
-@knowledge_source_router.post("/{source_id}/preview-book")
-async def preview_book_pdf(
-    source_id: uuid.UUID,
-    file: UploadFile,
-) -> BookPdfPreview:
-    """Parse PDF metadata for preview before upload confirmation."""
+async def _read_validated_pdf(file: UploadFile) -> bytes:
+    """Validate and read an uploaded PDF file, returning its bytes."""
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 
@@ -170,6 +166,18 @@ async def preview_book_pdf(
 
     if len(pdf_bytes) > MAX_PDF_SIZE_MB * 1024 * 1024:
         raise HTTPException(status_code=400, detail=f"File exceeds {MAX_PDF_SIZE_MB}MB limit")
+
+    return pdf_bytes
+
+
+@knowledge_source_router.post("/{source_id}/preview-book")
+async def preview_book_pdf(
+    source_id: uuid.UUID,
+    file: UploadFile,
+) -> BookPdfPreview:
+    """Parse PDF metadata for preview before upload confirmation."""
+    pdf_bytes = await _read_validated_pdf(file)
+    assert file.filename  # validated by _read_validated_pdf
 
     try:
         return ingestion_service.preview_book_pdf(pdf_bytes, file.filename)
@@ -190,15 +198,8 @@ async def upload_book_pdf(
     background_tasks: BackgroundTasks,
 ) -> BookUploadResponse:
     """Upload a PDF book, save to vault, and trigger background ingestion."""
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
-
-    pdf_bytes = await file.read()
-    if not pdf_bytes:
-        raise HTTPException(status_code=400, detail="File is empty")
-
-    if len(pdf_bytes) > MAX_PDF_SIZE_MB * 1024 * 1024:
-        raise HTTPException(status_code=400, detail=f"File exceeds {MAX_PDF_SIZE_MB}MB limit")
+    pdf_bytes = await _read_validated_pdf(file)
+    assert file.filename  # validated by _read_validated_pdf
 
     try:
         pdf_relative_path, notes_relative_path = await ingestion_service.upload_book_pdf(
