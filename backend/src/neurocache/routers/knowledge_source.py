@@ -5,6 +5,7 @@ This module provides REST API endpoints for knowledge source CRUD operations.
 
 import logging
 import uuid
+from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, UploadFile
 
@@ -29,6 +30,7 @@ from neurocache.schemas.knowledge_source.knowledge_source import (
 )
 from neurocache.services.knowledge_source import ingestion as ingestion_service
 from neurocache.services.knowledge_source import knowledge_source as knowledge_source_service
+from neurocache.services.knowledge_source.book_analysis import analyze_book, update_notes_with_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -208,10 +210,18 @@ async def upload_book_pdf(
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
 
-    # Trigger background ingestion with its own DB session
+    # Trigger background analysis + ingestion with its own DB session
     async def _ingest_in_background() -> None:
         async with session_maker.new_async_session() as bg_db:
             try:
+                # Run book analysis before ingestion (only for new Notes.md)
+                if notes_relative_path:
+                    pdf_full_path = Path(ingestion_service.VAULT_MOUNT_PATH) / pdf_relative_path
+                    analysis = await analyze_book(pdf_full_path)
+                    if analysis:
+                        notes_full_path = Path(ingestion_service.VAULT_MOUNT_PATH) / notes_relative_path
+                        update_notes_with_analysis(notes_full_path, analysis)
+
                 if notes_relative_path:
                     await ingestion_service.ingest_document(bg_db, openai_client, source_id, notes_relative_path)
                 await ingestion_service.ingest_pdf_document(bg_db, openai_client, source_id, pdf_relative_path)

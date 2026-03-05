@@ -20,7 +20,7 @@ class ApiSettings(BaseSettings):
 class BaseAgentSettings(BaseSettings):
     """Base agent configuration."""
 
-    AGENT_MODEL: str = "gpt-4o-mini"
+    AGENT_MODEL: str = "gpt-5-mini"
     AGENT_TEMPERATURE: float = 0.0
 
 
@@ -37,6 +37,13 @@ class PostgresSettings(BaseSettings):
     POSTGRES_PORT: int
 
 
+class BookAnalysisSettings(BaseSettings):
+    """Book analysis agent configuration."""
+
+    BOOK_ANALYSIS_MODEL: str = "gpt-5-mini"
+    BOOK_ANALYSIS_TEMPERATURE: float = 0.3
+
+
 class ObsidianSettings(BaseSettings):
     """Obsidian vault configuration."""
 
@@ -44,7 +51,9 @@ class ObsidianSettings(BaseSettings):
     OBSIDIAN_VAULT_NAME: str = "My Obsidian Vault"  # Default display name
 
 
-class Settings(ApiSettings, EmbeddingSettings, BaseAgentSettings, PostgresSettings, ObsidianSettings):
+class Settings(
+    ApiSettings, EmbeddingSettings, BaseAgentSettings, BookAnalysisSettings, PostgresSettings, ObsidianSettings
+):
     """Main application settings."""
 
     model_config = SettingsConfigDict(
