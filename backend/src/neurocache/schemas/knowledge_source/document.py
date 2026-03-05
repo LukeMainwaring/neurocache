@@ -3,6 +3,7 @@
 import uuid
 from datetime import datetime
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 
 from pydantic import Field
@@ -113,3 +114,60 @@ class BatchIngestResult(BaseSchema):
     documents_failed: int = Field(description="Failed to ingest")
     failed_files: list[BatchIngestFailure] = Field(default_factory=list)
     duration_seconds: float = Field(description="Total processing time")
+
+
+# Top-level directory containing book PDFs and notes
+BOOKS_DIR = "Books"
+
+
+class BookDocumentSummary(BaseSchema):
+    """Summary of a single document within a book (note or PDF)."""
+
+    id: uuid.UUID = Field(description="Document ID")
+    content_type: ContentType = Field(description="book_note or book_source")
+    status: DocumentStatus = Field(description="Indexing status")
+    chunk_count: int = Field(description="Number of chunks indexed")
+    error_message: str | None = Field(default=None, description="Error details if failed")
+
+
+class BookSchema(BaseSchema):
+    """A book grouped from its Books/ subfolder documents."""
+
+    folder_path: str = Field(description="Relative subfolder path, e.g. 'Books/AI Engineering'")
+    title: str = Field(description="Book title from frontmatter or folder name")
+    author: str | None = Field(default=None, description="Author from notes frontmatter")
+    tags: str | None = Field(default=None, description="Comma-separated tags from frontmatter")
+    documents: list[BookDocumentSummary] = Field(description="Component documents (note + PDF)")
+
+    @staticmethod
+    def folder_from_path(relative_path: str) -> str | None:
+        """Extract book subfolder from a document's relative path.
+
+        For "Books/AI Engineering/notes.md", returns "Books/AI Engineering".
+        """
+        parts = Path(relative_path).parts
+        if len(parts) >= 3 and parts[0] == BOOKS_DIR:
+            return f"{BOOKS_DIR}/{parts[1]}"
+        return None
+
+
+class BookListResponse(BaseSchema):
+    """Response for listing books from a knowledge source."""
+
+    books: list[BookSchema] = Field(description="Books grouped by subfolder")
+
+
+class BookPdfPreview(BaseSchema):
+    """Parsed metadata from a PDF before upload confirmation."""
+
+    title: str = Field(description="Title from PDF metadata or filename")
+    author: str | None = Field(default=None, description="Author from PDF metadata")
+    page_count: int = Field(description="Number of pages in the PDF")
+    filename: str = Field(description="Original filename")
+
+
+class BookUploadResponse(BaseSchema):
+    """Response after uploading and saving a PDF book."""
+
+    relative_path: str = Field(description="Vault-relative path where the PDF was saved")
+    notes_created: bool = Field(description="Whether a Notes.md scaffold was created")

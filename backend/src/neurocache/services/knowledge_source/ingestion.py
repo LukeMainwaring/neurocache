@@ -8,14 +8,18 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pymupdf
 from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neurocache.models.document import Document
 from neurocache.models.document_chunk import DocumentChunk
 from neurocache.schemas.knowledge_source.document import (
+    BOOKS_DIR,
     BatchIngestFailure,
     BatchIngestResult,
+    BookPdfPreview,
+    BookSchema,
     ContentType,
     DocumentCreateSchema,
     DocumentStatus,
@@ -34,8 +38,6 @@ VAULT_MOUNT_PATH = "/vault"
 # Directories to exclude during batch ingestion
 DEFAULT_EXCLUDE_DIRS = {".obsidian", ".smart-env", "copilot", ".git", ".trash"}
 
-# Top-level directory containing book PDFs and notes
-BOOKS_DIR = "Books"
 
 # Chunking config
 TARGET_CHUNK_SIZE = 1500  # target characters per chunk
@@ -508,26 +510,6 @@ def discover_pdf_files(
     return sorted(pdf_files)
 
 
-def _get_book_folder(relative_path: str) -> str | None:
-    """Extract the book folder name from a path.
-
-    For a path like "Books/AI Engineering/notes.md", returns "Books/AI Engineering".
-
-    Args:
-        relative_path: Path relative to vault root
-
-    Returns:
-        Book folder path or None if not in Books/ directory
-    """
-    parts = Path(relative_path).parts
-
-    # Must be in Books/ with at least a book title subfolder
-    if len(parts) >= 3 and parts[0] == BOOKS_DIR:
-        return f"{BOOKS_DIR}/{parts[1]}"
-
-    return None
-
-
 async def _auto_link_book_documents(
     db: AsyncSession,
     knowledge_source_id: uuid.UUID,
@@ -543,7 +525,7 @@ async def _auto_link_book_documents(
         knowledge_source_id: Knowledge source ID
         document: The document to link
     """
-    book_folder = _get_book_folder(document.relative_path)
+    book_folder = BookSchema.folder_from_path(document.relative_path)
     if not book_folder:
         return
 
@@ -554,7 +536,7 @@ async def _auto_link_book_documents(
         if other_doc.id == document.id:
             continue
 
-        other_folder = _get_book_folder(other_doc.relative_path)
+        other_folder = BookSchema.folder_from_path(other_doc.relative_path)
         if other_folder != book_folder:
             continue
 
@@ -855,3 +837,123 @@ async def ingest_all_documents(
         failed_files=failed_files,
         duration_seconds=round(duration, 2),
     )
+
+
+def preview_book_pdf(pdf_bytes: bytes, filename: str) -> BookPdfPreview:
+    """Parse PDF metadata for preview before upload confirmation.
+
+    Opens the PDF from bytes in memory, extracts title/author from PDF metadata,
+    and returns a preview with page count.
+
+    Args:
+        pdf_bytes: Raw PDF file content
+        filename: Original filename
+
+    Returns:
+        BookPdfPreview with extracted metadata
+
+    Raises:
+        ValueError: If the PDF is encrypted or has no extractable text
+    """
+    with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:
+        if doc.is_encrypted:
+            raise ValueError("PDF is password-protected and cannot be processed")
+
+        # Check for extractable text (sample first few pages)
+        has_text = False
+        for page_num in range(min(3, doc.page_count)):
+            if doc[page_num].get_text().strip():
+                has_text = True
+                break
+
+        if not has_text:
+            raise ValueError("PDF has no extractable text (may be scanned/image-only)")
+
+        metadata = doc.metadata or {}
+        title = metadata.get("title", "").strip() or Path(filename).stem
+        author = metadata.get("author", "").strip() or None
+        page_count = doc.page_count
+
+    return BookPdfPreview(
+        title=title,
+        author=author,
+        page_count=page_count,
+        filename=filename,
+    )
+
+
+async def upload_book_pdf(
+    db: AsyncSession,
+    knowledge_source_id: uuid.UUID,
+    pdf_bytes: bytes,
+    filename: str,
+    title: str,
+    author: str | None,
+) -> tuple[str, str | None]:
+    """Save a PDF to the vault and scaffold notes.
+
+    Writes the PDF to /vault/Books/{title}/{filename} and scaffolds a Notes.md
+    file if one doesn't exist. Does NOT create a Document record or run ingestion —
+    those are handled by ingest_pdf_document() and ingest_document() separately.
+
+    Args:
+        db: Database session
+        knowledge_source_id: Parent knowledge source ID
+        pdf_bytes: Raw PDF content
+        filename: Original PDF filename
+        title: User-edited book title (used as folder name)
+        author: User-edited author (used in Notes.md frontmatter)
+
+    Returns:
+        Tuple of (pdf_relative_path, notes_relative_path or None if not created)
+
+    Raises:
+        ValueError: If a document already exists at this path
+    """
+    # Sanitize the title for use as a folder name
+    safe_title = title.strip().replace("/", "-").replace("\\", "-").replace("\n", " ")
+    if not safe_title or safe_title in (".", "..") or "\x00" in safe_title:
+        raise ValueError("Invalid book title")
+
+    # Strip directory components from filename to prevent path traversal
+    safe_filename = Path(filename).name
+
+    # Verify resolved path stays under the expected directory
+    expected_parent = (Path(VAULT_MOUNT_PATH) / BOOKS_DIR).resolve()
+    book_dir = (Path(VAULT_MOUNT_PATH) / BOOKS_DIR / safe_title).resolve()
+    if not str(book_dir).startswith(str(expected_parent) + "/"):
+        raise ValueError("Invalid book title")
+
+    pdf_path = book_dir / safe_filename
+    relative_path = f"{BOOKS_DIR}/{safe_title}/{safe_filename}"
+
+    # Check for duplicate
+    existing = await Document.get_by_relative_path(db, knowledge_source_id, relative_path)
+    if existing:
+        raise ValueError(f"A document already exists at {relative_path}")
+
+    # Create directory and write PDF
+    book_dir.mkdir(parents=True, exist_ok=True)
+    pdf_path.write_bytes(pdf_bytes)
+    logger.info(f"Saved PDF to {pdf_path}")
+
+    # Scaffold Notes.md if it doesn't exist
+    notes_path = book_dir / "Notes.md"
+    notes_relative_path: str | None = None
+    if not notes_path.exists():
+        escaped_title = safe_title.replace('"', '\\"')
+        frontmatter_lines = [
+            "---",
+            f'title: "{escaped_title}"',
+            "type: book",
+        ]
+        if author:
+            escaped_author = author.replace('"', '\\"').replace("\n", " ")
+            frontmatter_lines.append(f'author: "{escaped_author}"')
+        frontmatter_lines.extend(["---", "", f"# {safe_title}", "", ""])
+
+        notes_path.write_text("\n".join(frontmatter_lines), encoding="utf-8")
+        notes_relative_path = f"{BOOKS_DIR}/{safe_title}/Notes.md"
+        logger.info(f"Scaffolded Notes.md at {notes_path}")
+
+    return relative_path, notes_relative_path

@@ -3,16 +3,24 @@
 This module provides REST API endpoints for knowledge source CRUD operations.
 """
 
+import asyncio
 import logging
 import uuid
+from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, UploadFile
 
 from neurocache.core.config import get_settings
-from neurocache.dependencies.db import AsyncPostgresSessionDep
+from neurocache.dependencies.db import AsyncPostgresSessionDep, AsyncSessionMakerDep
 from neurocache.dependencies.openai import OpenAIClientDep
 from neurocache.models.knowledge_source import KnowledgeSource
-from neurocache.schemas.knowledge_source.document import BatchIngestResult, DocumentSchema
+from neurocache.schemas.knowledge_source.document import (
+    BatchIngestResult,
+    BookListResponse,
+    BookPdfPreview,
+    BookUploadResponse,
+    DocumentSchema,
+)
 from neurocache.schemas.knowledge_source.knowledge_source import (
     KnowledgeSourceCreateSchema,
     KnowledgeSourceDefaults,
@@ -23,6 +31,7 @@ from neurocache.schemas.knowledge_source.knowledge_source import (
 )
 from neurocache.services.knowledge_source import ingestion as ingestion_service
 from neurocache.services.knowledge_source import knowledge_source as knowledge_source_service
+from neurocache.services.knowledge_source.book_analysis import analyze_book, update_notes_with_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +79,15 @@ async def get_knowledge_source(
 ) -> KnowledgeSourceSchema:
     """Get a single knowledge source by ID."""
     return await KnowledgeSource.get(db, source_id, DEMO_USER_ID)
+
+
+@knowledge_source_router.get("/{source_id}/books")
+async def list_books(
+    source_id: uuid.UUID,
+    db: AsyncPostgresSessionDep,
+) -> BookListResponse:
+    """List books grouped by subfolder for a knowledge source."""
+    return await knowledge_source_service.list_books(source_id, db)
 
 
 @knowledge_source_router.patch("/{source_id}")
@@ -135,3 +153,85 @@ async def ingest_all_documents(
         force_reindex: If True, re-ingest documents even if already indexed
     """
     return await knowledge_source_service.sync_documents(source_id, db, openai_client, force_reindex)
+
+
+MAX_PDF_SIZE_MB = 50
+
+
+async def _read_validated_pdf(file: UploadFile) -> bytes:
+    """Validate and read an uploaded PDF file, returning its bytes."""
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+
+    pdf_bytes = await file.read()
+    if not pdf_bytes:
+        raise HTTPException(status_code=400, detail="File is empty")
+
+    if len(pdf_bytes) > MAX_PDF_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=400, detail=f"File exceeds {MAX_PDF_SIZE_MB}MB limit")
+
+    return pdf_bytes
+
+
+@knowledge_source_router.post("/{source_id}/preview-book")
+async def preview_book_pdf(
+    source_id: uuid.UUID,
+    file: UploadFile,
+) -> BookPdfPreview:
+    """Parse PDF metadata for preview before upload confirmation."""
+    pdf_bytes = await _read_validated_pdf(file)
+    assert file.filename  # validated by _read_validated_pdf
+
+    try:
+        return ingestion_service.preview_book_pdf(pdf_bytes, file.filename)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+
+
+@knowledge_source_router.post("/{source_id}/upload-book")
+async def upload_book_pdf(
+    source_id: uuid.UUID,
+    file: UploadFile,
+    title: str = Form(...),
+    author: str | None = Form(default=None),
+    *,
+    db: AsyncPostgresSessionDep,
+    session_maker: AsyncSessionMakerDep,
+    openai_client: OpenAIClientDep,
+    background_tasks: BackgroundTasks,
+) -> BookUploadResponse:
+    """Upload a PDF book, save to vault, and trigger background ingestion."""
+    pdf_bytes = await _read_validated_pdf(file)
+    assert file.filename  # validated by _read_validated_pdf
+
+    try:
+        pdf_relative_path, notes_relative_path = await ingestion_service.upload_book_pdf(
+            db, source_id, pdf_bytes, file.filename, title, author
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+
+    # Trigger background analysis + ingestion with its own DB session
+    async def _ingest_in_background() -> None:
+        async with session_maker.new_async_session() as bg_db:
+            try:
+                # Run book analysis before ingestion (only for new Notes.md)
+                if notes_relative_path:
+                    pdf_full_path = Path(ingestion_service.VAULT_MOUNT_PATH) / pdf_relative_path
+                    analysis = await analyze_book(pdf_full_path)
+                    if analysis:
+                        notes_full_path = Path(ingestion_service.VAULT_MOUNT_PATH) / notes_relative_path
+                        await asyncio.to_thread(update_notes_with_analysis, notes_full_path, analysis)
+
+                if notes_relative_path:
+                    await ingestion_service.ingest_document(bg_db, openai_client, source_id, notes_relative_path)
+                await ingestion_service.ingest_pdf_document(bg_db, openai_client, source_id, pdf_relative_path)
+            except Exception:
+                logger.exception(f"Background ingestion failed for {pdf_relative_path}")
+
+    background_tasks.add_task(_ingest_in_background)
+
+    return BookUploadResponse(
+        relative_path=pdf_relative_path,
+        notes_created=notes_relative_path is not None,
+    )

@@ -83,6 +83,34 @@ class Document(Base):
         return list(result.scalars().all())
 
     @classmethod
+    async def get_books_by_source(
+        cls,
+        db: AsyncSession,
+        knowledge_source_id: uuid.UUID,
+    ) -> list[Document]:
+        """Get all book-related documents for a knowledge source.
+
+        Returns BOOK_NOTE and BOOK_SOURCE documents, ordered by relative_path
+        for consistent subfolder grouping.
+
+        Args:
+            db: Database session
+            knowledge_source_id: The knowledge source ID
+
+        Returns:
+            List of book-related documents
+        """
+        result = await db.execute(
+            select(Document)
+            .where(
+                Document.knowledge_source_id == knowledge_source_id,
+                Document.content_type.in_([ContentType.BOOK_NOTE, ContentType.BOOK_SOURCE]),
+            )
+            .order_by(Document.relative_path)
+        )
+        return list(result.scalars().all())
+
+    @classmethod
     async def get_by_relative_path(
         cls,
         db: AsyncSession,

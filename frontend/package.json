@@ -48,6 +48,7 @@
     "radix-ui": "^1.4.3",
     "react": "19.0.1",
     "react-dom": "19.0.1",
+    "react-dropzone": "^15.0.0",
     "react-resizable-panels": "^2.1.7",
     "react-syntax-highlighter": "^15.6.6",
     "resumable-stream": "^2.0.0",
