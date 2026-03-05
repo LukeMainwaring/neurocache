@@ -14,8 +14,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from neurocache.models.document import Document
 from neurocache.models.document_chunk import DocumentChunk
 from neurocache.schemas.knowledge_source.document import (
+    BOOKS_DIR,
     BatchIngestFailure,
     BatchIngestResult,
+    BookSchema,
     ContentType,
     DocumentCreateSchema,
     DocumentStatus,
@@ -34,8 +36,6 @@ VAULT_MOUNT_PATH = "/vault"
 # Directories to exclude during batch ingestion
 DEFAULT_EXCLUDE_DIRS = {".obsidian", ".smart-env", "copilot", ".git", ".trash"}
 
-# Top-level directory containing book PDFs and notes
-BOOKS_DIR = "Books"
 
 # Chunking config
 TARGET_CHUNK_SIZE = 1500  # target characters per chunk
@@ -508,26 +508,6 @@ def discover_pdf_files(
     return sorted(pdf_files)
 
 
-def _get_book_folder(relative_path: str) -> str | None:
-    """Extract the book folder name from a path.
-
-    For a path like "Books/AI Engineering/notes.md", returns "Books/AI Engineering".
-
-    Args:
-        relative_path: Path relative to vault root
-
-    Returns:
-        Book folder path or None if not in Books/ directory
-    """
-    parts = Path(relative_path).parts
-
-    # Must be in Books/ with at least a book title subfolder
-    if len(parts) >= 3 and parts[0] == BOOKS_DIR:
-        return f"{BOOKS_DIR}/{parts[1]}"
-
-    return None
-
-
 async def _auto_link_book_documents(
     db: AsyncSession,
     knowledge_source_id: uuid.UUID,
@@ -543,7 +523,7 @@ async def _auto_link_book_documents(
         knowledge_source_id: Knowledge source ID
         document: The document to link
     """
-    book_folder = _get_book_folder(document.relative_path)
+    book_folder = BookSchema.folder_from_path(document.relative_path)
     if not book_folder:
         return
 
@@ -554,7 +534,7 @@ async def _auto_link_book_documents(
         if other_doc.id == document.id:
             continue
 
-        other_folder = _get_book_folder(other_doc.relative_path)
+        other_folder = BookSchema.folder_from_path(other_doc.relative_path)
         if other_folder != book_folder:
             continue
 

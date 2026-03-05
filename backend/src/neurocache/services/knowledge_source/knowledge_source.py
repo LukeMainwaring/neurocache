@@ -5,8 +5,16 @@ from datetime import datetime, timezone
 from openai import AsyncOpenAI
 
 from neurocache.dependencies.db import AsyncPostgresSessionDep
+from neurocache.models.document import Document
 from neurocache.models.knowledge_source import KnowledgeSource
-from neurocache.schemas.knowledge_source.document import BatchIngestResult
+from neurocache.schemas.knowledge_source.document import (
+    BatchIngestResult,
+    BookDocumentSummary,
+    BookListResponse,
+    BookSchema,
+    ContentType,
+    DocumentStatus,
+)
 from neurocache.schemas.knowledge_source.knowledge_source import (
     KnowledgeSourceCreateSchema,
     KnowledgeSourceSchema,
@@ -111,3 +119,50 @@ async def _validate_obsidian_source(
         KnowledgeSourceStatus.ERROR,
         error_message,
     )
+
+
+async def list_books(
+    source_id: uuid.UUID,
+    db: AsyncPostgresSessionDep,
+) -> BookListResponse:
+    """List books grouped by subfolder for a knowledge source."""
+    source = await KnowledgeSource.get(db, source_id, DEMO_USER_ID)
+    book_docs = await Document.get_books_by_source(db, source.id)
+
+    # Group book documents by subfolder
+    grouped: dict[str, list[Document]] = {}
+    for doc in book_docs:
+        folder = BookSchema.folder_from_path(doc.relative_path)
+        if folder:
+            grouped.setdefault(folder, []).append(doc)
+
+    # Build BookSchema for each group
+    books: list[BookSchema] = []
+    for folder_path, docs in sorted(grouped.items()):
+        note_doc = next((d for d in docs if d.content_type == ContentType.BOOK_NOTE), None)
+        meta = note_doc.doc_metadata or {} if note_doc else {}
+
+        title = meta.get("title") or (note_doc.title if note_doc else None) or folder_path.split("/")[-1]
+
+        book_documents = [
+            BookDocumentSummary(
+                id=d.id,
+                content_type=ContentType(d.content_type),
+                status=DocumentStatus(d.status),
+                chunk_count=d.chunk_count,
+                error_message=d.error_message,
+            )
+            for d in docs
+        ]
+
+        books.append(
+            BookSchema(
+                folder_path=folder_path,
+                title=title,
+                author=meta.get("author"),
+                tags=meta.get("tags"),
+                documents=book_documents,
+            )
+        )
+
+    return BookListResponse(books=books)

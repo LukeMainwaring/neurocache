@@ -4,6 +4,7 @@ import {
   deleteKnowledgeSourceMutation,
   getKnowledgeSourceDefaultsOptions,
   ingestAllDocumentsMutation,
+  listBooksOptions,
   listKnowledgeSourcesOptions,
   listKnowledgeSourcesQueryKey,
   retryKnowledgeSourceMutation,
@@ -79,6 +80,13 @@ export const useRetryKnowledgeSource = () => {
     retrySource,
     ...mutationResult,
   };
+};
+
+export const useKnowledgeSourceBooks = (sourceId: string, enabled: boolean) => {
+  return useQuery({
+    ...listBooksOptions({ path: { source_id: sourceId } }),
+    enabled,
+  });
 };
 
 export const useSyncKnowledgeSource = () => {

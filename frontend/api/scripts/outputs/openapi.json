@@ -11,7 +11,7 @@
           "chat"
         ],
         "summary": "Stream Chat",
-        "description": "Chat agent streaming endpoint.\n\nUses VercelAIAdapter to handle Vercel AI SDK protocol natively.\n\nArgs:\n    request: Raw Starlette request (body consumed by adapter)\n    db: Database session\n    user_id: Authenticated user ID\n\nReturns:\n    Streaming response in Vercel AI Data Stream Protocol format",
+        "description": "Chat agent streaming endpoint.\n\nUses VercelAIAdapter to handle parsing, agent execution, and streaming\nin Vercel AI SDK protocol format.",
         "operationId": "streamChat",
         "responses": {
           "200": {
@@ -251,6 +251,50 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/knowledge-sources/{source_id}/books": {
+      "get": {
+        "tags": [
+          "knowledge-sources"
+        ],
+        "summary": "List Books",
+        "description": "List books grouped by subfolder for a knowledge source.",
+        "operationId": "listBooks",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Source Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookListResponse"
+                }
               }
             }
           },
@@ -697,6 +741,122 @@
         ],
         "title": "BatchIngestResult",
         "description": "Result of a batch ingestion operation."
+      },
+      "BookDocumentSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "Document ID"
+          },
+          "content_type": {
+            "$ref": "#/components/schemas/ContentType",
+            "description": "book_note or book_source"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DocumentStatus",
+            "description": "Indexing status"
+          },
+          "chunk_count": {
+            "type": "integer",
+            "title": "Chunk Count",
+            "description": "Number of chunks indexed"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message",
+            "description": "Error details if failed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "content_type",
+          "status",
+          "chunk_count"
+        ],
+        "title": "BookDocumentSummary",
+        "description": "Summary of a single document within a book (note or PDF)."
+      },
+      "BookListResponse": {
+        "properties": {
+          "books": {
+            "items": {
+              "$ref": "#/components/schemas/BookSchema"
+            },
+            "type": "array",
+            "title": "Books",
+            "description": "Books grouped by subfolder"
+          }
+        },
+        "type": "object",
+        "required": [
+          "books"
+        ],
+        "title": "BookListResponse",
+        "description": "Response for listing books from a knowledge source."
+      },
+      "BookSchema": {
+        "properties": {
+          "folder_path": {
+            "type": "string",
+            "title": "Folder Path",
+            "description": "Relative subfolder path, e.g. 'Books/AI Engineering'"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Book title from frontmatter or folder name"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author",
+            "description": "Author from notes frontmatter"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "Comma-separated tags from frontmatter"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/BookDocumentSummary"
+            },
+            "type": "array",
+            "title": "Documents",
+            "description": "Component documents (note + PDF)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "folder_path",
+          "title",
+          "documents"
+        ],
+        "title": "BookSchema",
+        "description": "A book grouped from its Books/ subfolder documents."
       },
       "ContentType": {
         "type": "string",

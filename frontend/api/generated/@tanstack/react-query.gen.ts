@@ -4,23 +4,16 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
-import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listKnowledgeSources, listThreads, listUsers, type Options, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization } from '../sdk.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
+import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listBooks, listKnowledgeSources, listThreads, listUsers, type Options, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization } from '../sdk.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListBooksData, ListBooksError, ListBooksResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse } from '../types.gen';
 
 /**
  * Stream Chat
  *
  * Chat agent streaming endpoint.
  *
- * Uses VercelAIAdapter to handle Vercel AI SDK protocol natively.
- *
- * Args:
- * request: Raw Starlette request (body consumed by adapter)
- * db: Database session
- * user_id: Authenticated user ID
- *
- * Returns:
- * Streaming response in Vercel AI Data Stream Protocol format
+ * Uses VercelAIAdapter to handle parsing, agent execution, and streaming
+ * in Vercel AI SDK protocol format.
  */
 export const streamChatMutation = (options?: Partial<Options<StreamChatData>>): UseMutationOptions<unknown, AxiosError<DefaultError>, Options<StreamChatData>> => {
     const mutationOptions: UseMutationOptions<unknown, AxiosError<DefaultError>, Options<StreamChatData>> = {
@@ -205,6 +198,26 @@ export const updateKnowledgeSourceMutation = (options?: Partial<Options<UpdateKn
     };
     return mutationOptions;
 };
+
+export const listBooksQueryKey = (options: Options<ListBooksData>) => createQueryKey('listBooks', options);
+
+/**
+ * List Books
+ *
+ * List books grouped by subfolder for a knowledge source.
+ */
+export const listBooksOptions = (options: Options<ListBooksData>) => queryOptions<ListBooksResponse, AxiosError<ListBooksError>, ListBooksResponse, ReturnType<typeof listBooksQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listBooks({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listBooksQueryKey(options)
+});
 
 /**
  * Retry Knowledge Source

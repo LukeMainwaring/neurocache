@@ -12,7 +12,7 @@ from neurocache.core.config import get_settings
 from neurocache.dependencies.db import AsyncPostgresSessionDep
 from neurocache.dependencies.openai import OpenAIClientDep
 from neurocache.models.knowledge_source import KnowledgeSource
-from neurocache.schemas.knowledge_source.document import BatchIngestResult, DocumentSchema
+from neurocache.schemas.knowledge_source.document import BatchIngestResult, BookListResponse, DocumentSchema
 from neurocache.schemas.knowledge_source.knowledge_source import (
     KnowledgeSourceCreateSchema,
     KnowledgeSourceDefaults,
@@ -70,6 +70,15 @@ async def get_knowledge_source(
 ) -> KnowledgeSourceSchema:
     """Get a single knowledge source by ID."""
     return await KnowledgeSource.get(db, source_id, DEMO_USER_ID)
+
+
+@knowledge_source_router.get("/{source_id}/books")
+async def list_books(
+    source_id: uuid.UUID,
+    db: AsyncPostgresSessionDep,
+) -> BookListResponse:
+    """List books grouped by subfolder for a knowledge source."""
+    return await knowledge_source_service.list_books(source_id, db)
 
 
 @knowledge_source_router.patch("/{source_id}")

@@ -79,6 +79,92 @@ export type BatchIngestResult = {
 };
 
 /**
+ * BookDocumentSummary
+ *
+ * Summary of a single document within a book (note or PDF).
+ */
+export type BookDocumentSummary = {
+    /**
+     * Id
+     *
+     * Document ID
+     */
+    id: string;
+    /**
+     * book_note or book_source
+     */
+    content_type: ContentType;
+    /**
+     * Indexing status
+     */
+    status: DocumentStatus;
+    /**
+     * Chunk Count
+     *
+     * Number of chunks indexed
+     */
+    chunk_count: number;
+    /**
+     * Error Message
+     *
+     * Error details if failed
+     */
+    error_message?: string | null;
+};
+
+/**
+ * BookListResponse
+ *
+ * Response for listing books from a knowledge source.
+ */
+export type BookListResponse = {
+    /**
+     * Books
+     *
+     * Books grouped by subfolder
+     */
+    books: Array<BookSchema>;
+};
+
+/**
+ * BookSchema
+ *
+ * A book grouped from its Books/ subfolder documents.
+ */
+export type BookSchema = {
+    /**
+     * Folder Path
+     *
+     * Relative subfolder path, e.g. 'Books/AI Engineering'
+     */
+    folder_path: string;
+    /**
+     * Title
+     *
+     * Book title from frontmatter or folder name
+     */
+    title: string;
+    /**
+     * Author
+     *
+     * Author from notes frontmatter
+     */
+    author?: string | null;
+    /**
+     * Tags
+     *
+     * Comma-separated tags from frontmatter
+     */
+    tags?: string | null;
+    /**
+     * Documents
+     *
+     * Component documents (note + PDF)
+     */
+    documents: Array<BookDocumentSummary>;
+};
+
+/**
  * ContentType
  *
  * Type of content for tiered knowledge retrieval.
@@ -729,6 +815,36 @@ export type UpdateKnowledgeSourceResponses = {
 };
 
 export type UpdateKnowledgeSourceResponse = UpdateKnowledgeSourceResponses[keyof UpdateKnowledgeSourceResponses];
+
+export type ListBooksData = {
+    body?: never;
+    path: {
+        /**
+         * Source Id
+         */
+        source_id: string;
+    };
+    query?: never;
+    url: '/api/knowledge-sources/{source_id}/books';
+};
+
+export type ListBooksErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListBooksError = ListBooksErrors[keyof ListBooksErrors];
+
+export type ListBooksResponses = {
+    /**
+     * Successful Response
+     */
+    200: BookListResponse;
+};
+
+export type ListBooksResponse = ListBooksResponses[keyof ListBooksResponses];
 
 export type RetryKnowledgeSourceData = {
     body?: never;

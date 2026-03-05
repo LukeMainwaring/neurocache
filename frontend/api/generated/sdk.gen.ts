@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, RetryKnowledgeSourceData, RetryKnowledgeSourceErrors, RetryKnowledgeSourceResponses, StreamChatData, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses } from './types.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListBooksData, ListBooksErrors, ListBooksResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, RetryKnowledgeSourceData, RetryKnowledgeSourceErrors, RetryKnowledgeSourceResponses, StreamChatData, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -23,15 +23,8 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
  *
  * Chat agent streaming endpoint.
  *
- * Uses VercelAIAdapter to handle Vercel AI SDK protocol natively.
- *
- * Args:
- * request: Raw Starlette request (body consumed by adapter)
- * db: Database session
- * user_id: Authenticated user ID
- *
- * Returns:
- * Streaming response in Vercel AI Data Stream Protocol format
+ * Uses VercelAIAdapter to handle parsing, agent execution, and streaming
+ * in Vercel AI SDK protocol format.
  */
 export const streamChat = <ThrowOnError extends boolean = false>(options?: Options<StreamChatData, ThrowOnError>) => (options?.client ?? client).post<StreamChatResponses, unknown, ThrowOnError>({
     responseType: 'json',
@@ -122,6 +115,17 @@ export const updateKnowledgeSource = <ThrowOnError extends boolean = false>(opti
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * List Books
+ *
+ * List books grouped by subfolder for a knowledge source.
+ */
+export const listBooks = <ThrowOnError extends boolean = false>(options: Options<ListBooksData, ThrowOnError>) => (options.client ?? client).get<ListBooksResponses, ListBooksErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/knowledge-sources/{source_id}/books',
+    ...options
 });
 
 /**
