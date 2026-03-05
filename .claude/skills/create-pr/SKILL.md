@@ -1,7 +1,7 @@
 ---
 name: create-pr
 description: Generate a summary for the current branch changes
-allowed-tools: Bash(git:*)
+allowed-tools: Bash(git:*, gh:*)
 disable-model-invocation: true
 ---
 

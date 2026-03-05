@@ -4,6 +4,7 @@ Extracts condensed content from a PDF, runs it through the book analysis agent
 to generate tags, summary, and key concepts, then writes the results into Notes.md.
 """
 
+import asyncio
 import logging
 import re
 from pathlib import Path
@@ -52,7 +53,7 @@ def _extract_all_page_text(doc: pymupdf.Document) -> list[tuple[int, str]]:
 def prepare_analysis_content(pdf_path: Path) -> str:
     """Build book content for LLM analysis.
 
-    Sends full text when it fits in context (~500k chars). Falls back to a sampled
+    Sends full text when it fits in context (~1.5M chars). Falls back to a sampled
     approach (TOC + first 10 pages + chapter openings) for very long books.
     """
     with pymupdf.open(pdf_path) as doc:
@@ -125,7 +126,7 @@ async def analyze_book(pdf_path: Path) -> BookAnalysis | None:
     from neurocache.agents.book_analysis_agent import book_analysis_agent
 
     try:
-        content = prepare_analysis_content(pdf_path)
+        content = await asyncio.to_thread(prepare_analysis_content, pdf_path)
         if not content.strip():
             logger.warning(f"No content extracted from {pdf_path} for analysis")
             return None

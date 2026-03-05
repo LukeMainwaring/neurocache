@@ -3,6 +3,7 @@
 This module provides REST API endpoints for knowledge source CRUD operations.
 """
 
+import asyncio
 import logging
 import uuid
 from pathlib import Path
@@ -220,7 +221,7 @@ async def upload_book_pdf(
                     analysis = await analyze_book(pdf_full_path)
                     if analysis:
                         notes_full_path = Path(ingestion_service.VAULT_MOUNT_PATH) / notes_relative_path
-                        update_notes_with_analysis(notes_full_path, analysis)
+                        await asyncio.to_thread(update_notes_with_analysis, notes_full_path, analysis)
 
                 if notes_relative_path:
                     await ingestion_service.ingest_document(bg_db, openai_client, source_id, notes_relative_path)

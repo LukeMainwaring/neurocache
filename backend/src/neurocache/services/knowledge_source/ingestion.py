@@ -911,10 +911,19 @@ async def upload_book_pdf(
         ValueError: If a document already exists at this path
     """
     # Sanitize the title for use as a folder name
-    safe_title = title.strip().replace("/", "-").replace("\\", "-")
+    safe_title = title.strip().replace("/", "-").replace("\\", "-").replace("\n", " ")
+    if not safe_title or safe_title in (".", "..") or "\x00" in safe_title:
+        raise ValueError("Invalid book title")
+
     # Strip directory components from filename to prevent path traversal
     safe_filename = Path(filename).name
-    book_dir = Path(VAULT_MOUNT_PATH) / BOOKS_DIR / safe_title
+
+    # Verify resolved path stays under the expected directory
+    expected_parent = (Path(VAULT_MOUNT_PATH) / BOOKS_DIR).resolve()
+    book_dir = (Path(VAULT_MOUNT_PATH) / BOOKS_DIR / safe_title).resolve()
+    if not str(book_dir).startswith(str(expected_parent) + "/"):
+        raise ValueError("Invalid book title")
+
     pdf_path = book_dir / safe_filename
     relative_path = f"{BOOKS_DIR}/{safe_title}/{safe_filename}"
 
@@ -939,7 +948,7 @@ async def upload_book_pdf(
             "type: book",
         ]
         if author:
-            escaped_author = author.replace('"', '\\"')
+            escaped_author = author.replace('"', '\\"').replace("\n", " ")
             frontmatter_lines.append(f'author: "{escaped_author}"')
         frontmatter_lines.extend(["---", "", f"# {safe_title}", "", ""])
 
