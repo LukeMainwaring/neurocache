@@ -15,6 +15,13 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
   - Change detection during sync (re-index modified files, clean up deleted files)
   - Agent-driven `search_knowledge_base` tool — agent decides when to search, can refine queries, and search multiple times per turn
 
+- **Book Import**: PDF upload with drag-and-drop UI, chapter-aware chunking, and AI-powered analysis
+
+  - Two-phase upload flow: preview PDF metadata, then confirm with editable title/author
+  - Background ingestion: PDF text extraction, chunking by chapter boundaries, embedding generation
+  - Book analysis agent: generates tags, summary, and key concepts breakdown into Notes.md using structured LLM output
+  - Book list UI with document status badges and polling during ingestion
+
 **Next Up:** Web search tool, MCP server, enhanced retrieval (hybrid search, cross-reference discovery, citations)
 
 ---
@@ -32,6 +39,10 @@ End-to-end RAG pipeline: pgvector storage with HNSW indexing, OpenAI embeddings,
 ### Phase 2.5: Agentic RAG via Tool Use
 
 Converted RAG from a pre-fetch step into a Pydantic AI tool (`search_knowledge_base`) the agent invokes on demand. Introduced shared `AgentDeps` dataclass and `agents/tools/` module pattern. The agent now decides whether retrieval is needed, can reformulate queries, and can search multiple times per turn. This is the architectural prerequisite for web search, write-back, MCP tools, and other future agent capabilities.
+
+### Phase 2.75: Book Import & Analysis
+
+PDF book upload with drag-and-drop UI, two-phase preview/confirm flow, and background ingestion with chapter-aware chunking. A dedicated book analysis agent (`book_analysis_agent`) uses Pydantic AI structured output to generate tags, a high-level summary, and per-chapter key concepts from the full PDF text, writing the results into the book's Notes.md before ingestion so the analysis is embedded and searchable via RAG. Knowledge base settings page refactored into modular components.
 
 ---
 
@@ -76,10 +87,6 @@ Basic error handling exists. Retry logic, rate limiting, and graceful degradatio
 ### Document Management UI
 
 A frontend for browsing/managing the knowledge base. For now, just use Obsidian directly.
-
-### Book Import
-
-EPUB/PDF ingestion with chapter-aware chunking. Future enhancement once Obsidian integration is solid.
 
 ### Web Content Ingestion
 

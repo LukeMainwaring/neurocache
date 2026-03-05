@@ -16,23 +16,26 @@ logger = logging.getLogger(__name__)
 config = get_settings()
 
 SYSTEM_PROMPT = """You are a book analyst. Given content extracted from a book (table of contents, \
-full text or sampled pages), produce a structured analysis.
+full text or sampled pages), produce a thorough structured analysis.
 
 Your output must include:
 
 1. **Tags**: 5-10 topical keywords that capture the book's main themes and subject domains. \
 Use lowercase, hyphenated phrases (e.g., "machine-learning", "distributed-systems", "cognitive-psychology").
 
-2. **Summary**: A 2-3 paragraph high-level summary covering what the book is about, its central \
-thesis or approach, and who would benefit from reading it.
+2. **Summary**: Write exactly 3 substantial paragraphs. \
+Paragraph 1: What the book is about — its subject, scope, and central thesis. \
+Paragraph 2: How the book approaches the topic — its structure, methodology, and what makes it distinctive. \
+Paragraph 3: Who would benefit from reading it and what they will take away.
 
-3. **Key Concepts**: A breakdown of the most important ideas, organized by chapter or thematic section. \
-For each section, provide 4-8 key concept descriptions (1-2 sentences each) that capture the core ideas.
+3. **Key Concepts**: A detailed breakdown of the most important ideas. \
+IMPORTANT: Create one entry per individual chapter, NOT grouped by part or section. \
+Use the exact chapter title from the table of contents as each heading. \
+For each chapter, provide 4-8 key concept descriptions (2-3 sentences each) that capture the \
+core ideas, arguments, and takeaways — not just topic names. Be specific and substantive.
 
-If the content includes a table of contents, organize key concepts by chapter headings. \
-If no table of contents is available, organize by the major themes you identify.
-
-Focus on substance over structure. Capture the actual ideas and arguments, not just topic names."""
+If no table of contents is available, organize by the major themes you identify, \
+but still aim for granular chapter-level groupings rather than broad categories."""
 
 _model = OpenAIChatModel(
     model_name=config.BOOK_ANALYSIS_MODEL,

@@ -140,25 +140,48 @@ async def analyze_book(pdf_path: Path) -> BookAnalysis | None:
         return None
 
 
+_HUMAN_SECTIONS = """\
+## Highlights & Annotations
+
+_Add your favorite quotes and reflections here._
+
+> "A memorable quote from the book that captures a key insight."
+
+Your reflection: How does this connect to your own thinking or experience?
+
+## How This Changed My Thinking
+
+_What ideas will you carry forward? How does this connect to other things you've read or thought about? \
+What actions might you take based on these ideas?_
+
+## Connections
+
+_Link to related notes in your vault._
+
+- [[Related Note]] - How this book connects to other ideas
+"""
+
+
 def update_notes_with_analysis(notes_path: Path, analysis: BookAnalysis) -> None:
     """Write analysis results into an existing Notes.md file.
 
-    Updates frontmatter with tags, appends Summary and Key Concepts sections.
+    Updates frontmatter with tags, appends AI-generated Summary and Key Concepts,
+    then adds human-in-the-loop sections for personal reflection.
     """
     content = notes_path.read_text(encoding="utf-8")
 
-    # 1. Update frontmatter: add tags line before closing ---
+    # 1. Update frontmatter: add tags in YAML inline list format for Obsidian
     tags_str = ", ".join(analysis.tags)
     fm_match = FRONTMATTER_PATTERN.match(content)
     if fm_match:
         fm_block = fm_match.group(0)
         lines = fm_block.rstrip().split("\n")
         # Insert tags before the closing --- (last line)
-        lines.insert(-1, f"tags: {tags_str}")
+        lines.insert(-1, f"tags: [{tags_str}]")
         new_fm = "\n".join(lines) + "\n"
         content = new_fm + content[fm_match.end() :]
 
-    # 2. Build summary and key concepts sections
+    # 2. Build AI-generated sections
     sections: list[str] = []
     sections.append(f"## Summary\n\n{analysis.summary}")
 
@@ -168,8 +191,8 @@ def update_notes_with_analysis(notes_path: Path, analysis: BookAnalysis) -> None
         concepts_parts.append(f"### {kc.heading}\n\n{concept_items}")
     sections.append("## Key Concepts\n\n" + "\n\n".join(concepts_parts))
 
-    # Append after existing content
-    content = content.rstrip() + "\n\n" + "\n\n".join(sections) + "\n"
+    # 3. Append AI sections + human-in-the-loop sections
+    content = content.rstrip() + "\n\n" + "\n\n".join(sections) + "\n\n" + _HUMAN_SECTIONS
 
     notes_path.write_text(content, encoding="utf-8")
     logger.info(f"Updated {notes_path} with analysis (tags: {tags_str})")
