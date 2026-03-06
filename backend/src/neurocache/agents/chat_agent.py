@@ -9,7 +9,7 @@ This module provides a simple chat agent that:
 import logging
 
 import logfire
-from pydantic_ai import Agent, ModelSettings, RunContext
+from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIChatModel
 
 from neurocache.agents.deps import AgentDeps
@@ -96,7 +96,7 @@ def build_chat_instructions(ctx: RunContext[AgentDeps]) -> str:
     return "\n\n".join(sections)
 
 
-_model = OpenAIChatModel(model_name=config.AGENT_MODEL, settings=ModelSettings(temperature=config.AGENT_TEMPERATURE))
+_model = OpenAIChatModel(model_name=config.AGENT_MODEL)
 
 chat_agent = Agent(
     model=_model,

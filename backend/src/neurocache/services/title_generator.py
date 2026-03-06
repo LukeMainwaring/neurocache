@@ -51,7 +51,6 @@ async def generate_thread_title(
             model=TITLE_MODEL,
             messages=[{"role": "user", "content": prompt}],
             max_completion_tokens=20,
-            temperature=0.3,
         )
 
         title = response.choices[0].message.content

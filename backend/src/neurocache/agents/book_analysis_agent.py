@@ -5,7 +5,7 @@ Uses Pydantic AI structured output to produce a BookAnalysis from condensed book
 
 import logging
 
-from pydantic_ai import Agent, ModelSettings
+from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
 
 from neurocache.core.config import get_settings
@@ -37,10 +37,7 @@ core ideas, arguments, and takeaways — not just topic names. Be specific and s
 If no table of contents is available, organize by the major themes you identify, \
 but still aim for granular chapter-level groupings rather than broad categories."""
 
-_model = OpenAIChatModel(
-    model_name=config.BOOK_ANALYSIS_MODEL,
-    settings=ModelSettings(temperature=config.BOOK_ANALYSIS_TEMPERATURE),
-)
+_model = OpenAIChatModel(model_name=config.BOOK_ANALYSIS_MODEL)
 
 book_analysis_agent = Agent(
     model=_model,

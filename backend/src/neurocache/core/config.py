@@ -21,7 +21,6 @@ class BaseAgentSettings(BaseSettings):
     """Base agent configuration."""
 
     AGENT_MODEL: str = "gpt-5-mini"
-    AGENT_TEMPERATURE: float = 0.0
 
 
 class EmbeddingSettings(BaseSettings):
@@ -41,7 +40,6 @@ class BookAnalysisSettings(BaseSettings):
     """Book analysis agent configuration."""
 
     BOOK_ANALYSIS_MODEL: str = "gpt-5-mini"
-    BOOK_ANALYSIS_TEMPERATURE: float = 0.3
 
 
 class ObsidianSettings(BaseSettings):
