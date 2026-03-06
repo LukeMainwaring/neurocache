@@ -7,6 +7,7 @@ import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
 import { MessageContent } from "./elements/message";
 import { Response } from "./elements/response";
+import { ToolCall } from "./elements/tool-call";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
 
@@ -26,6 +27,12 @@ const PurePreviewMessage = ({
   requiresScrollPadding: boolean;
 }) => {
   useDataStream();
+
+  const hasTextParts = message.parts?.some(
+    (p) => p.type === "text" && p.text?.trim(),
+  );
+  const hasToolParts = message.parts?.some((p) => p.type === "dynamic-tool");
+  const hasVisibleContent = hasTextParts || hasToolParts;
 
   return (
     <div
@@ -47,16 +54,28 @@ const PurePreviewMessage = ({
 
         <div
           className={cn("flex flex-col", {
-            "gap-2 md:gap-4": message.parts?.some(
-              (p) => p.type === "text" && p.text?.trim()
-            ),
+            "gap-2 md:gap-4": hasVisibleContent || isLoading,
             "w-full":
-              message.role === "assistant" &&
-              message.parts?.some((p) => p.type === "text" && p.text?.trim()),
+              message.role === "assistant" && (hasVisibleContent || isLoading),
             "max-w-[calc(100%-2.5rem)] sm:max-w-[min(fit-content,80%)]":
               message.role === "user",
           })}
         >
+          {!hasVisibleContent && isLoading && message.role === "assistant" && (
+            <div className="flex items-center gap-1 p-0 text-muted-foreground text-sm">
+              <span className="animate-pulse">Thinking</span>
+              <span className="inline-flex">
+                <span className="animate-bounce [animation-delay:0ms]">.</span>
+                <span className="animate-bounce [animation-delay:150ms]">
+                  .
+                </span>
+                <span className="animate-bounce [animation-delay:300ms]">
+                  .
+                </span>
+              </span>
+            </div>
+          )}
+
           {message.parts?.map((part, index) => {
             const { type } = part;
             const key = `message-${message.id}-part-${index}`;
@@ -81,6 +100,9 @@ const PurePreviewMessage = ({
                   </MessageContent>
                 </div>
               );
+            }
+            if (type === "dynamic-tool") {
+              return <ToolCall key={key} part={part} />;
             }
             return null;
           })}
@@ -109,7 +131,7 @@ export const PreviewMessage = memo(
       return true;
     }
     return false;
-  }
+  },
 );
 
 export const ThinkingMessage = () => {

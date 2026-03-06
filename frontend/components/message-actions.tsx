@@ -60,7 +60,11 @@ export function PureMessageActions({
     );
   }
 
-  // Assistant messages get only copy action
+  // Assistant messages: hide actions if no text content
+  if (!textFromParts) {
+    return null;
+  }
+
   return (
     <Actions className="-ml-0.5">
       <Action onClick={handleCopy} tooltip="Copy">
@@ -78,5 +82,5 @@ export const MessageActions = memo(
     }
 
     return true;
-  }
+  },
 );
