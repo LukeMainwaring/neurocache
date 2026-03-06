@@ -1,7 +1,6 @@
 "use client";
 
 import type { DynamicToolUIPart } from "ai";
-import { cn } from "@/lib/utils";
 import {
   CheckCircleFillIcon,
   ChevronDownIcon,
@@ -26,7 +25,7 @@ export function ToolCall({ part }: { part: DynamicToolUIPart }) {
 
   return (
     <Collapsible defaultOpen={isRunning}>
-      <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted/50">
+      <CollapsibleTrigger className="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted/50">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {isRunning && (
             <div className="animate-spin text-muted-foreground">
@@ -47,12 +46,7 @@ export function ToolCall({ part }: { part: DynamicToolUIPart }) {
             {formatToolName(part.toolName)}
           </span>
         </div>
-        <div
-          className={cn(
-            "transition-transform duration-200",
-            "data-[state=closed]:-rotate-90 data-[state=open]:rotate-0"
-          )}
-        >
+        <div className="group-data-[state=closed]:-rotate-90 transition-transform duration-200">
           <ChevronDownIcon size={14} />
         </div>
       </CollapsibleTrigger>

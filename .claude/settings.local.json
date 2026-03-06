@@ -30,7 +30,8 @@
       "Bash(pnpm format:*)",
       "mcp__ide__getDiagnostics",
       "Bash(pnpm generate-client:*)",
-      "Bash(gh pr view:*)"
+      "Bash(gh pr view:*)",
+      "Bash(git status:*)"
     ]
   }
 }
