@@ -9,7 +9,7 @@ from neurocache.models.thread import Thread
 
 logger = logging.getLogger(__name__)
 
-TITLE_MODEL = "gpt-4o-mini"
+TITLE_MODEL = "gpt-5-mini"
 
 TITLE_PROMPT = (
     "Generate a short, descriptive title (3-6 words) for this conversation. "
