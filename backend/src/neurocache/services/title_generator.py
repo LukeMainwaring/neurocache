@@ -50,7 +50,7 @@ async def generate_thread_title(
         response = await client.chat.completions.create(
             model=TITLE_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=20,
+            max_completion_tokens=20,
             temperature=0.3,
         )
 
