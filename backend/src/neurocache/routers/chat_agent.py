@@ -7,10 +7,8 @@ interaction with the user's knowledge base.
 import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Any
 
 from fastapi import APIRouter
-from pydantic_ai.messages import BuiltinToolReturnPart, ModelResponse
 from pydantic_ai.models.openai import OpenAIResponsesModelSettings
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 from starlette.requests import Request
@@ -26,28 +24,15 @@ from neurocache.models.thread import Thread
 from neurocache.models.user import User as UserModel
 from neurocache.schemas.agent_type import AgentType
 from neurocache.services.title_generator import generate_thread_title
-from neurocache.utils.message_serialization import extract_latest_user_text, prepare_messages_for_storage
+from neurocache.utils.message_serialization import (
+    extract_latest_user_text,
+    extract_web_sources,
+    prepare_messages_for_storage,
+)
 
 logger = logging.getLogger(__name__)
 
 chat_router = APIRouter(prefix="/chat", tags=["chat"])
-
-
-def _extract_web_sources(content: Any) -> list[dict[str, str]]:
-    """Extract web source URLs from web search tool return content.
-
-    Content shape: {"status": "completed", "sources": [{"type": "url", "url": "..."}]}
-    Some returns have no sources (just {"status": "completed"}).
-    """
-    sources: list[dict[str, str]] = []
-    if isinstance(content, dict):
-        for item in content.get("sources", []):
-            if isinstance(item, dict) and "url" in item:
-                source: dict[str, str] = {"url": item["url"]}
-                if "title" in item:
-                    source["title"] = item["title"]
-                sources.append(source)
-    return sources
 
 
 @chat_router.post("/stream")
@@ -74,13 +59,7 @@ async def stream_chat(
     deps = AgentDeps(user=user, db=db, openai_client=openai_client)
 
     async def on_complete(result):  # type: ignore[no-untyped-def]
-        # Extract web search sources from builtin tool return parts
-        web_sources: list[dict[str, str]] = []
-        for msg in result.all_messages():
-            if isinstance(msg, ModelResponse):
-                for part in msg.parts:
-                    if isinstance(part, BuiltinToolReturnPart) and part.tool_name == "web_search":
-                        web_sources.extend(_extract_web_sources(part.content))
+        web_sources = extract_web_sources(result.all_messages())
 
         # Save the full conversation: all_messages() includes the adapter's
         # converted history + new response. save_history is append-only (counts

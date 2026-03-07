@@ -7,7 +7,7 @@ Also manages RAG source metadata attachment across all three formats.
 
 from typing import Any
 
-from pydantic_ai.messages import ModelMessage, ModelMessagesTypeAdapter
+from pydantic_ai.messages import BuiltinToolReturnPart, ModelMessage, ModelMessagesTypeAdapter, ModelResponse
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 from pydantic_ai.ui.vercel_ai.request_types import TextUIPart, UIMessage
 
@@ -40,6 +40,49 @@ def extract_latest_user_text(messages: list[UIMessage]) -> str:
                 if isinstance(part, TextUIPart):
                     return part.text
     return ""
+
+
+# ============================================================================
+# Source Extraction
+# ============================================================================
+
+
+def extract_web_sources(messages: list[ModelMessage]) -> list[WebSource]:
+    """Extract web source URLs from web search tool return parts in a conversation.
+
+    Scans all model response messages for builtin web_search tool returns and
+    extracts source URLs and titles.
+
+    Args:
+        messages: Full conversation messages from result.all_messages()
+
+    Returns:
+        List of web source dicts with 'url' and optional 'title' keys
+    """
+    sources: list[WebSource] = []
+    for msg in messages:
+        if isinstance(msg, ModelResponse):
+            for part in msg.parts:
+                if isinstance(part, BuiltinToolReturnPart) and part.tool_name == "web_search":
+                    sources.extend(_extract_web_sources_from_content(part.content))
+    return sources
+
+
+def _extract_web_sources_from_content(content: Any) -> list[WebSource]:
+    """Extract web source URLs from a single web search tool return content.
+
+    Content shape: {"status": "completed", "sources": [{"type": "url", "url": "..."}]}
+    Some returns have no sources (just {"status": "completed"}).
+    """
+    sources: list[WebSource] = []
+    if isinstance(content, dict):
+        for item in content.get("sources", []):
+            if isinstance(item, dict) and "url" in item:
+                source: WebSource = {"url": item["url"]}
+                if "title" in item:
+                    source["title"] = item["title"]
+                sources.append(source)
+    return sources
 
 
 # ============================================================================
