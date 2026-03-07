@@ -2,8 +2,9 @@
 
 import { useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
+import { DefaultChatTransport } from "ai";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
 import { getThreadMessages } from "@/api/hooks/threads";
 import { ChatHeader } from "@/components/chat-header";
@@ -40,6 +41,11 @@ export function Chat({
 
   const [input, setInput] = useState<string>("");
 
+  const transport = useMemo(
+    () => new DefaultChatTransport({ api: "/api/chat" }),
+    []
+  );
+
   const {
     messages,
     setMessages,
@@ -50,6 +56,7 @@ export function Chat({
     resumeStream,
   } = useChat<ChatMessage>({
     id,
+    transport,
     messages: initialMessages,
     experimental_throttle: 100,
     onData: (dataPart) => {

@@ -137,6 +137,11 @@ const PurePreviewMessage = ({
 export const PreviewMessage = memo(
   PurePreviewMessage,
   (prevProps, nextProps) => {
+    // Always re-render the streaming message — useChat mutates parts in-place,
+    // so deep equality on the same array reference always returns true.
+    if (nextProps.isLoading) {
+      return false;
+    }
     if (
       prevProps.isLoading === nextProps.isLoading &&
       prevProps.message.id === nextProps.message.id &&

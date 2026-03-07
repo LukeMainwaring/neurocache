@@ -109,6 +109,7 @@ async def stream_chat(
         agent=chat_agent,
         deps=deps,
         on_complete=on_complete,
+        sdk_version=6,
         model_settings=OpenAIResponsesModelSettings(
             openai_include_web_search_sources=True,
         ),
