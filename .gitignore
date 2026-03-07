@@ -178,6 +178,9 @@ deploy/helm/codex/charts/*
 # VSCode
 .vscode
 
+# Claude Code local settings
+.claude/settings.local.json
+
 # Test coverage
 test_coverage/
 
