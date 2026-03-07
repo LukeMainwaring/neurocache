@@ -33,7 +33,8 @@
       "Bash(gh pr view:*)",
       "Bash(git status:*)",
       "Bash(git commit:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(git:*)"
     ]
   }
 }

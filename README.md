@@ -12,6 +12,7 @@ When I chat with this AI system, it should:
 - Reference a knowledge base tailored to me
 - Focus on the books I've read and my current research thoughts
 - Draw connections across concepts
+- Search the web for real-time information when needed
 
 **Important notes:**
 - This is a personal project, developed by me, mostly locally for now
@@ -32,7 +33,7 @@ neurocache/
 
 -   **FastAPI** with async support
 -   **PostgreSQL** database with SQLAlchemy
--   **Pydantic AI** for LLM agent orchestration
+-   **Pydantic AI** for LLM agent orchestration (RAG + web search)
 
 ### Frontend
 

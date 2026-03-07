@@ -9,6 +9,7 @@ import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter
+from pydantic_ai.models.openai import OpenAIResponsesModelSettings
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 from starlette.requests import Request
 from starlette.responses import Response
@@ -23,7 +24,11 @@ from neurocache.models.thread import Thread
 from neurocache.models.user import User as UserModel
 from neurocache.schemas.agent_type import AgentType
 from neurocache.services.title_generator import generate_thread_title
-from neurocache.utils.message_serialization import extract_latest_user_text, prepare_messages_for_storage
+from neurocache.utils.message_serialization import (
+    extract_latest_user_text,
+    extract_web_sources,
+    prepare_messages_for_storage,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,10 +59,12 @@ async def stream_chat(
     deps = AgentDeps(user=user, db=db, openai_client=openai_client)
 
     async def on_complete(result):  # type: ignore[no-untyped-def]
+        web_sources = extract_web_sources(result.all_messages())
+
         # Save the full conversation: all_messages() includes the adapter's
         # converted history + new response. save_history is append-only (counts
         # existing DB rows, inserts only messages at indexes beyond that).
-        all_msgs = prepare_messages_for_storage(result.all_messages(), deps.rag_sources)
+        all_msgs = prepare_messages_for_storage(result.all_messages(), deps.rag_sources, web_sources)
         await Thread.get_or_create(db, thread_id, AgentType.CHAT.value, user_id)
         await Message.save_history(db, thread_id, AgentType.CHAT.value, all_msgs)
 
@@ -81,4 +88,8 @@ async def stream_chat(
         agent=chat_agent,
         deps=deps,
         on_complete=on_complete,
+        sdk_version=6,
+        model_settings=OpenAIResponsesModelSettings(
+            openai_include_web_search_sources=True,
+        ),
     )

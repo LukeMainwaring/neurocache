@@ -3,8 +3,9 @@ import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { ChatMessage } from "@/lib/types";
 import { Action, Actions } from "./elements/actions";
-import { CopyIcon, FileTextIcon } from "./icons";
+import { CopyIcon, FileTextIcon, GlobeIcon } from "./icons";
 import { RAGSourcesDialog } from "./rag-sources-dialog";
+import { WebSourcesDialog } from "./web-sources-dialog";
 
 export function PureMessageActions({
   chatId: _chatId,
@@ -40,6 +41,7 @@ export function PureMessageActions({
   // User messages get copy action and optionally view sources
   if (message.role === "user") {
     const ragSources = message.metadata?.ragSources;
+    const webSources = message.metadata?.webSources;
 
     return (
       <Actions className="-mr-0.5 justify-end">
@@ -49,6 +51,16 @@ export function PureMessageActions({
             trigger={
               <Action tooltip="View sources">
                 <FileTextIcon />
+              </Action>
+            }
+          />
+        )}
+        {webSources && webSources.length > 0 && (
+          <WebSourcesDialog
+            sources={webSources}
+            trigger={
+              <Action tooltip="View web sources">
+                <GlobeIcon />
               </Action>
             }
           />
@@ -82,5 +94,5 @@ export const MessageActions = memo(
     }
 
     return true;
-  },
+  }
 );

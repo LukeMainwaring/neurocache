@@ -17,7 +17,7 @@ const AssistantAvatar = ({ isLoading }: { isLoading?: boolean }) => (
   <div
     className={cn(
       "-mt-1 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background ring-1 ring-border",
-      isLoading && "animate-synapse",
+      isLoading && "animate-synapse"
     )}
   >
     <Image
@@ -48,7 +48,7 @@ const PurePreviewMessage = ({
   useDataStream();
 
   const hasTextParts = message.parts?.some(
-    (p) => p.type === "text" && p.text?.trim(),
+    (p) => p.type === "text" && p.text?.trim()
   );
   const hasToolParts = message.parts?.some((p) => isToolUIPart(p));
   const hasVisibleContent = hasTextParts || hasToolParts;
@@ -137,6 +137,11 @@ const PurePreviewMessage = ({
 export const PreviewMessage = memo(
   PurePreviewMessage,
   (prevProps, nextProps) => {
+    // Always re-render the streaming message — useChat mutates parts in-place,
+    // so deep equality on the same array reference always returns true.
+    if (nextProps.isLoading) {
+      return false;
+    }
     if (
       prevProps.isLoading === nextProps.isLoading &&
       prevProps.message.id === nextProps.message.id &&
@@ -146,7 +151,7 @@ export const PreviewMessage = memo(
       return true;
     }
     return false;
-  },
+  }
 );
 
 export const SynapsingMessage = () => {

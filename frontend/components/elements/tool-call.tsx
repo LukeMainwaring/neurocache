@@ -20,6 +20,7 @@ function formatToolName(name: string): string {
 
 const TOOL_VERBS: Record<string, string> = {
   search_knowledge_base: "Searching knowledge base",
+  web_search: "Searching the web",
 };
 
 function getToolVerb(name: string): string {
@@ -42,7 +43,7 @@ export function ToolCall({
   const isComplete = !isRunning && part.state === "output-available";
 
   return (
-    <Collapsible defaultOpen={isRunning}>
+    <Collapsible defaultOpen={false}>
       <CollapsibleTrigger className="group flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted/50">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {isRunning && (
