@@ -1,15 +1,24 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
+import type { DynamicToolUIPart, ToolUIPart } from "ai";
 import equal from "fast-deep-equal";
 import Image from "next/image";
 import { memo } from "react";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
+import { BouncingDots } from "./elements/bouncing-dots";
 import { MessageContent } from "./elements/message";
 import { Response } from "./elements/response";
 import { ToolCall } from "./elements/tool-call";
 import { MessageActions } from "./message-actions";
+
+function isToolPart(type: string): boolean {
+  return (
+    type === "dynamic-tool" ||
+    (type.startsWith("tool-") && type !== "tool-invocation")
+  );
+}
 
 const AssistantAvatar = ({ isLoading }: { isLoading?: boolean }) => (
   <div
@@ -48,7 +57,7 @@ const PurePreviewMessage = ({
   const hasTextParts = message.parts?.some(
     (p) => p.type === "text" && p.text?.trim(),
   );
-  const hasToolParts = message.parts?.some((p) => p.type === "dynamic-tool");
+  const hasToolParts = message.parts?.some((p) => isToolPart(p.type));
   const hasVisibleContent = hasTextParts || hasToolParts;
 
   return (
@@ -78,16 +87,8 @@ const PurePreviewMessage = ({
         >
           {!hasVisibleContent && isLoading && message.role === "assistant" && (
             <div className="flex items-center gap-1 p-0 text-muted-foreground text-sm">
-              <span className="animate-pulse">Synapsing</span>
-              <span className="inline-flex">
-                <span className="animate-bounce [animation-delay:0ms]">.</span>
-                <span className="animate-bounce [animation-delay:150ms]">
-                  .
-                </span>
-                <span className="animate-bounce [animation-delay:300ms]">
-                  .
-                </span>
-              </span>
+              <span className="animate-shimmer">Synapsing</span>
+              <BouncingDots />
             </div>
           )}
 
@@ -116,8 +117,14 @@ const PurePreviewMessage = ({
                 </div>
               );
             }
-            if (type === "dynamic-tool") {
-              return <ToolCall key={key} part={part} />;
+            if (isToolPart(type)) {
+              return (
+                <ToolCall
+                  isStreaming={isLoading && !hasTextParts}
+                  key={key}
+                  part={part as DynamicToolUIPart | ToolUIPart}
+                />
+              );
             }
             return null;
           })}
@@ -161,12 +168,8 @@ export const SynapsingMessage = () => {
 
         <div className="flex w-full flex-col gap-2 md:gap-4">
           <div className="flex items-center gap-1 p-0 text-muted-foreground text-sm">
-            <span className="animate-pulse">Synapsing</span>
-            <span className="inline-flex">
-              <span className="animate-bounce [animation-delay:0ms]">.</span>
-              <span className="animate-bounce [animation-delay:150ms]">.</span>
-              <span className="animate-bounce [animation-delay:300ms]">.</span>
-            </span>
+            <span className="animate-shimmer">Synapsing</span>
+            <BouncingDots />
           </div>
         </div>
       </div>

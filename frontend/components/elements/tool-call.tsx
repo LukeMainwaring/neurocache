@@ -1,6 +1,6 @@
 "use client";
 
-import type { DynamicToolUIPart } from "ai";
+import { type DynamicToolUIPart, getToolName, type ToolUIPart } from "ai";
 import {
   CheckCircleFillIcon,
   ChevronDownIcon,
@@ -12,16 +12,34 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
+import { BouncingDots } from "./bouncing-dots";
 
 function formatToolName(name: string): string {
   return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function ToolCall({ part }: { part: DynamicToolUIPart }) {
+const TOOL_VERBS: Record<string, string> = {
+  search_knowledge_base: "Searching knowledge base",
+};
+
+function getToolVerb(name: string): string {
+  return TOOL_VERBS[name] ?? formatToolName(name);
+}
+
+export function ToolCall({
+  part,
+  isStreaming,
+}: {
+  part: DynamicToolUIPart | ToolUIPart;
+  isStreaming?: boolean;
+}) {
+  const toolName = getToolName(part);
   const isRunning =
-    part.state === "input-streaming" || part.state === "input-available";
+    part.state === "input-streaming" ||
+    part.state === "input-available" ||
+    (isStreaming && part.state === "output-available");
   const isError = part.state === "output-error";
-  const isComplete = part.state === "output-available";
+  const isComplete = !isRunning && part.state === "output-available";
 
   return (
     <Collapsible defaultOpen={isRunning}>
@@ -43,12 +61,15 @@ export function ToolCall({ part }: { part: DynamicToolUIPart }) {
             </div>
           )}
           <span className="truncate font-medium">
-            {formatToolName(part.toolName)}
+            {isRunning ? getToolVerb(toolName) : formatToolName(toolName)}
           </span>
+          {isRunning && <BouncingDots />}
         </div>
-        <div className="group-data-[state=closed]:-rotate-90 transition-transform duration-200">
-          <ChevronDownIcon size={14} />
-        </div>
+        {!isRunning && (
+          <div className="group-data-[state=closed]:-rotate-90 transition-transform duration-200">
+            <ChevronDownIcon size={14} />
+          </div>
+        )}
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="mt-1 ml-7 space-y-2 text-xs">

@@ -32,7 +32,8 @@
       "Bash(pnpm generate-client:*)",
       "Bash(gh pr view:*)",
       "Bash(git status:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(gh api:*)"
     ]
   }
 }
