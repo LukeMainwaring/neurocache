@@ -9,9 +9,15 @@ export type RAGSource = {
   chapter?: string;
 };
 
+export type WebSource = {
+  url: string;
+  title?: string;
+};
+
 export type MessageMetadata = {
   createdAt?: string;
   ragSources?: RAGSource[];
+  webSources?: WebSource[];
 };
 
 export type CustomUIDataTypes = {

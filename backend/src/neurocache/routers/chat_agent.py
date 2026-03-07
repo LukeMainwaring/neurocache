@@ -7,8 +7,11 @@ interaction with the user's knowledge base.
 import asyncio
 import logging
 from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import APIRouter
+from pydantic_ai.messages import BuiltinToolReturnPart, ModelResponse
+from pydantic_ai.models.openai import OpenAIResponsesModelSettings
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 from starlette.requests import Request
 from starlette.responses import Response
@@ -28,6 +31,23 @@ from neurocache.utils.message_serialization import extract_latest_user_text, pre
 logger = logging.getLogger(__name__)
 
 chat_router = APIRouter(prefix="/chat", tags=["chat"])
+
+
+def _extract_web_sources(content: Any) -> list[dict[str, str]]:
+    """Extract web source URLs from web search tool return content.
+
+    Content shape: {"status": "completed", "sources": [{"type": "url", "url": "..."}]}
+    Some returns have no sources (just {"status": "completed"}).
+    """
+    sources: list[dict[str, str]] = []
+    if isinstance(content, dict):
+        for item in content.get("sources", []):
+            if isinstance(item, dict) and "url" in item:
+                source: dict[str, str] = {"url": item["url"]}
+                if "title" in item:
+                    source["title"] = item["title"]
+                sources.append(source)
+    return sources
 
 
 @chat_router.post("/stream")
@@ -54,10 +74,18 @@ async def stream_chat(
     deps = AgentDeps(user=user, db=db, openai_client=openai_client)
 
     async def on_complete(result):  # type: ignore[no-untyped-def]
+        # Extract web search sources from builtin tool return parts
+        web_sources: list[dict[str, str]] = []
+        for msg in result.all_messages():
+            if isinstance(msg, ModelResponse):
+                for part in msg.parts:
+                    if isinstance(part, BuiltinToolReturnPart) and part.tool_name == "web_search":
+                        web_sources.extend(_extract_web_sources(part.content))
+
         # Save the full conversation: all_messages() includes the adapter's
         # converted history + new response. save_history is append-only (counts
         # existing DB rows, inserts only messages at indexes beyond that).
-        all_msgs = prepare_messages_for_storage(result.all_messages(), deps.rag_sources)
+        all_msgs = prepare_messages_for_storage(result.all_messages(), deps.rag_sources, web_sources)
         await Thread.get_or_create(db, thread_id, AgentType.CHAT.value, user_id)
         await Message.save_history(db, thread_id, AgentType.CHAT.value, all_msgs)
 
@@ -81,4 +109,7 @@ async def stream_chat(
         agent=chat_agent,
         deps=deps,
         on_complete=on_complete,
+        model_settings=OpenAIResponsesModelSettings(
+            openai_include_web_search_sources=True,
+        ),
     )

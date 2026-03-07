@@ -9,8 +9,8 @@ This module provides a simple chat agent that:
 import logging
 
 import logfire
-from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai import Agent, RunContext, WebSearchTool
+from pydantic_ai.models.openai import OpenAIResponsesModel
 
 from neurocache.agents.deps import AgentDeps
 from neurocache.agents.tools.knowledge_base_tools import register_knowledge_base_tools
@@ -51,7 +51,21 @@ Do NOT search for every message. Skip searches for:
 - Follow-up questions about content already in the conversation
 - Requests that clearly don't relate to the user's knowledge base
 
-When you find relevant results, naturally weave insights from the knowledge base into your response. Reference specific sources when helpful.""".strip()
+When you find relevant results, naturally weave insights from the knowledge base into your response. Reference specific sources when helpful.
+
+## Web Search
+You also have access to web search for real-time information. Use it when:
+- The user asks about current events, recent news, or time-sensitive topics
+- You need to supplement knowledge base results with up-to-date information
+- The topic is unlikely to be in the user's personal notes
+- The user explicitly asks to search the web
+
+Do NOT use web search for:
+- Questions answerable from the knowledge base alone
+- Personal topics specific to the user's notes and reading
+- General knowledge you're already confident about
+
+You can use BOTH tools in a single response when the question bridges personal knowledge and current external information.""".strip()
 
 # ============================================================================
 # Agent Creation and Instructions
@@ -96,12 +110,13 @@ def build_chat_instructions(ctx: RunContext[AgentDeps]) -> str:
     return "\n\n".join(sections)
 
 
-_model = OpenAIChatModel(model_name=config.AGENT_MODEL)
+_model = OpenAIResponsesModel(config.AGENT_MODEL)
 
 chat_agent = Agent(
     model=_model,
     deps_type=AgentDeps,
     instructions=build_chat_instructions,
+    builtin_tools=[WebSearchTool()],
 )
 
 register_knowledge_base_tools(chat_agent)

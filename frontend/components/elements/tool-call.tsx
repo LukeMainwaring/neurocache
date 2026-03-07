@@ -20,6 +20,7 @@ function formatToolName(name: string): string {
 
 const TOOL_VERBS: Record<string, string> = {
   search_knowledge_base: "Searching knowledge base",
+  web_search: "Searching the web",
 };
 
 function getToolVerb(name: string): string {
