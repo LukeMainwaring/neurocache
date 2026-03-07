@@ -18,12 +18,12 @@ Claude Desktop and ChatGPT now have memory, file upload, MCP, and web search. Wh
 - **Learned**: Pydantic AI tool registration, function-calling, agent autonomy, `RunContext` deps pattern
 - **Prerequisite for**: web search, write-back, MCP tools, cross-reference discovery
 
-### 2. Web Search Tool
+### ~~2. Web Search Tool~~ DONE
 
-Add Pydantic AI's built-in `WebSearchTool` (or Brave/Exa via MCP). Nearly a one-liner once tool use infrastructure exists from #1. The agent blends your personal notes with live web results in the same turn.
+Added Pydantic AI's built-in `WebSearchTool` via `OpenAIResponsesModel`. The agent blends personal notes with live web results in the same turn. Web sources are extracted, persisted, and displayed in a frontend dialog.
 
-- **Learning**: Multi-tool agents, tool selection behavior
-- **Moat**: MEDIUM -- Claude has web search, but can't blend it with your vault
+- **Files changed**: `agents/chat_agent.py`, `routers/chat_agent.py`, `utils/message_serialization.py`, `frontend/components/web-sources-dialog.tsx`
+- **Learned**: Multi-tool agents, `OpenAIResponsesModel` vs `OpenAIChatModel`, builtin tool return parsing, Vercel AI SDK v6 transport
 
 ### 3. Obsidian Deep Links in Sources
 
@@ -122,18 +122,18 @@ Different agents for different tasks: research agent (deep multi-query search), 
 ## Suggested Build Order
 
 ```
-#1 Agentic RAG ✅ ──→ #2 Web Search ──→ #4 MCP Server
-     (done)              (free win)      (differentiator)
-                              │
-                              └──→ #5 Hybrid Search  OR  #6 Write-Back
-                                   (retrieval depth)     (growth loop)
-                                           │
-                                           └──→ #8 Conversation-to-Knowledge Pipeline
-                                                (the full loop: read → chat → write → read)
+#1 Agentic RAG ✅ ──→ #2 Web Search ✅ ──→ #4 MCP Server
+     (done)              (done)             (differentiator)
+                                                 │
+                                                 └──→ #5 Hybrid Search  OR  #6 Write-Back
+                                                      (retrieval depth)     (growth loop)
+                                                              │
+                                                              └──→ #8 Conversation-to-Knowledge Pipeline
+                                                                   (the full loop: read → chat → write → read)
 ```
 
 **Priority 1**: ~~Agentic RAG (#1)~~ DONE
-**Priority 2**: Web Search (#2) -- nearly free now that tool use exists, immediate daily utility.
+**Priority 2**: ~~Web Search (#2)~~ DONE
 **Priority 3**: MCP Server (#4) -- biggest differentiator vs. Claude Desktop.
 **Priority 4**: Hybrid Search (#5) or Write-Back (#6) -- pick based on curiosity (IR fundamentals vs. agent autonomy).
 **Stretch**: Temporal tracking (#10) and knowledge gaps (#11) are the most unique ideas with no commercial equivalent.

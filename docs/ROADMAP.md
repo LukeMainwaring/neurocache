@@ -22,7 +22,7 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
   - Book analysis agent: generates tags, summary, and key concepts breakdown into Notes.md using structured LLM output
   - Book list UI with document status badges and polling during ingestion
 
-**Next Up:** Web search tool, MCP server, enhanced retrieval (hybrid search, cross-reference discovery, citations)
+**Next Up:** MCP server, enhanced retrieval (hybrid search, cross-reference discovery, citations)
 
 ---
 
@@ -43,6 +43,10 @@ Converted RAG from a pre-fetch step into a Pydantic AI tool (`search_knowledge_b
 ### Phase 2.75: Book Import & Analysis
 
 PDF book upload with drag-and-drop UI, two-phase preview/confirm flow, and background ingestion with chapter-aware chunking. A dedicated book analysis agent (`book_analysis_agent`) uses Pydantic AI structured output to generate tags, a high-level summary, and per-chapter key concepts from the full PDF text, writing the results into the book's Notes.md before ingestion so the analysis is embedded and searchable via RAG. Knowledge base settings page refactored into modular components.
+
+### Phase 2.8: Web Search
+
+Added Pydantic AI's built-in `WebSearchTool` to the chat agent via `OpenAIResponsesModel`. The agent can now blend personal knowledge base results with live web search in the same turn. Web search sources are extracted from tool return parts, persisted alongside RAG sources, and displayed in a "View Web Sources" dialog on the frontend.
 
 ---
 
@@ -100,9 +104,6 @@ User isolation, usage tracking, admin dashboard. Only relevant for productioniza
 
 CI/CD, monitoring, production deployment. Handle when/if the app goes public.
 
-### Live Web Search
-
-Use Pydantic AI's built-in `WebSearchTool` to supplement knowledge base answers with live web results. Would let the agent blend personal notes with current external information.
 
 ### Model Upgrades & Reasoning
 
