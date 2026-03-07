@@ -315,3 +315,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes synapse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@utility animate-synapse {
+  animation: synapse 1.8s ease-in-out infinite;
+}
