@@ -130,11 +130,19 @@ def messages_to_frontend(raw_messages: list[dict[str, Any]]) -> list[dict[str, A
     ui_messages = VercelAIAdapter.dump_messages(model_messages)
     frontend_messages: list[dict[str, Any]] = [msg.model_dump(mode="json", by_alias=True) for msg in ui_messages]
 
-    # Re-attach source metadata from raw storage onto user messages
+    # Re-attach source metadata from raw storage onto user messages.
+    # Raw messages contain multiple "request" kinds — both user-prompt requests
+    # and tool-return requests. Only user-prompt requests map to frontend user
+    # messages, so skip tool-return requests to keep alignment correct.
     raw_request_idx = 0
     for fm in frontend_messages:
         if fm["role"] == "user":
-            while raw_request_idx < len(raw_messages) and raw_messages[raw_request_idx].get("kind") != "request":
+            while raw_request_idx < len(raw_messages):
+                msg = raw_messages[raw_request_idx]
+                if msg.get("kind") == "request" and any(
+                    p.get("part_kind") == "user-prompt" for p in msg.get("parts", [])
+                ):
+                    break
                 raw_request_idx += 1
             if raw_request_idx < len(raw_messages):
                 raw_msg = raw_messages[raw_request_idx]
