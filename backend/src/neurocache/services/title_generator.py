@@ -11,11 +11,9 @@ logger = logging.getLogger(__name__)
 
 TITLE_MODEL = "gpt-4o-mini"
 
-TITLE_PROMPT = (
+TITLE_INSTRUCTIONS = (
     "Generate a short, descriptive title (3-6 words) for this conversation. "
-    "Return ONLY the title text, no quotes or punctuation at the end.\n\n"
-    "User: {user_message}\n\n"
-    "Assistant: {assistant_response}"
+    "Return ONLY the title text, no quotes or punctuation at the end."
 )
 
 MAX_FALLBACK_LENGTH = 40
@@ -43,17 +41,15 @@ async def generate_thread_title(
     """
     try:
         client = AsyncOpenAI()
-        prompt = TITLE_PROMPT.format(
-            user_message=user_message[:500],
-            assistant_response=assistant_response[:500],
-        )
-        response = await client.chat.completions.create(
+        response = await client.responses.create(
             model=TITLE_MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            max_completion_tokens=20,
+            instructions=TITLE_INSTRUCTIONS,
+            input=f"User: {user_message[:500]}\n\nAssistant: {assistant_response[:500]}",
+            max_output_tokens=20,
+            store=False,
         )
 
-        title = response.choices[0].message.content
+        title = response.output_text
         if title:
             title = title.strip().strip('"').strip("'")
             async with get_async_sqlalchemy_session() as db:
