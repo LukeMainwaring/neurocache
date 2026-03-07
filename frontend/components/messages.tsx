@@ -6,7 +6,7 @@ import { useMessages } from "@/hooks/use-messages";
 import type { ChatMessage } from "@/lib/types";
 import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
-import { PreviewMessage, ThinkingMessage } from "./message";
+import { PreviewMessage, SynapsingMessage } from "./message";
 
 type MessagesProps = {
   chatId: string;
@@ -60,7 +60,7 @@ function PureMessages({
             />
           ))}
 
-          {status === "submitted" && <ThinkingMessage />}
+          {status === "submitted" && <SynapsingMessage />}
 
           <div
             className="min-h-[24px] min-w-[24px] shrink-0"

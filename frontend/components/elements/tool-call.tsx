@@ -25,7 +25,7 @@ export function ToolCall({ part }: { part: DynamicToolUIPart }) {
 
   return (
     <Collapsible defaultOpen={isRunning}>
-      <CollapsibleTrigger className="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted/50">
+      <CollapsibleTrigger className="group flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted/50">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {isRunning && (
             <div className="animate-spin text-muted-foreground">
