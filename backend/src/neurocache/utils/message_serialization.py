@@ -14,10 +14,10 @@ from pydantic_ai.ui.vercel_ai.request_types import TextUIPart, UIMessage
 # Type alias for RAG source metadata
 # Contains: path, similarity, content, content_type, section_header, author,
 # page_number (for PDFs), chapter (for PDFs)
-RAGSource = dict[str, str | float | int]
+type RAGSource = dict[str, str | float | int]
 
 # Type alias for web search source metadata
-WebSource = dict[str, str]
+type WebSource = dict[str, str]
 
 
 # ============================================================================
