@@ -92,9 +92,9 @@ def parse_frontmatter(text: str) -> dict[str, str]:
             value = value.strip()
             # Remove quotes if present
             if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1]
+                value = value.removeprefix('"').removesuffix('"')
             elif value.startswith("'") and value.endswith("'"):
-                value = value[1:-1]
+                value = value.removeprefix("'").removesuffix("'")
             result[key] = value
 
     return result
