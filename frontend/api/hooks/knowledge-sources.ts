@@ -92,7 +92,7 @@ export const useKnowledgeSourceBooks = (sourceId: string, enabled: boolean) => {
     refetchInterval: (query) => {
       const books = query.state.data?.books;
       const hasProcessing = books?.some((book) =>
-        book.documents.some((d) => d.status === "processing")
+        book.documents.some((d) => d.status === "processing"),
       );
       return hasProcessing ? 3000 : false;
     },

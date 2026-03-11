@@ -94,5 +94,5 @@ export const MessageActions = memo(
     }
 
     return true;
-  }
+  },
 );

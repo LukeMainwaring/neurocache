@@ -5,17 +5,17 @@ description = "Neurocache backend service"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-  "alembic>=1.17.2",
+  "alembic>=1.18.4",
   "asyncpg>=0.31.0",
-  "fastapi[standard]>=0.128.0",
-  "pgvector>=0.4.0",
-  "psycopg[binary,pool]>=3.3.2",
+  "fastapi[standard]>=0.135.1",
+  "pgvector>=0.4.2",
+  "psycopg[binary,pool]>=3.3.3",
   "pydantic-ai>=1.67.0",
-  "pymupdf>=1.26.7",
+  "pymupdf>=1.27.2",
   "pydantic>=2.12.5",
   "python-json-logger>=4.0.0",
-  "sqlalchemy[mypy]>=2.0.45",
-  "uvicorn>=0.40.0",
+  "sqlalchemy[mypy]>=2.0.48",
+  "uvicorn>=0.41.0",
 ]
 
 [dependency-groups]
@@ -23,7 +23,7 @@ dev = [
   "mypy>=1.19.1",
   "pre-commit>=4.5.1",
   "pytest>=9.0.2",
-  "ruff>=0.14.10",
+  "ruff>=0.15.5",
 ]
 
 [tool.pytest.ini_options]

@@ -44,7 +44,7 @@ def _extract_all_page_text(doc: pymupdf.Document) -> list[tuple[int, str]]:
     """Extract text from all pages, returning (1-indexed page number, text) pairs."""
     pages = []
     for i in range(len(doc)):
-        text = doc[i].get_text().strip()
+        text = doc[i].get_text().strip()  # type: ignore[no-untyped-call]
         if text:
             pages.append((i + 1, text))
     return pages
@@ -56,7 +56,7 @@ def prepare_analysis_content(pdf_path: Path) -> str:
     Sends full text when it fits in context (~1.5M chars). Falls back to a sampled
     approach (TOC + first 10 pages + chapter openings) for very long books.
     """
-    with pymupdf.open(pdf_path) as doc:
+    with pymupdf.open(pdf_path) as doc:  # type: ignore[no-untyped-call]
         toc = extract_toc(doc)
         all_pages = _extract_all_page_text(doc)
 

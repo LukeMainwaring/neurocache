@@ -61,7 +61,7 @@ export function BookList({
   const [expanded, setExpanded] = useState(false);
   const { data: booksData, isLoading } = useKnowledgeSourceBooks(
     sourceId,
-    true
+    true,
   );
 
   return (

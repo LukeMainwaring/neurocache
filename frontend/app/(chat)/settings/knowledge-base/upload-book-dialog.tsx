@@ -90,7 +90,7 @@ export function UploadBookDialog({
       await uploadMutation.uploadBook(
         selectedFile,
         editTitle.trim(),
-        editAuthor.trim() || undefined
+        editAuthor.trim() || undefined,
       );
       toast.success("Book uploaded! Ingestion started in the background.");
       handleOpenChange(false);
