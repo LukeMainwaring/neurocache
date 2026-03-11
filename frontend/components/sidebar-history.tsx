@@ -61,7 +61,7 @@ const groupThreadsByDate = (threads: ThreadSummary[]): GroupedThreads => {
       lastWeek: [],
       lastMonth: [],
       older: [],
-    } as GroupedThreads
+    } as GroupedThreads,
   );
 };
 

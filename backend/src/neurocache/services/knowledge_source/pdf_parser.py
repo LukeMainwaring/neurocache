@@ -83,13 +83,13 @@ def extract_pdf_content(file_path: Path) -> list[PageContent]:
         raise FileNotFoundError(f"PDF file not found: {file_path}")
 
     try:
-        doc = pymupdf.open(file_path)
+        doc = pymupdf.open(file_path)  # type: ignore[no-untyped-call]
     except Exception as e:
         raise ValueError(f"Failed to open PDF: {e}") from e
 
     # Check for password protection
     if doc.is_encrypted:
-        doc.close()
+        doc.close()  # type: ignore[no-untyped-call]
         raise ValueError(f"PDF is password-protected: {file_path}")
 
     # Extract TOC for chapter lookup
@@ -100,11 +100,11 @@ def extract_pdf_content(file_path: Path) -> list[PageContent]:
 
     for page_num in range(len(doc)):
         page = doc[page_num]
-        text = page.get_text()
+        text = page.get_text()  # type: ignore[no-untyped-call]
 
         # Try to get the printed page label (e.g., "84", "xii")
         # Only use numeric labels; front matter (Roman numerals, etc.) gets None
-        page_label = page.get_label()
+        page_label = page.get_label()  # type: ignore[no-untyped-call]
         page_number: int | None = None
         if page_label:
             try:
@@ -125,7 +125,7 @@ def extract_pdf_content(file_path: Path) -> list[PageContent]:
         )
         total_text_length += len(text)
 
-    doc.close()
+    doc.close()  # type: ignore[no-untyped-call]
 
     # Warn if PDF appears to be scanned (no text extracted)
     if total_text_length < 100 and len(pages) > 0:

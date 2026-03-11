@@ -855,7 +855,7 @@ def preview_book_pdf(pdf_bytes: bytes, filename: str) -> BookPdfPreview:
     Raises:
         ValueError: If the PDF is encrypted or has no extractable text
     """
-    with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:
+    with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:  # type: ignore[no-untyped-call]
         if doc.is_encrypted:
             raise ValueError("PDF is password-protected and cannot be processed")
 

@@ -43,7 +43,7 @@ export function Chat({
 
   const transport = useMemo(
     () => new DefaultChatTransport({ api: "/api/chat" }),
-    []
+    [],
   );
 
   const {

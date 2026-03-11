@@ -79,7 +79,7 @@ function PureMultimodalInput({
 
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
     "input",
-    ""
+    "",
   );
 
   useEffect(() => {
@@ -189,7 +189,7 @@ export const MultimodalInput = memo(
     }
 
     return true;
-  }
+  },
 );
 
 function PureStopButton({
