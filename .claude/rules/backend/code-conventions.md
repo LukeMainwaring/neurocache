@@ -16,6 +16,7 @@ Python/FastAPI conventions for the neurocache backend.
 - Use FastAPI's dependency injection for shared resources (db sessions, auth, config)
 - All database operations are async using `AsyncSession`
 - Keep route handlers thin: push business logic to `services/`, DB logic to `models/`
+- Import service modules with a named alias in routers: `from neurocache.services import thread as thread_service`, then call `thread_service.rename_thread(...)`. This avoids name collisions with router functions and makes the delegation explicit.
 - Use `BackgroundTasks` for blocking, secondary work in routes
 - Prefer Pydantic models over raw dicts for request/response schemas
 

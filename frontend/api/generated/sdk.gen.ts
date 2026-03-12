@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListBooksData, ListBooksErrors, ListBooksResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, PreviewBookPdfData, PreviewBookPdfErrors, PreviewBookPdfResponses, RetryKnowledgeSourceData, RetryKnowledgeSourceErrors, RetryKnowledgeSourceResponses, StreamChatData, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses, UploadBookPdfData, UploadBookPdfErrors, UploadBookPdfResponses } from './types.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListBooksData, ListBooksErrors, ListBooksResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, PreviewBookPdfData, PreviewBookPdfErrors, PreviewBookPdfResponses, RenameThreadData, RenameThreadErrors, RenameThreadResponses, RetryKnowledgeSourceData, RetryKnowledgeSourceErrors, RetryKnowledgeSourceResponses, StreamChatData, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses, UploadBookPdfData, UploadBookPdfErrors, UploadBookPdfResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -236,6 +236,21 @@ export const deleteThread = <ThrowOnError extends boolean = false>(options: Opti
     responseType: 'json',
     url: '/api/threads/{thread_id}',
     ...options
+});
+
+/**
+ * Rename Thread
+ *
+ * Rename a thread.
+ */
+export const renameThread = <ThrowOnError extends boolean = false>(options: Options<RenameThreadData, ThrowOnError>) => (options.client ?? client).post<RenameThreadResponses, RenameThreadErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/threads/{thread_id}/rename',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

@@ -1,19 +1,19 @@
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from neurocache.dependencies.auth.auth import AuthenticatedUser
 from neurocache.dependencies.db import AsyncPostgresSessionDep
-from neurocache.models.message import Message
-from neurocache.models.thread import Thread
 from neurocache.schemas.agent_type import AgentType
 from neurocache.schemas.thread import (
     ThreadDeleteResponse,
     ThreadListResponse,
     ThreadMessagesResponse,
+    ThreadRenameRequest,
+    ThreadRenameResponse,
     ThreadSummary,
 )
-from neurocache.utils.message_serialization import messages_to_frontend
+from neurocache.services import thread as thread_service
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ thread_router = APIRouter(prefix="/threads", tags=["threads"])
 @thread_router.get("")
 async def list_threads(db: AsyncPostgresSessionDep, user_id: AuthenticatedUser) -> ThreadListResponse:
     """List all threads for the authenticated user."""
-    threads = await Thread.list_for_user(db, user_id, AgentType.CHAT.value)
+    threads = await thread_service.list_threads_for_user(db, user_id, AgentType.CHAT.value)
     return ThreadListResponse(
         threads=[
             ThreadSummary(
@@ -43,12 +43,7 @@ async def get_thread_messages(
     db: AsyncPostgresSessionDep, thread_id: str, user_id: AuthenticatedUser
 ) -> ThreadMessagesResponse:
     """Get all messages for a specific thread."""
-    thread = await Thread.get_for_user(db, thread_id, user_id, AgentType.CHAT.value)
-    if not thread:
-        raise HTTPException(status_code=404, detail="Thread not found")
-    raw = await Message.get_history(db, thread_id, AgentType.CHAT.value)
-    frontend_messages = messages_to_frontend(raw)
-
+    frontend_messages = await thread_service.get_thread_messages(db, thread_id, user_id, AgentType.CHAT.value)
     return ThreadMessagesResponse(thread_id=thread_id, messages=frontend_messages)
 
 
@@ -57,9 +52,19 @@ async def delete_thread(
     db: AsyncPostgresSessionDep, thread_id: str, user_id: AuthenticatedUser
 ) -> ThreadDeleteResponse:
     """Delete a thread and all its messages."""
-    thread = await Thread.get_for_user(db, thread_id, user_id, AgentType.CHAT.value)
-    if not thread:
-        raise HTTPException(status_code=404, detail="Thread not found")
-    await Thread.delete_for_user(db, thread_id, user_id, AgentType.CHAT.value)
+    await thread_service.delete_thread(db, thread_id, user_id, AgentType.CHAT.value)
     logger.info(f"Deleted thread {thread_id} for user {user_id}")
     return ThreadDeleteResponse(message="Thread deleted successfully")
+
+
+@thread_router.post("/{thread_id}/rename")
+async def rename_thread(
+    db: AsyncPostgresSessionDep,
+    thread_id: str,
+    user_id: AuthenticatedUser,
+    body: ThreadRenameRequest,
+) -> ThreadRenameResponse:
+    """Rename a thread."""
+    thread = await thread_service.rename_thread(db, thread_id, user_id, AgentType.CHAT.value, body.title)
+    logger.info(f"Renamed thread {thread_id} for user {user_id}")
+    return ThreadRenameResponse(thread_id=thread.thread_id, title=thread.title or "")

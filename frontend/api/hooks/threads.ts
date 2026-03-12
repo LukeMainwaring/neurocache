@@ -4,6 +4,7 @@ import {
   deleteThreadMutation,
   listThreadsOptions,
   listThreadsQueryKey,
+  renameThreadMutation,
 } from "../generated/@tanstack/react-query.gen";
 import { getThreadMessages as getThreadMessagesApi } from "../generated/sdk.gen";
 
@@ -12,6 +13,28 @@ import "../client";
 
 export const useThreads = () => {
   return useQuery(listThreadsOptions());
+};
+
+export const useRenameThread = () => {
+  const queryClient = useQueryClient();
+  const mutationResult = useMutation({
+    ...renameThreadMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: listThreadsQueryKey() });
+    },
+  });
+
+  const renameThread = (threadId: string, title: string) => {
+    return mutationResult.mutateAsync({
+      path: { thread_id: threadId },
+      body: { title },
+    });
+  };
+
+  return {
+    renameThread,
+    ...mutationResult,
+  };
 };
 
 export const useDeleteThread = () => {
