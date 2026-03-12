@@ -590,6 +590,34 @@ export type ThreadMessagesResponse = {
 };
 
 /**
+ * ThreadRenameRequest
+ *
+ * Request to rename a thread.
+ */
+export type ThreadRenameRequest = {
+    /**
+     * Title
+     */
+    title: string;
+};
+
+/**
+ * ThreadRenameResponse
+ *
+ * Response for successful thread rename.
+ */
+export type ThreadRenameResponse = {
+    /**
+     * Thread Id
+     */
+    thread_id: string;
+    /**
+     * Title
+     */
+    title: string;
+};
+
+/**
  * ThreadSummary
  *
  * Summary of a thread for list view.
@@ -1171,6 +1199,36 @@ export type DeleteThreadResponses = {
 };
 
 export type DeleteThreadResponse = DeleteThreadResponses[keyof DeleteThreadResponses];
+
+export type RenameThreadData = {
+    body: ThreadRenameRequest;
+    path: {
+        /**
+         * Thread Id
+         */
+        thread_id: string;
+    };
+    query?: never;
+    url: '/api/threads/{thread_id}';
+};
+
+export type RenameThreadErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RenameThreadError = RenameThreadErrors[keyof RenameThreadErrors];
+
+export type RenameThreadResponses = {
+    /**
+     * Successful Response
+     */
+    200: ThreadRenameResponse;
+};
+
+export type RenameThreadResponse = RenameThreadResponses[keyof RenameThreadResponses];
 
 export type GetMyselfData = {
     body?: never;

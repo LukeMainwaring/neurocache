@@ -78,12 +78,15 @@ class Thread(Base):
         return list(result.scalars().all())
 
     @classmethod
-    async def get_for_user(cls, db: AsyncSession, thread_id: str, user_id: str, agent_type: str) -> Thread | None:
-        """Get a thread by ID, user ID, and agent type."""
+    async def get_for_user(cls, db: AsyncSession, thread_id: str, user_id: str, agent_type: str) -> Thread:
+        """Get a thread by ID, user ID, and agent type. Raises NoThreadFound if not found."""
         result = await db.execute(
             select(cls).where(cls.thread_id == thread_id, cls.user_id == user_id, cls.agent_type == agent_type)
         )
-        return result.scalar_one_or_none()
+        thread = result.scalar_one_or_none()
+        if not thread:
+            raise NoThreadFound()
+        return thread
 
     @classmethod
     async def delete_for_user(cls, db: AsyncSession, thread_id: str, user_id: str, agent_type: str) -> None:

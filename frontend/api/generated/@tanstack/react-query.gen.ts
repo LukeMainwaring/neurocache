@@ -4,8 +4,8 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
-import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listBooks, listKnowledgeSources, listThreads, listUsers, type Options, previewBookPdf, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization, uploadBookPdf } from '../sdk.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListBooksData, ListBooksError, ListBooksResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, PreviewBookPdfData, PreviewBookPdfError, PreviewBookPdfResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse, UploadBookPdfData, UploadBookPdfError, UploadBookPdfResponse } from '../types.gen';
+import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listBooks, listKnowledgeSources, listThreads, listUsers, type Options, previewBookPdf, renameThread, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization, uploadBookPdf } from '../sdk.gen';
+import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListBooksData, ListBooksError, ListBooksResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, PreviewBookPdfData, PreviewBookPdfError, PreviewBookPdfResponse, RenameThreadData, RenameThreadError, RenameThreadResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse, UploadBookPdfData, UploadBookPdfError, UploadBookPdfResponse } from '../types.gen';
 
 /**
  * Stream Chat
@@ -375,6 +375,25 @@ export const deleteThreadMutation = (options?: Partial<Options<DeleteThreadData>
     const mutationOptions: UseMutationOptions<DeleteThreadResponse, AxiosError<DeleteThreadError>, Options<DeleteThreadData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await deleteThread({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Rename Thread
+ *
+ * Rename a thread.
+ */
+export const renameThreadMutation = (options?: Partial<Options<RenameThreadData>>): UseMutationOptions<RenameThreadResponse, AxiosError<RenameThreadError>, Options<RenameThreadData>> => {
+    const mutationOptions: UseMutationOptions<RenameThreadResponse, AxiosError<RenameThreadError>, Options<RenameThreadData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await renameThread({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

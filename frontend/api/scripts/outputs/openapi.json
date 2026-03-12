@@ -676,6 +676,57 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "threads"
+        ],
+        "summary": "Rename Thread",
+        "description": "Rename a thread.",
+        "operationId": "renameThread",
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThreadRenameRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreadRenameResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/users/myself": {
@@ -1549,6 +1600,41 @@
         ],
         "title": "ThreadMessagesResponse",
         "description": "Response containing thread messages.\n\nMessages are returned in their raw JSONB format as stored in the database,\nwhich includes role, content, and metadata fields."
+      },
+      "ThreadRenameRequest": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "ThreadRenameRequest",
+        "description": "Request to rename a thread."
+      },
+      "ThreadRenameResponse": {
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "thread_id",
+          "title"
+        ],
+        "title": "ThreadRenameResponse",
+        "description": "Response for successful thread rename."
       },
       "ThreadSummary": {
         "properties": {

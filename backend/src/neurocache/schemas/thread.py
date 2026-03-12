@@ -3,6 +3,8 @@
 from datetime import datetime
 from typing import Any
 
+from pydantic import Field
+
 from neurocache.schemas.agent_type import AgentType
 
 from .base import BaseSchema
@@ -61,3 +63,16 @@ class ThreadDeleteResponse(BaseSchema):
     """Response for successful thread delete operations."""
 
     message: str
+
+
+class ThreadRenameRequest(BaseSchema):
+    """Request to rename a thread."""
+
+    title: str = Field(min_length=1, max_length=255)
+
+
+class ThreadRenameResponse(BaseSchema):
+    """Response for successful thread rename."""
+
+    thread_id: str
+    title: str

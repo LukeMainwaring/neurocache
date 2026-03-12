@@ -5,7 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { ThreadSummary } from "@/api/generated/types.gen";
-import { useDeleteThread, useThreads } from "@/api/hooks/threads";
+import {
+  useDeleteThread,
+  useRenameThread,
+  useThreads,
+} from "@/api/hooks/threads";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,7 +92,9 @@ export function SidebarHistory() {
   const router = useRouter();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
   const { deleteThread } = useDeleteThread();
+  const { renameThread } = useRenameThread();
 
   const handleDelete = () => {
     const threadToDelete = deleteId;
@@ -111,6 +117,16 @@ export function SidebarHistory() {
         return "Thread deleted successfully";
       },
       error: "Failed to delete thread",
+    });
+  };
+
+  const handleRename = (chatId: string, title: string) => {
+    setRenamingId(null);
+
+    toast.promise(renameThread(chatId, title), {
+      loading: "Renaming thread...",
+      success: "Thread renamed",
+      error: "Failed to rename thread",
     });
   };
 
@@ -176,10 +192,14 @@ export function SidebarHistory() {
                     }}
                     isActive={thread.id === id}
                     key={thread.id}
+                    isRenaming={renamingId === thread.id}
+                    onCancelRename={() => setRenamingId(null)}
                     onDelete={(chatId) => {
                       setDeleteId(chatId);
                       setShowDeleteDialog(true);
                     }}
+                    onRename={handleRename}
+                    onStartRename={(chatId) => setRenamingId(chatId)}
                     setOpenMobile={setOpenMobile}
                   />
                 ))}
@@ -200,10 +220,14 @@ export function SidebarHistory() {
                     }}
                     isActive={thread.id === id}
                     key={thread.id}
+                    isRenaming={renamingId === thread.id}
+                    onCancelRename={() => setRenamingId(null)}
                     onDelete={(chatId) => {
                       setDeleteId(chatId);
                       setShowDeleteDialog(true);
                     }}
+                    onRename={handleRename}
+                    onStartRename={(chatId) => setRenamingId(chatId)}
                     setOpenMobile={setOpenMobile}
                   />
                 ))}
@@ -224,10 +248,14 @@ export function SidebarHistory() {
                     }}
                     isActive={thread.id === id}
                     key={thread.id}
+                    isRenaming={renamingId === thread.id}
+                    onCancelRename={() => setRenamingId(null)}
                     onDelete={(chatId) => {
                       setDeleteId(chatId);
                       setShowDeleteDialog(true);
                     }}
+                    onRename={handleRename}
+                    onStartRename={(chatId) => setRenamingId(chatId)}
                     setOpenMobile={setOpenMobile}
                   />
                 ))}
@@ -248,10 +276,14 @@ export function SidebarHistory() {
                     }}
                     isActive={thread.id === id}
                     key={thread.id}
+                    isRenaming={renamingId === thread.id}
+                    onCancelRename={() => setRenamingId(null)}
                     onDelete={(chatId) => {
                       setDeleteId(chatId);
                       setShowDeleteDialog(true);
                     }}
+                    onRename={handleRename}
+                    onStartRename={(chatId) => setRenamingId(chatId)}
                     setOpenMobile={setOpenMobile}
                   />
                 ))}
@@ -272,10 +304,14 @@ export function SidebarHistory() {
                     }}
                     isActive={thread.id === id}
                     key={thread.id}
+                    isRenaming={renamingId === thread.id}
+                    onCancelRename={() => setRenamingId(null)}
                     onDelete={(chatId) => {
                       setDeleteId(chatId);
                       setShowDeleteDialog(true);
                     }}
+                    onRename={handleRename}
+                    onStartRename={(chatId) => setRenamingId(chatId)}
                     setOpenMobile={setOpenMobile}
                   />
                 ))}
