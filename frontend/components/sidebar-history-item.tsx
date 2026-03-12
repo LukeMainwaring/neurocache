@@ -61,7 +61,7 @@ const PureChatItem = ({
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
         {isRenaming ? (
-          <div className="flex items-center">
+          <div className="flex items-center bg-sidebar-accent text-sidebar-accent-foreground">
             <input
               className="w-full bg-transparent text-sm outline-none"
               onBlur={handleRenameSubmit}
