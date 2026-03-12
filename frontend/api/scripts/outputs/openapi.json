@@ -676,10 +676,8 @@
             }
           }
         }
-      }
-    },
-    "/api/threads/{thread_id}/rename": {
-      "post": {
+      },
+      "patch": {
         "tags": [
           "threads"
         ],

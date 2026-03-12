@@ -243,9 +243,9 @@ export const deleteThread = <ThrowOnError extends boolean = false>(options: Opti
  *
  * Rename a thread.
  */
-export const renameThread = <ThrowOnError extends boolean = false>(options: Options<RenameThreadData, ThrowOnError>) => (options.client ?? client).post<RenameThreadResponses, RenameThreadErrors, ThrowOnError>({
+export const renameThread = <ThrowOnError extends boolean = false>(options: Options<RenameThreadData, ThrowOnError>) => (options.client ?? client).patch<RenameThreadResponses, RenameThreadErrors, ThrowOnError>({
     responseType: 'json',
-    url: '/api/threads/{thread_id}/rename',
+    url: '/api/threads/{thread_id}',
     ...options,
     headers: {
         'Content-Type': 'application/json',

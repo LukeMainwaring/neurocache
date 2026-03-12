@@ -1209,7 +1209,7 @@ export type RenameThreadData = {
         thread_id: string;
     };
     query?: never;
-    url: '/api/threads/{thread_id}/rename';
+    url: '/api/threads/{thread_id}';
 };
 
 export type RenameThreadErrors = {

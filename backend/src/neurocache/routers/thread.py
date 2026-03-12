@@ -57,7 +57,7 @@ async def delete_thread(
     return ThreadDeleteResponse(message="Thread deleted successfully")
 
 
-@thread_router.post("/{thread_id}/rename")
+@thread_router.patch("/{thread_id}")
 async def rename_thread(
     db: AsyncPostgresSessionDep,
     thread_id: str,
@@ -67,4 +67,4 @@ async def rename_thread(
     """Rename a thread."""
     thread = await thread_service.rename_thread(db, thread_id, user_id, AgentType.CHAT.value, body.title)
     logger.info(f"Renamed thread {thread_id} for user {user_id}")
-    return ThreadRenameResponse(thread_id=thread.thread_id, title=thread.title or "")
+    return ThreadRenameResponse(thread_id=thread.thread_id, title=body.title)
