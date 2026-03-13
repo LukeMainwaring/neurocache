@@ -11,9 +11,17 @@ export async function POST(request: Request) {
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader) {
+    headers.Authorization = authHeader;
+  }
+
   const response = await fetch(`${backendUrl}/api/chat/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
     credentials: "include",
   });

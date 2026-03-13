@@ -409,7 +409,7 @@ export const getMyselfQueryKey = (options?: Options<GetMyselfData>) => createQue
 /**
  * Get Myself
  *
- * Get a user by ID.
+ * Get the current user, auto-creating on first login.
  */
 export const getMyselfOptions = (options?: Options<GetMyselfData>) => queryOptions<GetMyselfResponse, AxiosError<DefaultError>, GetMyselfResponse, ReturnType<typeof getMyselfQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {

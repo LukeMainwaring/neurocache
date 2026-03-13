@@ -27,28 +27,27 @@ from neurocache.services.knowledge_source.vault_validator import validate_obsidi
 logger = logging.getLogger(__name__)
 
 
-DEMO_USER_ID = "110771214372945994893"
-
-
 async def create_and_validate(
     source_data: KnowledgeSourceCreateSchema,
     db: AsyncPostgresSessionDep,
+    user_id: str,
 ) -> KnowledgeSourceSchema:
     """Create a new knowledge source and validate if it's an Obsidian vault."""
-    source = await KnowledgeSource.create(db, DEMO_USER_ID, source_data)
+    source = await KnowledgeSource.create(db, user_id, source_data)
     if source_data.source_type == KnowledgeSourceType.OBSIDIAN:
-        source = await _validate_obsidian_source(db, source)
+        source = await _validate_obsidian_source(db, source, user_id)
     return source
 
 
 async def retry_validation(
     source_id: uuid.UUID,
     db: AsyncPostgresSessionDep,
+    user_id: str,
 ) -> KnowledgeSourceSchema:
     """Re-validate an existing knowledge source."""
-    source = await KnowledgeSource.get(db, source_id, DEMO_USER_ID)
+    source = await KnowledgeSource.get(db, source_id, user_id)
     if source.source_type == KnowledgeSourceType.OBSIDIAN:
-        source = await _validate_obsidian_source(db, source)
+        source = await _validate_obsidian_source(db, source, user_id)
     return source
 
 
@@ -56,6 +55,7 @@ async def sync_documents(
     source_id: uuid.UUID,
     db: AsyncPostgresSessionDep,
     openai_client: AsyncOpenAI,
+    user_id: str,
     force_reindex: bool = False,
 ) -> BatchIngestResult:
     """Sync all documents for a knowledge source with lifecycle management.
@@ -64,9 +64,9 @@ async def sync_documents(
     to CONNECTED on success or ERROR on failure.
     """
     # Validate source exists and belongs to user
-    source = await KnowledgeSource.get(db, source_id, DEMO_USER_ID)
+    source = await KnowledgeSource.get(db, source_id, user_id)
 
-    await KnowledgeSource.update_status(db, source.id, DEMO_USER_ID, KnowledgeSourceStatus.SYNCING)
+    await KnowledgeSource.update_status(db, source.id, user_id, KnowledgeSourceStatus.SYNCING)
 
     try:
         result = await ingestion_service.ingest_all_documents(db, openai_client, source_id, force_reindex)
@@ -77,7 +77,7 @@ async def sync_documents(
         await KnowledgeSource.update_status(
             db,
             source.id,
-            DEMO_USER_ID,
+            user_id,
             KnowledgeSourceStatus.CONNECTED,
             config=config,
             last_synced_at=datetime.now(timezone.utc),
@@ -88,7 +88,7 @@ async def sync_documents(
         await KnowledgeSource.update_status(
             db,
             source.id,
-            DEMO_USER_ID,
+            user_id,
             KnowledgeSourceStatus.ERROR,
             error_message="Sync failed unexpectedly",
         )
@@ -98,6 +98,7 @@ async def sync_documents(
 async def _validate_obsidian_source(
     db: AsyncPostgresSessionDep,
     source: KnowledgeSourceSchema,
+    user_id: str,
 ) -> KnowledgeSourceSchema:
     """Validate an Obsidian vault source and update its status."""
     is_valid, error_message, file_count = await validate_obsidian_vault(
@@ -107,14 +108,14 @@ async def _validate_obsidian_source(
         return await KnowledgeSource.update_status(
             db,
             source.id,
-            DEMO_USER_ID,
+            user_id,
             KnowledgeSourceStatus.CONNECTED,
             config={"file_count": file_count},
         )
     return await KnowledgeSource.update_status(
         db,
         source.id,
-        DEMO_USER_ID,
+        user_id,
         KnowledgeSourceStatus.ERROR,
         error_message,
     )
@@ -123,9 +124,10 @@ async def _validate_obsidian_source(
 async def list_books(
     source_id: uuid.UUID,
     db: AsyncPostgresSessionDep,
+    user_id: str,
 ) -> BookListResponse:
     """List books grouped by subfolder for a knowledge source."""
-    source = await KnowledgeSource.get(db, source_id, DEMO_USER_ID)
+    source = await KnowledgeSource.get(db, source_id, user_id)
     book_docs = await Document.get_books_by_source(db, source.id)
 
     # Group book documents by subfolder

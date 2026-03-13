@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { getAccessToken } from "@/api/client";
 import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
 import { getThreadMessages } from "@/api/hooks/threads";
 import { ChatHeader } from "@/components/chat-header";
@@ -42,7 +43,14 @@ export function Chat({
   const [input, setInput] = useState<string>("");
 
   const transport = useMemo(
-    () => new DefaultChatTransport({ api: "/api/chat" }),
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        headers: async () => {
+          const token = await getAccessToken();
+          return token ? { Authorization: `Bearer ${token}` } : {};
+        },
+      }),
     [],
   );
 

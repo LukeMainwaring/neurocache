@@ -49,8 +49,30 @@ class ObsidianSettings(BaseSettings):
     OBSIDIAN_VAULT_NAME: str = "My Obsidian Vault"  # Default display name
 
 
+class Auth0Settings(BaseSettings):
+    """Auth0 authentication configuration."""
+
+    AUTH0_DOMAIN: str = ""
+    AUTH0_API_AUDIENCE: str = ""
+    AUTH0_ALGORITHMS: str = "RS256"
+
+    @property
+    def auth0_issuer(self) -> str:
+        return f"https://{self.AUTH0_DOMAIN}/"
+
+    @property
+    def auth0_jwks_url(self) -> str:
+        return f"https://{self.AUTH0_DOMAIN}/.well-known/jwks.json"
+
+
 class Settings(
-    ApiSettings, EmbeddingSettings, BaseAgentSettings, BookAnalysisSettings, PostgresSettings, ObsidianSettings
+    ApiSettings,
+    EmbeddingSettings,
+    BaseAgentSettings,
+    BookAnalysisSettings,
+    PostgresSettings,
+    ObsidianSettings,
+    Auth0Settings,
 ):
     """Main application settings."""
 

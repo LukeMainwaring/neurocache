@@ -60,6 +60,17 @@ class User(Base):
         return UserSchema.model_validate(user)
 
     @classmethod
+    async def update_email(cls, db: AsyncSession, id: str, email: str) -> UserSchema:
+        """Update a user's email address."""
+        user = await db.get(cls, id)
+        if user is None:
+            raise NoUserFound(f"User with id {id} not found")
+        user.email = email
+        await db.flush()
+        await db.refresh(user)
+        return UserSchema.model_validate(user)
+
+    @classmethod
     async def update(
         cls,
         db: AsyncSession,

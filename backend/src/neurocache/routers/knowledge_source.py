@@ -11,6 +11,7 @@ from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, UploadFile
 
 from neurocache.core.config import get_settings
+from neurocache.dependencies.auth.auth import AuthenticatedUser
 from neurocache.dependencies.db import AsyncPostgresSessionDep, AsyncSessionMakerDep
 from neurocache.dependencies.openai import OpenAIClientDep
 from neurocache.models.knowledge_source import KnowledgeSource
@@ -39,30 +40,29 @@ config = get_settings()
 
 knowledge_source_router = APIRouter(prefix="/knowledge-sources", tags=["knowledge-sources"])
 
-# Using same demo user pattern as user.py
-DEMO_USER_ID = "110771214372945994893"
-
 
 @knowledge_source_router.get("")
 async def list_knowledge_sources(
+    user_id: AuthenticatedUser,
     db: AsyncPostgresSessionDep,
 ) -> KnowledgeSourceListResponse:
     """List all knowledge sources for the current user."""
-    sources = await KnowledgeSource.list_for_user(db, DEMO_USER_ID)
+    sources = await KnowledgeSource.list_for_user(db, user_id)
     return KnowledgeSourceListResponse(sources=sources)
 
 
 @knowledge_source_router.post("")
 async def create_knowledge_source(
     source_data: KnowledgeSourceCreateSchema,
+    user_id: AuthenticatedUser,
     db: AsyncPostgresSessionDep,
 ) -> KnowledgeSourceSchema:
     """Create a new knowledge source and validate if it's an Obsidian vault."""
-    return await knowledge_source_service.create_and_validate(source_data, db)
+    return await knowledge_source_service.create_and_validate(source_data, db, user_id)
 
 
 @knowledge_source_router.get("/defaults")
-async def get_knowledge_source_defaults() -> KnowledgeSourceDefaults:
+async def get_knowledge_source_defaults(_user_id: AuthenticatedUser) -> KnowledgeSourceDefaults:
     """Return default values for creating a knowledge source."""
     return KnowledgeSourceDefaults(
         obsidian=ObsidianDefaults(
@@ -75,53 +75,59 @@ async def get_knowledge_source_defaults() -> KnowledgeSourceDefaults:
 @knowledge_source_router.get("/{source_id}")
 async def get_knowledge_source(
     source_id: uuid.UUID,
+    user_id: AuthenticatedUser,
     db: AsyncPostgresSessionDep,
 ) -> KnowledgeSourceSchema:
     """Get a single knowledge source by ID."""
-    return await KnowledgeSource.get(db, source_id, DEMO_USER_ID)
+    return await KnowledgeSource.get(db, source_id, user_id)
 
 
 @knowledge_source_router.get("/{source_id}/books")
 async def list_books(
     source_id: uuid.UUID,
+    user_id: AuthenticatedUser,
     db: AsyncPostgresSessionDep,
 ) -> BookListResponse:
     """List books grouped by subfolder for a knowledge source."""
-    return await knowledge_source_service.list_books(source_id, db)
+    return await knowledge_source_service.list_books(source_id, db, user_id)
 
 
 @knowledge_source_router.patch("/{source_id}")
 async def update_knowledge_source(
     source_id: uuid.UUID,
     source_data: KnowledgeSourceUpdateSchema,
+    user_id: AuthenticatedUser,
     db: AsyncPostgresSessionDep,
 ) -> KnowledgeSourceSchema:
     """Update a knowledge source."""
-    return await KnowledgeSource.update(db, source_id, DEMO_USER_ID, source_data)
+    return await KnowledgeSource.update(db, source_id, user_id, source_data)
 
 
 @knowledge_source_router.delete("/{source_id}")
 async def delete_knowledge_source(
     source_id: uuid.UUID,
+    user_id: AuthenticatedUser,
     db: AsyncPostgresSessionDep,
 ) -> None:
     """Delete a knowledge source."""
-    await KnowledgeSource.delete(db, source_id, DEMO_USER_ID)
+    await KnowledgeSource.delete(db, source_id, user_id)
 
 
 @knowledge_source_router.post("/{source_id}/retry")
 async def retry_knowledge_source(
     source_id: uuid.UUID,
+    user_id: AuthenticatedUser,
     db: AsyncPostgresSessionDep,
 ) -> KnowledgeSourceSchema:
     """Re-validate an existing knowledge source connection."""
-    return await knowledge_source_service.retry_validation(source_id, db)
+    return await knowledge_source_service.retry_validation(source_id, db, user_id)
 
 
 @knowledge_source_router.post("/{source_id}/ingest")
 async def ingest_document(
     source_id: uuid.UUID,
     relative_path: str,
+    _user_id: AuthenticatedUser,
     db: AsyncPostgresSessionDep,
     openai_client: OpenAIClientDep,
 ) -> DocumentSchema:
@@ -138,6 +144,7 @@ async def ingest_document(
 @knowledge_source_router.post("/{source_id}/ingest-all")
 async def ingest_all_documents(
     source_id: uuid.UUID,
+    user_id: AuthenticatedUser,
     db: AsyncPostgresSessionDep,
     openai_client: OpenAIClientDep,
     force_reindex: bool = False,
@@ -152,7 +159,7 @@ async def ingest_all_documents(
         source_id: The knowledge source ID
         force_reindex: If True, re-ingest documents even if already indexed
     """
-    return await knowledge_source_service.sync_documents(source_id, db, openai_client, force_reindex)
+    return await knowledge_source_service.sync_documents(source_id, db, openai_client, user_id, force_reindex)
 
 
 MAX_PDF_SIZE_MB = 50
@@ -177,6 +184,7 @@ async def _read_validated_pdf(file: UploadFile) -> bytes:
 async def preview_book_pdf(
     source_id: uuid.UUID,
     file: UploadFile,
+    _user_id: AuthenticatedUser,
 ) -> BookPdfPreview:
     """Parse PDF metadata for preview before upload confirmation."""
     pdf_bytes = await _read_validated_pdf(file)
@@ -192,6 +200,7 @@ async def preview_book_pdf(
 async def upload_book_pdf(
     source_id: uuid.UUID,
     file: UploadFile,
+    _user_id: AuthenticatedUser,
     title: str = Form(...),
     author: str | None = Form(default=None),
     *,

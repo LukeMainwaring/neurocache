@@ -735,7 +735,7 @@
           "users"
         ],
         "summary": "Get Myself",
-        "description": "Get a user by ID.",
+        "description": "Get the current user, auto-creating on first login.",
         "operationId": "getMyself",
         "responses": {
           "200": {

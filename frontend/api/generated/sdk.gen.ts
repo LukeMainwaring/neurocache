@@ -256,7 +256,7 @@ export const renameThread = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Get Myself
  *
- * Get a user by ID.
+ * Get the current user, auto-creating on first login.
  */
 export const getMyself = <ThrowOnError extends boolean = false>(options?: Options<GetMyselfData, ThrowOnError>) => (options?.client ?? client).get<GetMyselfResponses, unknown, ThrowOnError>({
     responseType: 'json',
