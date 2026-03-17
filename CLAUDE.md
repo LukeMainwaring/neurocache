@@ -67,10 +67,14 @@ Next.js 16 with App Router and React 19.
 -   **`api/client.ts`**: Axios client configuration (baseURL, credentials)
 -   **`api/hooks/`**: Custom TanStack Query hooks wrapping generated client
 -   **`api/generated/`**: Auto-generated TypeScript client from OpenAPI (do not edit manually)
+-   **`components/auth0-provider.tsx`**: Auth0 SPA SDK provider configuration
+-   **`components/access-token-provider.tsx`**: Axios interceptor that attaches JWT access tokens to API requests
+-   **`components/activation-guard.tsx`**: Guards routes for unactivated users, redirecting to account activation form
 -   **`components/ui/`**: Reusable UI components (shadcn/ui style)
 
 Key patterns:
 
+-   Auth0 JWT authentication — backend verifies tokens via JWKS, frontend attaches tokens via Axios interceptor
 -   Uses Vercel AI SDK's `useChat` for streaming chat
 -   Backend URL configured via `NEXT_PUBLIC_BACKEND_URL` env var
 -   TanStack Query for data fetching with automatic caching/invalidation

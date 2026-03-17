@@ -24,6 +24,10 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 **Next Up:** MCP server, enhanced retrieval (hybrid search, cross-reference discovery, citations)
 
+### Phase 2.9: Authentication (Auth0)
+
+Replaced hardcoded demo user with Auth0 JWT authentication. Backend verifies JWTs via JWKS, extracts user identity from the `sub` claim, and guards all routes. Frontend uses Auth0 SPA SDK with an activation flow for new users (first/last name entry). Axios interceptor attaches access tokens to all API requests.
+
 ---
 
 ## Completed
@@ -79,10 +83,6 @@ Surface connections across notes during conversation.
 ## Deferred Features
 
 Features documented here to avoid re-adding them prematurely. These make sense for a production app but are unnecessary overhead for local experimentation.
-
-### Authentication
-
-Currently uses a hardcoded demo user. Real auth (OAuth, email/password) only matters if the app becomes multi-user or deployed.
 
 ### Error Handling and Resilience
 

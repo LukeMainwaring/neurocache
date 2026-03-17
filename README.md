@@ -50,7 +50,7 @@ neurocache/
     cp frontend/.env.example frontend/.env.local
     ```
 
-2. Add your OpenAI API key to `.env`
+2. Add your OpenAI API key and Auth0 credentials to `.env`
 
 3. Start the backend with Docker:
 
