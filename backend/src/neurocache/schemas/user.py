@@ -9,6 +9,7 @@ class UserSchema(BaseSchema):
     id: str = Field(description="Unique user identifier")
     email: str = Field(description="User's email")
     name: str = Field(description="User's name")
+    is_activated: bool = Field(description="Whether the user has completed account activation")
     created_at: datetime = Field(description="When this user profile was created")
     updated_at: datetime = Field(description="When this user profile was last updated")
 
@@ -23,6 +24,13 @@ class UserCreateSchema(BaseSchema):
     id: str = Field(description="Unique user identifier")
     email: str = Field(description="User's email")
     name: str = Field(description="User's name")
+
+
+class UserActivateSchema(BaseSchema):
+    """Schema for activating a user account."""
+
+    first_name: str = Field(min_length=1, max_length=100, description="User's first name")
+    last_name: str = Field(min_length=1, max_length=100, description="User's last name")
 
 
 class UserPersonalizationUpdateSchema(BaseSchema):

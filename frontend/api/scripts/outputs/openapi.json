@@ -735,7 +735,7 @@
           "users"
         ],
         "summary": "Get Myself",
-        "description": "Get a user by ID.",
+        "description": "Get the current user, auto-creating on first login.",
         "operationId": "getMyself",
         "responses": {
           "200": {
@@ -744,6 +744,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserSchema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/myself/activate": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Activate Myself",
+        "description": "Activate the current user's account with their name.",
+        "operationId": "activateMyself",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserActivateSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1679,6 +1721,31 @@
         "title": "ThreadSummary",
         "description": "Summary of a thread for list view.\n\nCompatible with frontend sidebar expectations."
       },
+      "UserActivateSchema": {
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "First Name",
+            "description": "User's first name"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Last Name",
+            "description": "User's last name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "first_name",
+          "last_name"
+        ],
+        "title": "UserActivateSchema",
+        "description": "Schema for activating a user account."
+      },
       "UserPersonalizationUpdateSchema": {
         "properties": {
           "custom_instructions": {
@@ -1747,6 +1814,11 @@
             "title": "Name",
             "description": "User's name"
           },
+          "is_activated": {
+            "type": "boolean",
+            "title": "Is Activated",
+            "description": "Whether the user has completed account activation"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -1813,6 +1885,7 @@
           "id",
           "email",
           "name",
+          "is_activated",
           "created_at",
           "updated_at"
         ],

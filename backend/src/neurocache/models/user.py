@@ -24,6 +24,7 @@ class User(Base):
     id: Mapped[str] = mapped_column(primary_key=True, index=True)
     email: Mapped[str] = mapped_column(index=True)
     name: Mapped[str | None]
+    is_activated: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.now)
 
@@ -55,6 +56,29 @@ class User(Base):
     ) -> UserSchema:
         user = cls(**user_create_schema.model_dump())
         db.add(user)
+        await db.flush()
+        await db.refresh(user)
+        return UserSchema.model_validate(user)
+
+    @classmethod
+    async def update_email(cls, db: AsyncSession, id: str, email: str) -> UserSchema:
+        """Update a user's email address."""
+        user = await db.get(cls, id)
+        if user is None:
+            raise NoUserFound(f"User with id {id} not found")
+        user.email = email
+        await db.flush()
+        await db.refresh(user)
+        return UserSchema.model_validate(user)
+
+    @classmethod
+    async def activate(cls, db: AsyncSession, id: str, name: str) -> UserSchema:
+        """Activate a user account by setting their display name."""
+        user = await db.get(cls, id)
+        if user is None:
+            raise NoUserFound(f"User with id {id} not found")
+        user.name = name
+        user.is_activated = True
         await db.flush()
         await db.refresh(user)
         return UserSchema.model_validate(user)

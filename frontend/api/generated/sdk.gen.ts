@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListBooksData, ListBooksErrors, ListBooksResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, PreviewBookPdfData, PreviewBookPdfErrors, PreviewBookPdfResponses, RenameThreadData, RenameThreadErrors, RenameThreadResponses, RetryKnowledgeSourceData, RetryKnowledgeSourceErrors, RetryKnowledgeSourceResponses, StreamChatData, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses, UploadBookPdfData, UploadBookPdfErrors, UploadBookPdfResponses } from './types.gen';
+import type { ActivateMyselfData, ActivateMyselfErrors, ActivateMyselfResponses, CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListBooksData, ListBooksErrors, ListBooksResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, PreviewBookPdfData, PreviewBookPdfErrors, PreviewBookPdfResponses, RenameThreadData, RenameThreadErrors, RenameThreadResponses, RetryKnowledgeSourceData, RetryKnowledgeSourceErrors, RetryKnowledgeSourceResponses, StreamChatData, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses, UploadBookPdfData, UploadBookPdfErrors, UploadBookPdfResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -256,12 +256,27 @@ export const renameThread = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Get Myself
  *
- * Get a user by ID.
+ * Get the current user, auto-creating on first login.
  */
 export const getMyself = <ThrowOnError extends boolean = false>(options?: Options<GetMyselfData, ThrowOnError>) => (options?.client ?? client).get<GetMyselfResponses, unknown, ThrowOnError>({
     responseType: 'json',
     url: '/api/users/myself',
     ...options
+});
+
+/**
+ * Activate Myself
+ *
+ * Activate the current user's account with their name.
+ */
+export const activateMyself = <ThrowOnError extends boolean = false>(options: Options<ActivateMyselfData, ThrowOnError>) => (options.client ?? client).post<ActivateMyselfResponses, ActivateMyselfErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/users/myself/activate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

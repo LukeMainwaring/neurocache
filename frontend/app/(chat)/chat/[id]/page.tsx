@@ -1,23 +1,21 @@
-import { Suspense } from "react";
-import { getThreadMessages } from "@/api/hooks/threads";
+"use client";
+
+import { useParams } from "next/navigation";
+import { useThreadMessages } from "@/api/hooks/threads";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 
-export default function Page(props: { params: Promise<{ id: string }> }) {
-  return (
-    <Suspense fallback={<div className="flex h-dvh" />}>
-      <ChatPage params={props.params} />
-    </Suspense>
-  );
-}
+export default function Page() {
+  const { id } = useParams<{ id: string }>();
+  const { data: initialMessages, isLoading } = useThreadMessages(id);
 
-async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const initialMessages = await getThreadMessages(id);
+  if (isLoading) {
+    return <div className="flex h-dvh" />;
+  }
 
   return (
     <>
-      <Chat autoResume={true} id={id} initialMessages={initialMessages} />
+      <Chat autoResume={true} id={id} initialMessages={initialMessages ?? []} />
       <DataStreamHandler />
     </>
   );

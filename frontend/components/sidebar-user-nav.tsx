@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronUp, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
+import { useAuth0 } from "@auth0/auth0-react";
+import {
+  ChevronUp,
+  LogOutIcon,
+  MoonIcon,
+  SettingsIcon,
+  SunIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -19,6 +26,7 @@ import {
 
 export function SidebarUserNav() {
   const { setTheme, resolvedTheme } = useTheme();
+  const { logout } = useAuth0();
   const [mounted, setMounted] = useState(false);
   const { data: user } = useMyself();
 
@@ -73,6 +81,17 @@ export function SidebarUserNav() {
               {mounted
                 ? `Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`
                 : "Toggle theme"}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onSelect={() =>
+                logout({
+                  logoutParams: { returnTo: window.location.origin },
+                })
+              }
+            >
+              <LogOutIcon className="mr-2 size-4" />
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

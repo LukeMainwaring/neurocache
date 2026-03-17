@@ -648,6 +648,26 @@ export type ThreadSummary = {
 };
 
 /**
+ * UserActivateSchema
+ *
+ * Schema for activating a user account.
+ */
+export type UserActivateSchema = {
+    /**
+     * First Name
+     *
+     * User's first name
+     */
+    first_name: string;
+    /**
+     * Last Name
+     *
+     * User's last name
+     */
+    last_name: string;
+};
+
+/**
  * UserPersonalizationUpdateSchema
  *
  * Schema for updating user personalization settings.
@@ -693,6 +713,12 @@ export type UserSchema = {
      * User's name
      */
     name: string;
+    /**
+     * Is Activated
+     *
+     * Whether the user has completed account activation
+     */
+    is_activated: boolean;
     /**
      * Created At
      *
@@ -1245,6 +1271,31 @@ export type GetMyselfResponses = {
 };
 
 export type GetMyselfResponse = GetMyselfResponses[keyof GetMyselfResponses];
+
+export type ActivateMyselfData = {
+    body: UserActivateSchema;
+    path?: never;
+    query?: never;
+    url: '/api/users/myself/activate';
+};
+
+export type ActivateMyselfErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ActivateMyselfError = ActivateMyselfErrors[keyof ActivateMyselfErrors];
+
+export type ActivateMyselfResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserSchema;
+};
+
+export type ActivateMyselfResponse = ActivateMyselfResponses[keyof ActivateMyselfResponses];
 
 export type UpdateMyPersonalizationData = {
     body: UserPersonalizationUpdateSchema;

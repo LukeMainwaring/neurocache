@@ -4,8 +4,8 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
-import { createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listBooks, listKnowledgeSources, listThreads, listUsers, type Options, previewBookPdf, renameThread, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization, uploadBookPdf } from '../sdk.gen';
-import type { CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListBooksData, ListBooksError, ListBooksResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, PreviewBookPdfData, PreviewBookPdfError, PreviewBookPdfResponse, RenameThreadData, RenameThreadError, RenameThreadResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse, UploadBookPdfData, UploadBookPdfError, UploadBookPdfResponse } from '../types.gen';
+import { activateMyself, createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listBooks, listKnowledgeSources, listThreads, listUsers, type Options, previewBookPdf, renameThread, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization, uploadBookPdf } from '../sdk.gen';
+import type { ActivateMyselfData, ActivateMyselfError, ActivateMyselfResponse, CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListBooksData, ListBooksError, ListBooksResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, PreviewBookPdfData, PreviewBookPdfError, PreviewBookPdfResponse, RenameThreadData, RenameThreadError, RenameThreadResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse, UploadBookPdfData, UploadBookPdfError, UploadBookPdfResponse } from '../types.gen';
 
 /**
  * Stream Chat
@@ -409,7 +409,7 @@ export const getMyselfQueryKey = (options?: Options<GetMyselfData>) => createQue
 /**
  * Get Myself
  *
- * Get a user by ID.
+ * Get the current user, auto-creating on first login.
  */
 export const getMyselfOptions = (options?: Options<GetMyselfData>) => queryOptions<GetMyselfResponse, AxiosError<DefaultError>, GetMyselfResponse, ReturnType<typeof getMyselfQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -423,6 +423,25 @@ export const getMyselfOptions = (options?: Options<GetMyselfData>) => queryOptio
     },
     queryKey: getMyselfQueryKey(options)
 });
+
+/**
+ * Activate Myself
+ *
+ * Activate the current user's account with their name.
+ */
+export const activateMyselfMutation = (options?: Partial<Options<ActivateMyselfData>>): UseMutationOptions<ActivateMyselfResponse, AxiosError<ActivateMyselfError>, Options<ActivateMyselfData>> => {
+    const mutationOptions: UseMutationOptions<ActivateMyselfResponse, AxiosError<ActivateMyselfError>, Options<ActivateMyselfData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await activateMyself({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 /**
  * Update My Personalization

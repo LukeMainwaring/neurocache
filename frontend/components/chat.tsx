@@ -5,8 +5,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { DefaultChatTransport } from "ai";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { listThreadsQueryKey } from "@/api/generated/@tanstack/react-query.gen";
-import { getThreadMessages } from "@/api/hooks/threads";
+import { getAccessToken } from "@/api/client";
+import {
+  getThreadMessagesOptions,
+  listThreadsQueryKey,
+} from "@/api/generated/@tanstack/react-query.gen";
 import { ChatHeader } from "@/components/chat-header";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import type { ChatMessage } from "@/lib/types";
@@ -42,7 +45,14 @@ export function Chat({
   const [input, setInput] = useState<string>("");
 
   const transport = useMemo(
-    () => new DefaultChatTransport({ api: "/api/chat" }),
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        headers: async (): Promise<Record<string, string>> => {
+          const token = await getAccessToken();
+          return token ? { Authorization: `Bearer ${token}` } : {};
+        },
+      }),
     [],
   );
 
@@ -69,9 +79,12 @@ export function Chat({
       // Refetch messages to get RAG metadata (stored server-side)
       // This ensures "View Sources" button appears after streaming completes
       try {
-        const updatedMessages = await getThreadMessages(id);
-        if (updatedMessages.length > 0) {
-          setMessages(updatedMessages);
+        const data = await queryClient.fetchQuery({
+          ...getThreadMessagesOptions({ path: { thread_id: id } }),
+          staleTime: 0,
+        });
+        if (data.messages.length > 0) {
+          setMessages(data.messages as unknown as ChatMessage[]);
         }
       } catch (error) {
         console.error("Failed to refresh messages with RAG metadata:", error);
