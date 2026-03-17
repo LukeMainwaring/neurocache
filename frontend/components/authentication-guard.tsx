@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth0 } from "@auth0/auth0-react";
+import { Button } from "@/components/ui/button";
 
 interface AuthenticationGuardProps {
   children: React.ReactNode;
@@ -27,13 +28,20 @@ export function AuthenticationGuard({ children }: AuthenticationGuardProps) {
         <p className="text-muted-foreground">
           Your personal second brain AI assistant
         </p>
-        <button
-          className="rounded-md bg-primary px-6 py-2 font-medium text-primary-foreground text-sm transition-colors hover:bg-primary/90"
-          onClick={() => loginWithRedirect()}
-          type="button"
-        >
-          Sign in
-        </button>
+        <div className="flex gap-3">
+          <Button
+            onClick={() =>
+              loginWithRedirect({
+                authorizationParams: { screen_hint: "signup" },
+              })
+            }
+          >
+            Sign up
+          </Button>
+          <Button onClick={() => loginWithRedirect()} variant="outline">
+            Log in
+          </Button>
+        </div>
       </div>
     );
   }
