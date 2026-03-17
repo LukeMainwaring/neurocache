@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { AccessTokenProvider } from "@/components/access-token-provider";
+import { ActivationGuard } from "@/components/activation-guard";
 import { Auth0Provider } from "@/components/auth0-provider";
 import { AuthenticationGuard } from "@/components/authentication-guard";
 import { QueryProvider } from "@/components/query-provider";
@@ -85,8 +86,10 @@ export default function RootLayout({
             <Auth0Provider>
               <AccessTokenProvider>
                 <AuthenticationGuard>
-                  <Toaster position="top-center" />
-                  {children}
+                  <ActivationGuard>
+                    <Toaster position="top-center" />
+                    {children}
+                  </ActivationGuard>
                 </AuthenticationGuard>
               </AccessTokenProvider>
             </Auth0Provider>

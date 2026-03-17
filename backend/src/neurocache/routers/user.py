@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 from neurocache.dependencies.auth.auth import AuthenticatedUser, get_current_user_email
 from neurocache.dependencies.db import AsyncPostgresSessionDep
 from neurocache.models.user import NoUserFound, User
-from neurocache.schemas.user import UserCreateSchema, UserPersonalizationUpdateSchema, UserSchema
+from neurocache.schemas.user import UserActivateSchema, UserCreateSchema, UserPersonalizationUpdateSchema, UserSchema
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,17 @@ async def get_myself(
     except NoUserFound:
         user = await User.create(db, UserCreateSchema(id=user_id, email=email, name=email))
     return user
+
+
+@user_router.post("/myself/activate")
+async def activate_myself(
+    user_id: AuthenticatedUser,
+    activation_data: UserActivateSchema,
+    db: AsyncPostgresSessionDep,
+) -> UserSchema:
+    """Activate the current user's account with their name."""
+    name = f"{activation_data.first_name.strip()} {activation_data.last_name.strip()}"
+    return await User.activate(db, user_id, name)
 
 
 @user_router.patch("/myself/personalization")
