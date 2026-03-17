@@ -1,5 +1,6 @@
 """Auth0 JWT authentication dependency."""
 
+import asyncio
 import logging
 from typing import Annotated, Any, cast
 
@@ -33,7 +34,9 @@ class VerifyToken:
             raise HTTPException(status_code=401, detail="Missing authorization header")
 
         try:
-            signing_key = self.jwks_client.get_signing_key_from_jwt(credentials.credentials).key
+            signing_key = (
+                await asyncio.to_thread(self.jwks_client.get_signing_key_from_jwt, credentials.credentials)
+            ).key
         except jwt.exceptions.PyJWKClientError as e:
             raise HTTPException(status_code=401, detail=str(e))
 
