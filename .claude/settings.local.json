@@ -38,7 +38,11 @@
       "Bash(cd frontend:*)",
       "Bash(cd /Users/lukemainwaring/projects/neurocache/frontend && pnpm update --latest 2>&1)",
       "Bash(curl -o /Users/lukemainwaring/projects/neurocache/docs/pydantic-ai-llms-full.txt https://ai.pydantic.dev/llms-full.txt 2>&1)",
-      "Bash(curl -s https://ai-sdk.dev/llms.txt | sed -n -e '/^# AI SDK UI$/,/^# AI_APICallError$/{' -e '/^# AI_APICallError$/d' -e p -e '}' > /Users/lukemainwaring/projects/neurocache/docs/vercel-ai-sdk-ui.txt 2>&1)"
+      "Bash(curl -s https://ai-sdk.dev/llms.txt | sed -n -e '/^# AI SDK UI$/,/^# AI_APICallError$/{' -e '/^# AI_APICallError$/d' -e p -e '}' > /Users/lukemainwaring/projects/neurocache/docs/vercel-ai-sdk-ui.txt 2>&1)",
+      "Bash(pnpm update:*)",
+      "Bash(pnpm add:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(grep:*)"
     ]
   }
 }
