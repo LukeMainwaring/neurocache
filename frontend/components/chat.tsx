@@ -72,9 +72,12 @@ export function Chat({
     onData: (dataPart) => {
       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
     },
-    onFinish: async () => {
+    onFinish: async ({ isAbort, isError }) => {
       // Refresh sidebar thread list
       queryClient.invalidateQueries({ queryKey: listThreadsQueryKey() });
+
+      // Skip refetch on abort/error — no new data to fetch
+      if (isAbort || isError) return;
 
       // Refetch messages to get RAG metadata (stored server-side)
       // This ensures "View Sources" button appears after streaming completes
@@ -106,10 +109,7 @@ export function Chat({
 
   useEffect(() => {
     if (query && !hasAppendedQuery) {
-      sendMessage({
-        role: "user" as const,
-        parts: [{ type: "text", text: query }],
-      });
+      sendMessage({ text: query });
 
       setHasAppendedQuery(true);
       window.history.replaceState({}, "", `/chat/${id}`);
