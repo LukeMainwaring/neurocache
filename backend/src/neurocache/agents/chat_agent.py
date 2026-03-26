@@ -116,7 +116,7 @@ chat_agent = Agent(
     model=_model,
     deps_type=AgentDeps,
     instructions=build_chat_instructions,
-    builtin_tools=[WebSearchTool()],
+    builtin_tools=[WebSearchTool(search_context_size="medium")],
 )
 
 register_knowledge_base_tools(chat_agent)
