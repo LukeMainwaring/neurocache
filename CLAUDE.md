@@ -46,7 +46,7 @@ FastAPI Python backend using async patterns throughout.
 
 -   **`src/neurocache/app.py`**: FastAPI application entry point with CORS and logging middleware
 -   **`src/neurocache/routers/`**: API routes by domain (chat, threads, users, knowledge sources, health)
--   **`src/neurocache/agents/`**: Pydantic AI agents — `chat_agent.py` defines the chat agent and system prompt (uses `OpenAIResponsesModel` with `WebSearchTool` for web search and `search_knowledge_base` for RAG); `book_analysis_agent.py` generates structured book analysis (tags, summary, key concepts) on PDF upload; `deps.py` defines shared `AgentDeps`; `tools/` contains agent tools (e.g., `knowledge_base_tools.py` for RAG search)
+-   **`src/neurocache/agents/`**: Pydantic AI agents — `chat_agent.py` defines the chat agent and system prompt; `capabilities/` bundles tools and hooks as composable capabilities (`WebSearch` for web search, `KnowledgeBaseCapability` for RAG); `book_analysis_agent.py` generates structured book analysis (tags, summary, key concepts) on PDF upload; `deps.py` defines shared `AgentDeps`; `tools/` contains agent tool functions (e.g., `knowledge_base_tools.py` for RAG search)
 -   **`src/neurocache/models/`**: SQLAlchemy async models with CRUD classmethods (User, Thread, Message, KnowledgeSource, Document)
 -   **`src/neurocache/schemas/`**: Pydantic schemas for API contracts, enums, and domain types
 -   **`src/neurocache/services/`**: Business logic (embeddings, RAG retrieval, document ingestion, title generation)

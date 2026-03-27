@@ -45,7 +45,7 @@ Do NOT review for:
 - Pydantic v2: `model_dump()` not `dict()`, `model_validate()` not `parse_obj()`
 - SQLAlchemy: simple type inference, `mapped_column` only when customization needed
 - Module imports: deep imports by default, re-exports only in `models/` and `routers/` `__init__.py`
-- Messages stored as JSONB, agentic RAG via tool calls in `agents/tools/`
+- Messages stored as JSONB, agentic RAG via capabilities in `agents/capabilities/`
 
 ### Frontend (TypeScript/Next.js)
 - Next.js App Router patterns
