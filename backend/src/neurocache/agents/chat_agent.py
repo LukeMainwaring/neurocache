@@ -9,11 +9,12 @@ This module provides a simple chat agent that:
 import logging
 
 import logfire
-from pydantic_ai import Agent, RunContext, WebSearchTool
+from pydantic_ai import Agent, RunContext
+from pydantic_ai.capabilities import WebSearch
 from pydantic_ai.models.openai import OpenAIResponsesModel
 
+from neurocache.agents.capabilities.knowledge_base import KnowledgeBaseCapability
 from neurocache.agents.deps import AgentDeps
-from neurocache.agents.tools.knowledge_base_tools import register_knowledge_base_tools
 from neurocache.core.config import get_settings
 
 logfire.configure()
@@ -116,7 +117,8 @@ chat_agent = Agent(
     model=_model,
     deps_type=AgentDeps,
     instructions=build_chat_instructions,
-    builtin_tools=[WebSearchTool()],
+    capabilities=[
+        WebSearch(search_context_size="medium"),
+        KnowledgeBaseCapability(),
+    ],
 )
-
-register_knowledge_base_tools(chat_agent)

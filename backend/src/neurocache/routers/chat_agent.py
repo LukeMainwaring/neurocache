@@ -91,5 +91,6 @@ async def stream_chat(
         sdk_version=6,
         model_settings=OpenAIResponsesModelSettings(
             openai_include_web_search_sources=True,
+            openai_previous_response_id="auto",
         ),
     )
