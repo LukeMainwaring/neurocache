@@ -7,7 +7,7 @@ retrieved chunks into context strings and source metadata.
 
 import logging
 
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import RunContext
 
 from neurocache.agents.deps import AgentDeps
 from neurocache.models.document_chunk import DocumentChunk
@@ -142,8 +142,3 @@ async def search_knowledge_base(ctx: RunContext[AgentDeps], query: str) -> str:
     except Exception:
         logger.exception("Error searching knowledge base")
         return "An error occurred while searching the knowledge base."
-
-
-def register_knowledge_base_tools(agent: Agent[AgentDeps, str]) -> None:
-    """Register knowledge base tools with the agent."""
-    agent.tool(search_knowledge_base)
