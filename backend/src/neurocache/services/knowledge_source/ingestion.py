@@ -29,6 +29,7 @@ from neurocache.schemas.knowledge_source.document_chunk import ChunkData
 from neurocache.services.embedding import generate_embeddings_batch
 from neurocache.services.knowledge_source.pdf_chunker import chunk_pdf_pages
 from neurocache.services.knowledge_source.pdf_parser import extract_pdf_content
+from neurocache.services.knowledge_source.search_vector import populate_search_vectors
 
 logger = logging.getLogger(__name__)
 
@@ -422,6 +423,10 @@ async def ingest_document(
             )
             db.add(chunk)
 
+        # Populate full-text search vectors for hybrid search
+        await db.flush()
+        await populate_search_vectors(db, document.id)
+
         document = await Document.update(
             db,
             document.id,
@@ -658,6 +663,10 @@ async def ingest_pdf_document(
                 token_count=cd.token_count,
             )
             db.add(chunk)
+
+        # Populate full-text search vectors for hybrid search
+        await db.flush()
+        await populate_search_vectors(db, document.id)
 
         document = await Document.update(
             db,
