@@ -7,6 +7,9 @@ export type RAGSource = {
   section_header?: string;
   page_number?: number;
   chapter?: string;
+  author?: string;
+  content_type?: string;
+  source_number?: number;
 };
 
 export type WebSource = {

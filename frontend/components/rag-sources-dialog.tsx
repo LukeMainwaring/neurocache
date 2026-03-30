@@ -35,9 +35,14 @@ export function RAGSourcesDialog({ sources, trigger }: RAGSourcesDialogProps) {
               key={`${source.path}-${index}`}
             >
               <div className="mb-2 flex items-start justify-between gap-2">
-                <span className="line-clamp-2 break-all font-mono text-foreground text-sm">
-                  {source.path}
-                </span>
+                <div className="flex items-start gap-2">
+                  <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 font-medium text-primary text-xs">
+                    [{source.source_number ?? index + 1}]
+                  </span>
+                  <span className="line-clamp-2 break-all font-mono text-foreground text-sm">
+                    {source.path}
+                  </span>
+                </div>
                 <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-muted-foreground text-xs">
                   {Math.round(source.similarity * 100)}% match
                 </span>
