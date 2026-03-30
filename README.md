@@ -61,9 +61,8 @@ neurocache/
 4. Start the frontend:
 
     ```bash
-    cd frontend
-    pnpm install
-    pnpm dev
+    pnpm -C frontend install
+    pnpm -C frontend dev
     ```
 
 5. Open [localhost:3000](http://localhost:3000)

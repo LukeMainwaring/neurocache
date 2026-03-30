@@ -21,7 +21,7 @@ repos:
         name: mypy-backend
         language: system
         files: ^backend/(src|tests)/.*.py$
-        entry: /bin/bash -c "cd backend && uv sync --frozen --no-install-project --all-groups && uv run mypy --strict src tests"
+        entry: /bin/bash -c "uv sync --directory backend --frozen --no-install-project --all-groups && uv run --directory backend mypy --strict src tests"
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
