@@ -12,7 +12,7 @@ from pydantic_ai import RunContext
 from neurocache.agents.deps import AgentDeps
 from neurocache.models.document_chunk import DocumentChunk
 from neurocache.schemas.knowledge_source.document import ContentType
-from neurocache.services.knowledge_source.retrieval import search_similar_chunks_for_user
+from neurocache.services.knowledge_source.retrieval import search_hybrid_for_user
 from neurocache.utils.message_serialization import RAGSource
 
 logger = logging.getLogger(__name__)
@@ -132,7 +132,7 @@ async def search_knowledge_base(ctx: RunContext[AgentDeps], query: str) -> str:
                effective search terms.
     """
     try:
-        chunks = await search_similar_chunks_for_user(ctx.deps.db, ctx.deps.openai_client, query, ctx.deps.user.id)
+        chunks = await search_hybrid_for_user(ctx.deps.db, ctx.deps.openai_client, query, ctx.deps.user.id)
         if not chunks:
             return "No relevant results found in the knowledge base."
 
