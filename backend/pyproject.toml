@@ -10,10 +10,10 @@ dependencies = [
   "fastapi[standard]>=0.135.2",
   "pgvector>=0.4.2",
   "psycopg[binary,pool]>=3.3.3",
-  "pydantic-ai>=1.72.0",
+  "pydantic-ai>=1.73.0",
   "pymupdf>=1.27.2.2",
   "pydantic>=2.12.5",
-  "python-json-logger>=4.0.0",
+  "python-json-logger>=4.1.0",
   "sqlalchemy[mypy]>=2.0.48",
   "uvicorn>=0.42.0",
 ]
@@ -23,7 +23,7 @@ dev = [
   "mypy>=1.19.1",
   "pre-commit>=4.5.1",
   "pytest>=9.0.2",
-  "ruff>=0.15.7",
+  "ruff>=0.15.8",
 ]
 
 [tool.pytest.ini_options]
