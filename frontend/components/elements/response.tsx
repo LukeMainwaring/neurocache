@@ -17,7 +17,7 @@ function processCitations(text: string): string {
   return parts
     .map((part, i) => {
       if (i % 2 === 1) return part;
-      return part.replace(/\[(\d+)\]/g, "<cite>[$1]</cite>");
+      return part.replace(/\[(\d+)\](?!\()/g, "<cite>[$1]</cite>");
     })
     .join("");
 }
