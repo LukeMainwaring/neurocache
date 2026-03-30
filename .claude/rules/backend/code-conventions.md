@@ -27,6 +27,7 @@ Python/FastAPI conventions for the neurocache backend.
 - Agents stream responses via `VercelAIAdapter.dispatch_request()` (Vercel AI SDK format)
 - Message persistence handled via `on_complete` callback using append-only `Message.save_history()`
 - RAG retrieval is agentic: the agent calls `search_knowledge_base` tool on demand (not pre-fetched). Tool functions live in `agents/tools/` and are bundled into capabilities in `agents/capabilities/`
+- Retrieval uses hybrid search: semantic (pgvector cosine) + keyword (PostgreSQL full-text search with weighted tsvector) fused via Reciprocal Rank Fusion. Search vectors are populated during ingestion via `populate_search_vectors()` in `services/knowledge_source/search_vector.py`
 
 ## Pydantic
 

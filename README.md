@@ -33,7 +33,7 @@ neurocache/
 
 -   **FastAPI** with async support
 -   **PostgreSQL** database with SQLAlchemy
--   **Pydantic AI** for LLM agent orchestration (RAG + web search)
+-   **Pydantic AI** for LLM agent orchestration (hybrid RAG + web search)
 
 ### Frontend
 

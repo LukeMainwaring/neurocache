@@ -8,7 +8,7 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 - **Chat**: Streaming responses, message persistence, thread management, auto-generated titles
 - **Personalization**: User-specific context (custom instructions, occupation, about) injected into system prompt
-- **RAG / Knowledge Base**: Document ingestion from Obsidian vaults, markdown-aware chunking, semantic search via pgvector, agentic retrieval via tool use
+- **RAG / Knowledge Base**: Document ingestion from Obsidian vaults, markdown-aware chunking, hybrid search (semantic + keyword) via pgvector and PostgreSQL full-text search with Reciprocal Rank Fusion, agentic retrieval via tool use
 
   - Batch ingestion of all markdown files from a knowledge source
   - Sync lifecycle with manual re-sync UI and status tracking
@@ -22,7 +22,7 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
   - Book analysis agent: generates tags, summary, and key concepts breakdown into Notes.md using structured LLM output
   - Book list UI with document status badges and polling during ingestion
 
-**Next Up:** MCP server, enhanced retrieval (hybrid search, cross-reference discovery, citations)
+**Next Up:** MCP server, enhanced retrieval (citations, cross-reference discovery)
 
 ### Phase 2.9: Authentication (Auth0)
 
@@ -52,6 +52,10 @@ PDF book upload with drag-and-drop UI, two-phase preview/confirm flow, and backg
 
 Added Pydantic AI's built-in `WebSearchTool` to the chat agent via `OpenAIResponsesModel`. The agent can now blend personal knowledge base results with live web search in the same turn. Web search sources are extracted from tool return parts, persisted alongside RAG sources, and displayed in a "View Web Sources" dialog on the frontend.
 
+### Phase 3.1: Hybrid Search
+
+Added keyword search alongside existing semantic search using PostgreSQL full-text search (`tsvector`/`tsquery`) with a GIN index. Results from both methods are fused via Reciprocal Rank Fusion (RRF) with k=60. Each chunk's tsvector is a weighted composition of document metadata (title and author at weight A, tags/section headers/chapters at weight B) and chunk content (weight C), using `english` config for stemmed fields and `simple` for tags. Dual tsquery matching (english + simple) ensures both stemmed content and exact metadata terms are found. Search vectors are computed per-document during ingestion via a single SQL UPDATE join.
+
 ---
 
 ## Phase 3: Enhanced Retrieval
@@ -74,7 +78,6 @@ Surface connections across notes during conversation.
 
 ### Advanced Retrieval
 
-- Hybrid search (keyword + semantic)
 - Re-ranking retrieved results
 - Query expansion/reformulation
 
