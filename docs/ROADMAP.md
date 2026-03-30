@@ -22,7 +22,7 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
   - Book analysis agent: generates tags, summary, and key concepts breakdown into Notes.md using structured LLM output
   - Book list UI with document status badges and polling during ingestion
 
-**Next Up:** MCP server, enhanced retrieval (citations, cross-reference discovery)
+**Next Up:** MCP server, enhanced retrieval (cross-reference discovery)
 
 ### Phase 2.9: Authentication (Auth0)
 
@@ -56,6 +56,10 @@ Added Pydantic AI's built-in `WebSearchTool` to the chat agent via `OpenAIRespon
 
 Added keyword search alongside existing semantic search using PostgreSQL full-text search (`tsvector`/`tsquery`) with a GIN index. Results from both methods are fused via Reciprocal Rank Fusion (RRF) with k=60. Each chunk's tsvector is a weighted composition of document metadata (title and author at weight A, tags/section headers/chapters at weight B) and chunk content (weight C), using `english` config for stemmed fields and `simple` for tags. Dual tsquery matching (english + simple) ensures both stemmed content and exact metadata terms are found. Search vectors are computed per-document during ingestion via a single SQL UPDATE join.
 
+### Phase 3.2: Inline Citations
+
+Added numbered inline citations (`[1]`, `[2]`) to assistant responses when the agent references the knowledge base. Sources are numbered in the RAG context so the agent can cite them, with consecutive numbering across multiple searches in one turn. Frontend renders citations as interactive superscript badges via Streamdown's `allowedTags`/`components` overrides — hover shows a compact tooltip (source path, content type, match %), click opens a dialog with the full source content and metadata. RAG sources are now attached to both user messages (for the existing "View Sources" dialog) and assistant messages (for inline citation rendering). Citations degrade gracefully: plain superscripts during streaming, interactive after refetch; invalid citation numbers render as non-interactive text.
+
 ---
 
 ## Phase 3: Enhanced Retrieval
@@ -69,12 +73,6 @@ Surface connections across notes during conversation.
 - "Related notes" suggestions based on conversation context
 - Concept linking across different sources
 - Leverage Obsidian's `[[wiki-links]]` for explicit connections
-
-### Citation Display
-
-- Inline citations linking to source notes
-- Expandable previews of source content
-- Click-to-open in Obsidian (obsidian:// URI scheme)
 
 ### Advanced Retrieval
 
