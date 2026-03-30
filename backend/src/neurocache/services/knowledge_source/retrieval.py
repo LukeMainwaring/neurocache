@@ -1,6 +1,5 @@
 """Retrieval service for semantic and hybrid search over document chunks."""
 
-import asyncio
 import logging
 
 from openai import AsyncOpenAI
@@ -57,50 +56,6 @@ def apply_content_type_boost(
     return boosted
 
 
-async def search_similar_chunks_for_user(
-    db: AsyncSession,
-    openai_client: AsyncOpenAI,
-    query: str,
-    user_id: str,
-    top_k: int = DEFAULT_TOP_K,
-    similarity_threshold: float = RAG_SIMILARITY_THRESHOLD,
-    content_types: list[ContentType] | None = None,
-    apply_boost: bool = True,
-) -> list[tuple[DocumentChunk, float]]:
-    """Search for document chunks within all of a user's knowledge sources.
-
-    Args:
-        db: Database session
-        openai_client: OpenAI client for generating query embedding
-        query: The search query text
-        user_id: Filter to chunks from this user's knowledge sources
-        top_k: Maximum number of results to return
-        similarity_threshold: Minimum similarity score to include in the results
-        content_types: Optional list of content types to filter by
-        apply_boost: Whether to apply content-type-aware score boosting
-
-    Returns:
-        List of (DocumentChunk, similarity_score) tuples, ordered by similarity descending.
-    """
-    query_embedding = await generate_embedding(openai_client, query)
-
-    # Convert enum to string values for DB query
-    type_values = [ct.value for ct in content_types] if content_types else None
-
-    chunks = await DocumentChunk.search_similar_for_user(
-        db, query_embedding, user_id, top_k, similarity_threshold, type_values
-    )
-
-    # Apply content-type boosting if enabled and we have results
-    if apply_boost and chunks:
-        # Load document relationships for boosting logic
-        for chunk, _ in chunks:
-            await db.refresh(chunk, ["document"])
-        chunks = apply_content_type_boost(chunks)
-
-    return chunks
-
-
 def reciprocal_rank_fusion(
     semantic_results: list[tuple[DocumentChunk, float]],
     keyword_results: list[tuple[DocumentChunk, float]],
@@ -152,10 +107,10 @@ async def search_hybrid_for_user(
 ) -> list[tuple[DocumentChunk, float]]:
     """Hybrid search combining semantic and keyword retrieval with RRF.
 
-    Runs both search methods concurrently, fuses results using Reciprocal
-    Rank Fusion, and applies content-type boosting. This improves recall
-    for exact keyword matches (proper nouns, book titles, author names)
-    while preserving semantic search's strength for conceptual queries.
+    Runs both search methods, fuses results using Reciprocal Rank Fusion,
+    and applies content-type boosting. This improves recall for exact keyword
+    matches (proper nouns, book titles, author names) while preserving
+    semantic search's strength for conceptual queries.
 
     Args:
         db: Database session
@@ -176,13 +131,12 @@ async def search_hybrid_for_user(
     # Generate embedding first (requires OpenAI API call)
     query_embedding = await generate_embedding(openai_client, query)
 
-    # Run semantic and keyword searches concurrently
-    semantic_results, keyword_results = await asyncio.gather(
-        DocumentChunk.search_similar_for_user(
-            db, query_embedding, user_id, candidate_count, similarity_threshold, type_values
-        ),
-        DocumentChunk.search_keyword_for_user(db, query, user_id, candidate_count, type_values),
+    # Run semantic and keyword searches sequentially (AsyncSession is not
+    # safe for concurrent use -- it wraps a single underlying connection)
+    semantic_results = await DocumentChunk.search_similar_for_user(
+        db, query_embedding, user_id, candidate_count, similarity_threshold, type_values
     )
+    keyword_results = await DocumentChunk.search_keyword_for_user(db, query, user_id, candidate_count, type_values)
 
     logger.info(f"Hybrid search: {len(semantic_results)} semantic, {len(keyword_results)} keyword results")
 
