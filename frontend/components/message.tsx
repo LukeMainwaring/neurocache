@@ -100,7 +100,15 @@ const PurePreviewMessage = ({
                     })}
                     data-testid="message-content"
                   >
-                    <Response>{sanitizeText(part.text)}</Response>
+                    <Response
+                      sources={
+                        message.role === "assistant"
+                          ? message.metadata?.ragSources
+                          : undefined
+                      }
+                    >
+                      {sanitizeText(part.text)}
+                    </Response>
                   </MessageContent>
                 </div>
               );
@@ -141,7 +149,8 @@ export const PreviewMessage = memo(
       prevProps.isLoading === nextProps.isLoading &&
       prevProps.message.id === nextProps.message.id &&
       prevProps.requiresScrollPadding === nextProps.requiresScrollPadding &&
-      equal(prevProps.message.parts, nextProps.message.parts)
+      equal(prevProps.message.parts, nextProps.message.parts) &&
+      equal(prevProps.message.metadata, nextProps.message.metadata)
     ) {
       return true;
     }

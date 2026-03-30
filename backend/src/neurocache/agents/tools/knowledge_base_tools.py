@@ -36,16 +36,18 @@ def _content_type_label(content_type: str | None) -> str:
 
 def format_rag_context(
     relevant_chunks: list[tuple[DocumentChunk, float]],
+    start_index: int = 1,
 ) -> tuple[str | None, list[RAGSource]]:
-    """Format retrieved chunks into context for the prompt.
+    """Format retrieved chunks into numbered context for the prompt.
 
     Reconstructs attribution prefixes from chunk metadata and document path
     (the chunk content itself is stored without prefixes for clean embeddings).
-    Includes content type, book-specific metadata (author), and PDF metadata
-    (page number, chapter) when available.
+    Each source is numbered for inline citation (e.g., [1], [2]) by the agent.
 
     Args:
         relevant_chunks: List of (chunk, similarity) tuples from retrieval
+        start_index: Starting source number (supports consecutive numbering
+            across multiple search_knowledge_base calls in one turn)
 
     Returns:
         Tuple of (formatted_context, sources_metadata)
@@ -58,7 +60,7 @@ def format_rag_context(
     context_parts = []
     sources: list[RAGSource] = []
 
-    for chunk, similarity in relevant_chunks:
+    for source_number, (chunk, similarity) in enumerate(relevant_chunks, start=start_index):
         doc = chunk.document
         source_path = doc.relative_path if doc else "Unknown"
         content_type = doc.content_type if doc else None
@@ -90,13 +92,14 @@ def format_rag_context(
         if section_header:
             prefix += f"\n[Section: {section_header}]"
 
-        context_parts.append(f"{prefix}\n\n{chunk.content}")
+        context_parts.append(f"[{source_number}] {prefix}\n\n{chunk.content}")
 
         # Build source metadata for frontend
         source: RAGSource = {
             "path": source_path,
             "similarity": float(similarity),
             "content": chunk.content,
+            "source_number": source_number,
         }
         if content_type:
             source["content_type"] = content_type
@@ -136,7 +139,9 @@ async def search_knowledge_base(ctx: RunContext[AgentDeps], query: str) -> str:
         if not chunks:
             return "No relevant results found in the knowledge base."
 
-        formatted_context, sources = format_rag_context(chunks)
+        # Offset source numbering for consecutive citations across multiple searches
+        start_index = len(ctx.deps.rag_sources) + 1
+        formatted_context, sources = format_rag_context(chunks, start_index=start_index)
         ctx.deps.rag_sources.extend(sources)
         return formatted_context or "No relevant results found in the knowledge base."
     except Exception:

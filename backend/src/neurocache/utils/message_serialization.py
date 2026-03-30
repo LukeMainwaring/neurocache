@@ -113,7 +113,8 @@ def prepare_messages_for_storage(
     if not serialized:
         return serialized
 
-    # Attach sources to the last user-prompt request message.
+    # Attach sources to the last user-prompt request message (for "View Sources" dialog)
+    # and the last response message (for inline citation rendering).
     # With tool use, result.all_messages() may contain tool-return requests
     # (kind="request" with part_kind="tool-return") — we need the actual
     # user message (kind="request" with a "user-prompt" part).
@@ -127,6 +128,14 @@ def prepare_messages_for_storage(
                     if web_sources:
                         msg["web_sources"] = web_sources
                     break
+
+    # Also attach RAG sources to the last response message so the frontend
+    # can render inline citations in the assistant's response text.
+    if rag_sources:
+        for msg in reversed(serialized):
+            if msg.get("kind") == "response":
+                msg["rag_sources"] = rag_sources
+                break
 
     return serialized
 
@@ -173,7 +182,8 @@ def messages_to_frontend(raw_messages: list[dict[str, Any]]) -> list[dict[str, A
     ui_messages = VercelAIAdapter.dump_messages(model_messages)
     frontend_messages: list[dict[str, Any]] = [msg.model_dump(mode="json", by_alias=True) for msg in ui_messages]
 
-    # Re-attach source metadata from raw storage onto user messages.
+    # Re-attach source metadata from raw storage onto user messages (for "View Sources")
+    # and assistant messages (for inline citation rendering).
     # Raw messages contain multiple "request" kinds — both user-prompt requests
     # and tool-return requests. Only user-prompt requests map to frontend user
     # messages, so skip tool-return requests to keep alignment correct.
@@ -200,5 +210,24 @@ def messages_to_frontend(raw_messages: list[dict[str, Any]]) -> list[dict[str, A
                     if web_sources:
                         fm["metadata"]["webSources"] = web_sources
                 raw_request_idx += 1
+
+    # Attach RAG sources to assistant messages for inline citation rendering.
+    raw_response_idx = 0
+    for fm in frontend_messages:
+        if fm["role"] == "assistant":
+            while raw_response_idx < len(raw_messages):
+                msg = raw_messages[raw_response_idx]
+                if msg.get("kind") == "response":
+                    break
+                raw_response_idx += 1
+            if raw_response_idx < len(raw_messages):
+                raw_msg = raw_messages[raw_response_idx]
+                rag_sources = raw_msg.get("rag_sources")
+                if rag_sources:
+                    fm.setdefault("metadata", {})
+                    if fm["metadata"] is None:
+                        fm["metadata"] = {}
+                    fm["metadata"]["ragSources"] = rag_sources
+                raw_response_idx += 1
 
     return frontend_messages
