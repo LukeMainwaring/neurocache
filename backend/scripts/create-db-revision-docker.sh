@@ -9,3 +9,7 @@ if [ -z "$revision_message" ]; then
 fi
 
 docker compose run --rm backend python -m alembic -c src/neurocache/alembic.ini revision --autogenerate -m "$revision_message"
+
+echo "Formatting migration files..."
+cd backend && uv run ruff format src/neurocache/migrations/versions/
+uv run ruff check --fix src/neurocache/migrations/versions/
