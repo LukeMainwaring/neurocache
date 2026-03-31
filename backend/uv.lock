@@ -1390,7 +1390,7 @@ dependencies = [
     { name = "pydantic-ai" },
     { name = "pymupdf" },
     { name = "python-json-logger" },
-    { name = "sqlalchemy", extra = ["mypy"] },
+    { name = "sqlalchemy", extra = ["asyncio", "mypy"] },
     { name = "uvicorn" },
 ]
 
@@ -1413,7 +1413,7 @@ requires-dist = [
     { name = "pydantic-ai", specifier = ">=1.73.0" },
     { name = "pymupdf", specifier = ">=1.27.2.2" },
     { name = "python-json-logger", specifier = ">=4.1.0" },
-    { name = "sqlalchemy", extras = ["mypy"], specifier = ">=2.0.48" },
+    { name = "sqlalchemy", extras = ["asyncio", "mypy"], specifier = ">=2.0.48" },
     { name = "uvicorn", specifier = ">=0.42.0" },
 ]
 
@@ -2525,6 +2525,9 @@ wheels = [
 ]
 
 [package.optional-dependencies]
+asyncio = [
+    { name = "greenlet" },
+]
 mypy = [
     { name = "mypy" },
 ]

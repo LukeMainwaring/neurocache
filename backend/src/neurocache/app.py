@@ -35,11 +35,16 @@ def generate_operation_id(route: APIRoute) -> str:
     return parts[0] + "".join(word.capitalize() for word in parts[1:])
 
 
+from neurocache.mcp.server import mcp as mcp_server  # noqa: E402
+
+mcp_app = mcp_server.http_app(transport="streamable-http", path="/")
+
 app = FastAPI(
     title="Neurocache",
     openapi_url=f"{config.API_PREFIX}/openapi.json",
     docs_url=f"{config.API_PREFIX}/docs",
     generate_unique_id_function=generate_operation_id,
+    lifespan=mcp_app.lifespan,
 )
 
 
@@ -57,6 +62,9 @@ app.add_middleware(
 
 
 app.include_router(api_router, prefix=config.API_PREFIX)
+
+# Mount MCP server for knowledge base access from Claude Desktop/Code/Cursor
+app.mount("/mcp", mcp_app)
 
 
 @app.middleware("http")
