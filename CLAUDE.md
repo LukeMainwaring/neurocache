@@ -87,7 +87,7 @@ Key patterns:
 2. Route proxies raw request body to backend `/api/chat/stream`
 3. Backend uses `VercelAIAdapter.dispatch_request()` to parse the request and execute the chat agent, which decides whether to call `search_knowledge_base` for RAG retrieval (hybrid semantic + keyword search with RRF) or `web_search` for real-time web results, then streams the response
 4. `on_complete` callback extracts web search sources, persists conversation (with RAG/web source metadata) to PostgreSQL, and triggers title generation for new threads
-5. Frontend renders streamed chunks in real-time; on finish, refetches messages from DB for RAG/web source metadata (inline citations on assistant messages become interactive, "View Sources" / "View Web Sources" buttons appear on user messages)
+5. Frontend renders streamed chunks in real-time; on finish, refetches messages from DB for RAG/web source metadata (inline citations on assistant messages become interactive, "View Sources" / "View Web Sources" buttons appear on user messages). Each RAG source includes an `obsidian_url` field (`obsidian://open?vault=...&file=...`) so citation file paths link directly to the original note in Obsidian.
 
 ## Additional Instructions
 
