@@ -13,6 +13,7 @@ When I chat with this AI system, it should:
 - Focus on the books I've read and my current research thoughts
 - Draw connections across concepts
 - Search the web for real-time information when needed
+- Extract insights from conversations back into the knowledge base, creating a growth loop
 
 **Important notes:**
 - This is a personal project, developed by me, mostly locally for now
