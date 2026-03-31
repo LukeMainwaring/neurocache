@@ -120,7 +120,7 @@ Upload a book PDF and the AI generates tags, a summary, and key concepts — the
 | **Backend** | Python 3.13, FastAPI, Pydantic AI, SQLAlchemy (async), Alembic |
 | **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS 4, Vercel AI SDK |
 | **Database** | PostgreSQL 17, pgvector, tsvector full-text search |
-| **AI** | OpenAI (GPT-4o, text-embedding-3-large), Pydantic AI agents |
+| **AI** | OpenAI (GPT-5-mini, text-embedding-3-large), Pydantic AI agents |
 | **Auth** | Auth0 (JWT + JWKS verification) |
 | **Infrastructure** | Docker Compose, GitHub Actions CI, pre-commit hooks |
 | **Integrations** | MCP server (FastMCP), Obsidian deep links |
