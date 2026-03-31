@@ -5,11 +5,12 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, ForeignKeyConstraint, select
+from sqlalchemy import DateTime, ForeignKey, ForeignKeyConstraint, Row, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from neurocache.models.base import Base
+from neurocache.models.document import Document
 
 
 class Extraction(Base):
@@ -42,6 +43,26 @@ class Extraction(Base):
             select(cls).where(cls.thread_id == thread_id, cls.agent_type == agent_type).order_by(cls.created_at.desc())
         )
         return list(result.scalars().all())
+
+    @classmethod
+    async def get_by_thread_with_paths(
+        cls,
+        db: AsyncSession,
+        thread_id: str,
+        agent_type: str,
+    ) -> list[Row[tuple[Extraction, str]]]:
+        """Get all extractions for a thread with document relative paths.
+
+        Returns:
+            List of (Extraction, relative_path) rows, ordered by most recent first.
+        """
+        result = await db.execute(
+            select(cls, Document.relative_path)
+            .join(Document, cls.document_id == Document.id)
+            .where(cls.thread_id == thread_id, cls.agent_type == agent_type)
+            .order_by(cls.created_at.desc())
+        )
+        return list(result.all())
 
     @classmethod
     async def create(

@@ -54,8 +54,8 @@ class ExtractionConfirmRequest(BaseSchema):
     """User-edited content to save to the vault."""
 
     thread_id: str
-    title: str = Field(description="Note title (may be edited by user)")
-    content: str = Field(description="Full markdown content (may be edited by user)")
+    title: str = Field(min_length=1, max_length=200, description="Note title (may be edited by user)")
+    content: str = Field(min_length=1, description="Full markdown content (may be edited by user)")
 
 
 class ExtractionResponse(BaseSchema):

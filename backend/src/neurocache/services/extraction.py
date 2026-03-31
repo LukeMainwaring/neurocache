@@ -10,8 +10,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from fastapi import HTTPException
 from openai import AsyncOpenAI
 from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from neurocache.agents.extraction_agent import extraction_agent
@@ -20,7 +22,13 @@ from neurocache.models.document import Document
 from neurocache.models.extraction import Extraction
 from neurocache.models.knowledge_source import KnowledgeSource
 from neurocache.models.message import Message
-from neurocache.schemas.extraction import ExtractionOutput, ExtractionPreview, ExtractionResponse
+from neurocache.schemas.extraction import (
+    ExtractionOutput,
+    ExtractionPreview,
+    ExtractionResponse,
+    ExtractionStatusResponse,
+    ExtractionSummary,
+)
 from neurocache.services.knowledge_source.ingestion import VAULT_MOUNT_PATH, ingest_document
 from neurocache.utils.message_serialization import deserialize_messages
 
@@ -54,17 +62,20 @@ async def _get_existing_note_titles(db: AsyncSession, user_id: str) -> list[str]
     if not sources:
         return []
 
+    source_ids = [s.id for s in sources]
+    result = await db.execute(
+        select(Document.title, Document.relative_path).where(Document.knowledge_source_id.in_(source_ids))
+    )
+    rows = result.all()
+
     titles: list[str] = []
-    for source in sources:
-        docs = await Document.get_all_by_source(db, source.id)
-        for doc in docs:
-            if doc.title:
-                titles.append(doc.title)
-            else:
-                # Use filename without extension as fallback
-                name = Path(doc.relative_path).stem
-                if name:
-                    titles.append(name)
+    for title, relative_path in rows:
+        if title:
+            titles.append(title)
+        else:
+            name = Path(relative_path).stem
+            if name:
+                titles.append(name)
 
     return titles
 
@@ -115,11 +126,20 @@ def _resolve_filename(title: str) -> tuple[str, Path]:
     """Resolve a unique filename in the insights directory.
 
     Returns (relative_path, absolute_path) with collision handling.
+
+    Raises:
+        ValueError: If the resolved path escapes the vault directory.
     """
     vault = Path(VAULT_MOUNT_PATH)
+    expected_parent = (vault / INSIGHTS_DIR).resolve()
     base_name = _sanitize_filename(title)
     relative = f"{INSIGHTS_DIR}/{base_name}.md"
     absolute = vault / relative
+
+    # Path traversal guard — ensure resolved path stays within insights dir
+    if not absolute.resolve().parent == expected_parent:
+        msg = f"Filename resolves outside vault: {title}"
+        raise ValueError(msg)
 
     if not absolute.exists():
         return relative, absolute
@@ -148,8 +168,7 @@ async def preview_extraction(
     # Load conversation
     raw_messages = await Message.get_history(db, thread_id, agent_type)
     if not raw_messages:
-        msg = f"No messages found for thread {thread_id}"
-        raise ValueError(msg)
+        raise HTTPException(status_code=404, detail="No messages found for this thread")
 
     conversation_text = _format_conversation(raw_messages)
 
@@ -207,17 +226,23 @@ async def save_extraction(
     absolute_path.write_text(content, encoding="utf-8")
     logger.info(f"Wrote extraction note to {relative_path}")
 
-    # Ingest via existing pipeline (chunk → embed → TSVECTOR)
-    document = await ingest_document(db, openai_client, knowledge_source_id, relative_path)
+    try:
+        # Ingest via existing pipeline (chunk → embed → TSVECTOR)
+        document = await ingest_document(db, openai_client, knowledge_source_id, relative_path)
 
-    # Create provenance record
-    extraction = await Extraction.create(
-        db,
-        thread_id=thread_id,
-        agent_type=agent_type,
-        knowledge_source_id=knowledge_source_id,
-        document_id=document.id,
-    )
+        # Create provenance record
+        extraction = await Extraction.create(
+            db,
+            thread_id=thread_id,
+            agent_type=agent_type,
+            knowledge_source_id=knowledge_source_id,
+            document_id=document.id,
+        )
+    except Exception:
+        # Clean up orphan file if ingestion or DB fails
+        absolute_path.unlink(missing_ok=True)
+        logger.exception(f"Failed to ingest extraction note {relative_path}, cleaned up file")
+        raise
 
     obsidian_url = build_obsidian_url(relative_path)
 
@@ -226,3 +251,35 @@ async def save_extraction(
         relative_path=relative_path,
         obsidian_url=obsidian_url,
     )
+
+
+async def get_extraction_status(
+    db: AsyncSession,
+    thread_id: str,
+    agent_type: str,
+) -> ExtractionStatusResponse:
+    """Get extraction status for a thread."""
+    rows = await Extraction.get_by_thread_with_paths(db, thread_id, agent_type)
+
+    summaries = [
+        ExtractionSummary(
+            id=ext.id,
+            document_id=ext.document_id,
+            relative_path=relative_path,
+            created_at=ext.created_at,
+        )
+        for ext, relative_path in rows
+    ]
+
+    return ExtractionStatusResponse(extractions=summaries)
+
+
+async def get_user_knowledge_source_id(db: AsyncSession, user_id: str) -> uuid.UUID:
+    """Get the user's primary knowledge source ID, raising 400 if none configured."""
+    sources = await KnowledgeSource.list_for_user(db, user_id)
+    if not sources:
+        raise HTTPException(
+            status_code=400,
+            detail="No knowledge source configured. Add one in Settings.",
+        )
+    return sources[0].id

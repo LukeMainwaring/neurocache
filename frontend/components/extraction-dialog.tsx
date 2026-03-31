@@ -58,7 +58,7 @@ export function ExtractionDialog({
     previewRef
       .current(tid)
       .then((result) => {
-        if (!result.content.trim() || result.title === "") {
+        if (!result.content.trim() || !result.title.trim()) {
           setState("empty");
           return;
         }
