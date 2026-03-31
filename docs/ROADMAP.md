@@ -56,5 +56,4 @@ Specialized agents for different tasks: research agent (deep multi-query search)
 ## Notes
 
 - Obsidian is the primary knowledge source. Keep the ingestion pipeline simple.
-- This is a learning project approaching portfolio readiness. Optimize for understanding patterns and demonstrable features.
-- Incremental progress: each item should be completable in a reasonable work session.
+- Each item should be completable in a focused work session.
