@@ -17,6 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import { Response } from "./response";
 
 const CONTENT_TYPE_LABELS: Record<string, string> = {
   personal_note: "Personal Note",
@@ -108,9 +109,9 @@ export function CitationMarker({ number, source }: CitationMarkerProps) {
               </p>
             )}
             {source.content && (
-              <p className="max-h-64 overflow-y-auto break-words text-muted-foreground text-sm">
-                {source.content}
-              </p>
+              <div className="max-h-64 overflow-y-auto break-words text-muted-foreground text-sm">
+                <Response className="prose-sm">{source.content}</Response>
+              </div>
             )}
           </div>
         </DialogContent>

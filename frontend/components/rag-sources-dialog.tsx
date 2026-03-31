@@ -3,6 +3,7 @@
 import { ExternalLink } from "lucide-react";
 import type { ReactNode } from "react";
 import type { RAGSource } from "@/lib/types";
+import { Response } from "./elements/response";
 import {
   Dialog,
   DialogContent,
@@ -69,9 +70,9 @@ export function RAGSourcesDialog({ sources, trigger }: RAGSourcesDialogProps) {
                 </p>
               )}
               {source.content && (
-                <p className="max-h-48 overflow-y-auto break-words text-muted-foreground text-sm">
-                  {source.content}
-                </p>
+                <div className="max-h-48 overflow-y-auto break-words text-muted-foreground text-sm">
+                  <Response className="prose-sm">{source.content}</Response>
+                </div>
               )}
             </div>
           ))}
