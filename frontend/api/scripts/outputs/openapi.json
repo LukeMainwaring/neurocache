@@ -31,7 +31,7 @@
           "extractions"
         ],
         "summary": "Preview Extraction",
-        "description": "Generate an extraction preview from a conversation.\n\nRuns the extraction agent to analyze the thread and produce\na structured Obsidian note for user review.",
+        "description": "Generate an extraction preview from a conversation.",
         "operationId": "previewExtraction",
         "requestBody": {
           "content": {
@@ -73,7 +73,7 @@
           "extractions"
         ],
         "summary": "Confirm Extraction",
-        "description": "Save an extraction to the vault.\n\nWrites the markdown file, runs ingestion (chunk, embed, index),\nand creates a provenance record.",
+        "description": "Save an extraction to the vault.",
         "operationId": "confirmExtraction",
         "requestBody": {
           "content": {
@@ -1450,11 +1450,14 @@
           },
           "title": {
             "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
             "title": "Title",
             "description": "Note title (may be edited by user)"
           },
           "content": {
             "type": "string",
+            "minLength": 1,
             "title": "Content",
             "description": "Full markdown content (may be edited by user)"
           }

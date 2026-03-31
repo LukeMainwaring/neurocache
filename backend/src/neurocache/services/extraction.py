@@ -122,7 +122,7 @@ def _sanitize_filename(title: str) -> str:
     return sanitized or "Untitled Insight"
 
 
-def _resolve_filename(title: str) -> tuple[str, Path]:
+def _resolve_filename(title: str, vault_path: str = VAULT_MOUNT_PATH) -> tuple[str, Path]:
     """Resolve a unique filename in the insights directory.
 
     Returns (relative_path, absolute_path) with collision handling.
@@ -130,7 +130,7 @@ def _resolve_filename(title: str) -> tuple[str, Path]:
     Raises:
         ValueError: If the resolved path escapes the vault directory.
     """
-    vault = Path(VAULT_MOUNT_PATH)
+    vault = Path(vault_path)
     expected_parent = (vault / INSIGHTS_DIR).resolve()
     base_name = _sanitize_filename(title)
     relative = f"{INSIGHTS_DIR}/{base_name}.md"
@@ -201,6 +201,53 @@ Existing notes in the vault (for wiki-link suggestions):
     )
 
 
+async def write_and_ingest_note(
+    db: AsyncSession,
+    openai_client: AsyncOpenAI,
+    knowledge_source_id: uuid.UUID,
+    title: str,
+    content: str,
+    vault_path: str = VAULT_MOUNT_PATH,
+) -> tuple[str, str]:
+    """Write a markdown note to the vault and ingest it.
+
+    Handles directory creation, filename collision, file write, and ingestion.
+    Cleans up the file if ingestion fails.
+
+    Args:
+        db: Database session
+        openai_client: OpenAI client for embeddings
+        knowledge_source_id: Knowledge source to index under
+        title: Note title (used for filename)
+        content: Full markdown content (with frontmatter)
+        vault_path: Root path of the vault (default: /vault container mount,
+            pass OBSIDIAN_VAULT_PATH for standalone MCP usage)
+
+    Returns:
+        Tuple of (relative_path, obsidian_url)
+    """
+    # Ensure insights directory exists
+    insights_dir = Path(vault_path) / INSIGHTS_DIR
+    insights_dir.mkdir(parents=True, exist_ok=True)
+
+    # Resolve unique filename
+    relative_path, absolute_path = _resolve_filename(title, vault_path)
+
+    # Write file to vault
+    absolute_path.write_text(content, encoding="utf-8")
+    logger.info(f"Wrote note to {relative_path}")
+
+    try:
+        await ingest_document(db, openai_client, knowledge_source_id, relative_path, vault_path=vault_path)
+    except Exception:
+        absolute_path.unlink(missing_ok=True)
+        logger.exception(f"Failed to ingest note {relative_path}, cleaned up file")
+        raise
+
+    obsidian_url = build_obsidian_url(relative_path)
+    return relative_path, obsidian_url
+
+
 async def save_extraction(
     db: AsyncSession,
     openai_client: AsyncOpenAI,
@@ -215,42 +262,50 @@ async def save_extraction(
     Writes the markdown file, runs the ingestion pipeline (chunk, embed, index),
     and creates an Extraction provenance record.
     """
-    # Ensure insights directory exists
-    insights_dir = Path(VAULT_MOUNT_PATH) / INSIGHTS_DIR
-    insights_dir.mkdir(parents=True, exist_ok=True)
+    relative_path, obsidian_url = await write_and_ingest_note(db, openai_client, knowledge_source_id, title, content)
 
-    # Resolve unique filename
-    relative_path, absolute_path = _resolve_filename(title)
+    # Look up the document that was just ingested for the provenance record
+    doc = await Document.get_by_relative_path(db, knowledge_source_id, relative_path)
+    if not doc:
+        msg = f"Document not found after ingestion: {relative_path}"
+        raise RuntimeError(msg)
 
-    # Write file to vault
-    absolute_path.write_text(content, encoding="utf-8")
-    logger.info(f"Wrote extraction note to {relative_path}")
-
-    try:
-        # Ingest via existing pipeline (chunk → embed → TSVECTOR)
-        document = await ingest_document(db, openai_client, knowledge_source_id, relative_path)
-
-        # Create provenance record
-        extraction = await Extraction.create(
-            db,
-            thread_id=thread_id,
-            agent_type=agent_type,
-            knowledge_source_id=knowledge_source_id,
-            document_id=document.id,
-        )
-    except Exception:
-        # Clean up orphan file if ingestion or DB fails
-        absolute_path.unlink(missing_ok=True)
-        logger.exception(f"Failed to ingest extraction note {relative_path}, cleaned up file")
-        raise
-
-    obsidian_url = build_obsidian_url(relative_path)
+    extraction = await Extraction.create(
+        db,
+        thread_id=thread_id,
+        agent_type=agent_type,
+        knowledge_source_id=knowledge_source_id,
+        document_id=doc.id,
+    )
 
     return ExtractionResponse(
         extraction_id=extraction.id,
         relative_path=relative_path,
         obsidian_url=obsidian_url,
     )
+
+
+def compose_insight_markdown(title: str, content: str, tags: list[str] | None = None) -> str:
+    """Compose an Obsidian markdown note with chat_insight frontmatter.
+
+    Used by the MCP save_to_knowledge_base tool where the client LLM
+    provides the content directly (no extraction agent needed).
+    """
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    tags = tags or []
+
+    tags_yaml = "\n".join(f"  - {tag}" for tag in tags) if tags else ""
+    tag_block = f"\ntags:\n{tags_yaml}" if tags_yaml else ""
+
+    return f"""---
+type: chat_insight
+created: {today}{tag_block}
+---
+
+# {title}
+
+{content}
+"""
 
 
 async def get_extraction_status(

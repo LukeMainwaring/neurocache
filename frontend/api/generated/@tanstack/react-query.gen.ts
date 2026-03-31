@@ -33,9 +33,6 @@ export const streamChatMutation = (options?: Partial<Options<StreamChatData>>): 
  * Preview Extraction
  *
  * Generate an extraction preview from a conversation.
- *
- * Runs the extraction agent to analyze the thread and produce
- * a structured Obsidian note for user review.
  */
 export const previewExtractionMutation = (options?: Partial<Options<PreviewExtractionData>>): UseMutationOptions<PreviewExtractionResponse, AxiosError<PreviewExtractionError>, Options<PreviewExtractionData>> => {
     const mutationOptions: UseMutationOptions<PreviewExtractionResponse, AxiosError<PreviewExtractionError>, Options<PreviewExtractionData>> = {
@@ -55,9 +52,6 @@ export const previewExtractionMutation = (options?: Partial<Options<PreviewExtra
  * Confirm Extraction
  *
  * Save an extraction to the vault.
- *
- * Writes the markdown file, runs ingestion (chunk, embed, index),
- * and creates a provenance record.
  */
 export const confirmExtractionMutation = (options?: Partial<Options<ConfirmExtractionData>>): UseMutationOptions<ConfirmExtractionResponse, AxiosError<ConfirmExtractionError>, Options<ConfirmExtractionData>> => {
     const mutationOptions: UseMutationOptions<ConfirmExtractionResponse, AxiosError<ConfirmExtractionError>, Options<ConfirmExtractionData>> = {

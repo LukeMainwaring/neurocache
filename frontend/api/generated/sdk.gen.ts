@@ -36,9 +36,6 @@ export const streamChat = <ThrowOnError extends boolean = false>(options?: Optio
  * Preview Extraction
  *
  * Generate an extraction preview from a conversation.
- *
- * Runs the extraction agent to analyze the thread and produce
- * a structured Obsidian note for user review.
  */
 export const previewExtraction = <ThrowOnError extends boolean = false>(options: Options<PreviewExtractionData, ThrowOnError>) => (options.client ?? client).post<PreviewExtractionResponses, PreviewExtractionErrors, ThrowOnError>({
     responseType: 'json',
@@ -54,9 +51,6 @@ export const previewExtraction = <ThrowOnError extends boolean = false>(options:
  * Confirm Extraction
  *
  * Save an extraction to the vault.
- *
- * Writes the markdown file, runs ingestion (chunk, embed, index),
- * and creates a provenance record.
  */
 export const confirmExtraction = <ThrowOnError extends boolean = false>(options: Options<ConfirmExtractionData, ThrowOnError>) => (options.client ?? client).post<ConfirmExtractionResponses, ConfirmExtractionErrors, ThrowOnError>({
     responseType: 'json',
