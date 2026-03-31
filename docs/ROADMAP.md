@@ -10,27 +10,27 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 Make inline citations link directly to notes via `obsidian://open?vault=...&file=...`. The vault name is already in config. Small effort, high UX payoff — turns source attribution from decorative to actionable.
 
-### Cross-Reference Discovery
+### Conversation-to-Knowledge Pipeline
 
-Surface connections across notes during conversation. Parse Obsidian `[[wiki-links]]` during ingestion, store as edges, and retrieve linked notes alongside semantic matches. Combine explicit links with embedding proximity for "related notes."
+After each conversation, extract key facts, decisions, and insights. Propose them as new Obsidian notes or additions to existing notes. Subsumes note write-back — the agent gains tools to create and append to notes in the vault. The full loop: read → chat → write → read. This creates a genuine growth loop where using the app makes it smarter.
 
-### Advanced Retrieval
+### Temporal Knowledge Tracking + Memory Layer
 
-Re-ranking retrieved results, query expansion/reformulation.
+Track how thinking evolves over time. Surface when you first encountered an idea and how your understanding shifted across notes. No commercial tool does this — genuinely unique. Build a memory layer that extracts and timestamps facts from conversations and notes, enabling queries like "when did I first explore this idea?" and "how has my thinking changed?" Technology choice (Mem0, custom pipeline, or alternatives) to be determined after research.
 
 ---
 
 ## Future Ideas
 
-Ambitious features worth exploring once the core is mature. Ordered roughly by uniqueness and impact.
+Experimental features worth exploring if time permits.
 
-### Conversation-to-Knowledge Pipeline
+### Cross-Reference Discovery
 
-After each conversation, extract key facts, decisions, and insights. Propose them as new Obsidian notes or additions to existing notes. The full loop: read → chat → write → read. This creates a genuine growth loop where using the app makes it smarter.
+Parse Obsidian `[[wiki-links]]` during ingestion, store as edges, and retrieve linked notes alongside semantic matches. Combine explicit links with embedding proximity for "related notes." Infrastructure-level improvement to retrieval quality.
 
-### Temporal Knowledge Tracking
+### Advanced Retrieval
 
-Track how thinking evolves over time. Surface when you first encountered an idea and how your understanding shifted across notes. No commercial tool does this — genuinely unique.
+Re-ranking retrieved results, query expansion/reformulation. Standard IR techniques — useful but not differentiating.
 
 ### Knowledge Gap Detection
 
@@ -64,5 +64,5 @@ Specialized agents for different tasks: research agent (deep multi-query search)
 ## Notes
 
 - Obsidian is the primary knowledge source. Keep the ingestion pipeline simple.
-- This is a learning project. Optimize for understanding patterns, not production robustness.
+- This is a learning project approaching portfolio readiness. Optimize for understanding patterns and demonstrable features.
 - Incremental progress: each item should be completable in a reasonable work session.
