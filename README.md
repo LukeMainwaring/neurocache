@@ -58,11 +58,9 @@ Surfaces non-obvious links across your knowledge base using semantic search and 
 Search your knowledge base from Claude Desktop, Claude Code, or Cursor via the built-in MCP server.
 
 <div align="center">
-  <img src="docs/assets/mcp-claude-search.png" alt="Searching the knowledge base from Claude" width="30%" />
+  <img src="docs/assets/mcp-claude.gif" alt="Search knowledge base and save from Claude" width="45%" />
   &nbsp;&nbsp;
-  <img src="docs/assets/mcp-claude-save.png" alt="Save to knowledge base in Claude" width="30%" />
-    &nbsp;&nbsp;
-  <img src="docs/assets/mcp-obsidian-save.png" alt="Obsidian note output from thread" width="30%" />
+  <img src="docs/assets/mcp-obsidian-save.png" alt="Obsidian note output from thread" width="45%" />
 </div>
 
 ## PDF Book Pipeline
