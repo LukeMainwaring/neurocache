@@ -118,8 +118,9 @@ def format_rag_context(
             "similarity": float(similarity),
             "content": chunk.content,
             "source_number": source_number,
-            "obsidian_url": build_obsidian_url(source_path),
         }
+        if doc:
+            source["obsidian_url"] = build_obsidian_url(source_path)
         if content_type:
             source["content_type"] = content_type
         if section_header:
