@@ -39,14 +39,6 @@ Track how thinking evolves over time. Surface when you first encountered an idea
 
 Analyze the vault for topics referenced frequently but never deeply explored. "You mention 'reinforcement learning' in 8 notes but have no dedicated material on it." Turns passive retrieval into active learning guidance.
 
-### "Think With Me" Mode
-
-Instead of just answering, the agent walks through existing notes step-by-step, showing its reasoning chain through your knowledge. Makes the retrieval chain visible and interactive — commercial tools hide this.
-
-### User-Configurable MCP Client (Plugin System)
-
-Let users plug in external MCP servers (GitHub, Calendar, code execution) from a settings UI. Uses Pydantic AI's `MCPServerHTTP`/`MCPServerStdio` + `load_mcp_servers()`. Turns Neurocache into an extensible platform.
-
 ### Obsidian Deep Links in Citations
 
 Make inline citations link directly to notes via `obsidian://open?vault=...&file=...`. The vault name is already in config. Small effort, high UX payoff.
@@ -57,21 +49,9 @@ Make inline citations link directly to notes via `obsidian://open?vault=...&file
 
 Features documented here to avoid re-adding them prematurely. These make sense for a production app but are unnecessary overhead for local experimentation.
 
-### Error Handling and Resilience
-
-Basic error handling exists. Retry logic, rate limiting, and graceful degradation are production concerns.
-
-### Document Management UI
-
-A frontend for browsing/managing the knowledge base. For now, just use Obsidian directly.
-
 ### Web Content Ingestion
 
 URL scraping and web content capture. Can add later if needed.
-
-### Multi-User Support
-
-User isolation, usage tracking, admin dashboard. Only relevant for productionization.
 
 ### Deployment Infrastructure
 
@@ -85,10 +65,6 @@ Experiment with reasoning models and tune `ModelSettings` (e.g., `openai_reasoni
 ### Multi-Agent Architecture
 
 Specialized agents for different tasks: research agent (deep multi-query search), daily review agent (surfaces unvisited notes), writing assistant (drafts from your notes). Defer unless a specific use case demands it — the single agent covers most cases today.
-
-### Data Export
-
-Conversation and knowledge base export. Low priority for personal use.
 
 ---
 
