@@ -1,6 +1,6 @@
 # Neurocache
 
-An AI chat application with hybrid RAG retrieval, web search, and Obsidian integration. Chat with an AI agent that draws on your personal knowledge base — notes, books, articles — and combines it with real-time web search to give answers grounded in what you actually know.
+Build an institution of your mind. An AI agent that turns your notes, books, and articles into a searchable second brain — grounding every answer in what you actually know.
 
 <!-- TODO: Add hero GIF showing a chat with KB search + web search + inline citations -->
 <!-- ![Neurocache Demo](docs/assets/hero-demo.gif) -->
