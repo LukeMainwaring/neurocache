@@ -122,6 +122,9 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# MCP server config (contains user ID and local credentials)
+.mcp.json
+
 # Environments
 .env
 .venv

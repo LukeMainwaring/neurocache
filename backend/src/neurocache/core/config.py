@@ -49,6 +49,12 @@ class ObsidianSettings(BaseSettings):
     OBSIDIAN_VAULT_NAME: str = "My Obsidian Vault"  # Default display name
 
 
+class MCPSettings(BaseSettings):
+    """MCP server configuration."""
+
+    NEUROCACHE_USER_ID: str | None = None  # Auth0 user ID for MCP server access
+
+
 class Auth0Settings(BaseSettings):
     """Auth0 authentication configuration."""
 
@@ -73,6 +79,7 @@ class Settings(
     PostgresSettings,
     ObsidianSettings,
     Auth0Settings,
+    MCPSettings,
 ):
     """Main application settings."""
 

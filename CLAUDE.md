@@ -52,6 +52,7 @@ FastAPI Python backend using async patterns throughout.
 -   **`src/neurocache/services/`**: Business logic (embeddings, hybrid RAG retrieval with RRF, document ingestion, title generation)
 -   **`src/neurocache/utils/message_serialization.py`**: Message format round-trip: storage serialization, frontend conversion via `VercelAIAdapter.dump_messages()`, RAG/web source metadata extraction and attachment (sources attached to both user messages for "View Sources" dialog and assistant messages for inline citation rendering)
 -   **`src/neurocache/core/config.py`**: Settings via pydantic-settings (reads from `.env`)
+-   **`src/neurocache/mcp/`**: FastMCP server exposing the knowledge base as MCP tools (`search_knowledge_base`, `get_document`, `list_documents`) for Claude Desktop/Code/Cursor. Mounted on FastAPI at `/mcp` (HTTP) and runnable standalone via `python -m neurocache.mcp` (stdio)
 -   **`src/neurocache/migrations/`**: Alembic migrations for PostgreSQL
 -   **`src/neurocache/dependencies/`**: FastAPI dependency injection (db sessions, OpenAI client, auth)
 

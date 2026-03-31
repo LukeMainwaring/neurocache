@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "neurocache": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "export $(grep -E '^(OPENAI_API_KEY|AUTH0_)' .env | xargs) && export PYTHONPATH=src && cd backend && uv run python -m neurocache.mcp"
+      ],
+      "env": {
+        "NEUROCACHE_USER_ID": "115524821798930175784",
+        "POSTGRES_DB": "neurocache",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "password",
+        "POSTGRES_HOST": "localhost",
+        "POSTGRES_PORT": "5432"
+      }
+    }
+  }
+}

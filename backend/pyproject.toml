@@ -14,7 +14,7 @@ dependencies = [
   "pymupdf>=1.27.2.2",
   "pydantic>=2.12.5",
   "python-json-logger>=4.1.0",
-  "sqlalchemy[mypy]>=2.0.48",
+  "sqlalchemy[asyncio,mypy]>=2.0.48",
   "uvicorn>=0.42.0",
 ]
 
