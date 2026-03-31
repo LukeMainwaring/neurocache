@@ -125,6 +125,9 @@ celerybeat.pid
 # MCP server config (contains user ID and local credentials)
 .mcp.json
 
+# Internal strategy docs (kept locally, not in repo)
+docs/HOSTED_PRODUCT_STRATEGY.md
+
 # Environments
 .env
 .venv

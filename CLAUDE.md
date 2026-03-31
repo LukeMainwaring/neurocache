@@ -97,5 +97,4 @@ Key patterns:
 -   Assume that Git operations for branches, commits, and pushes will mostly be done manually. If executing a multi-step, comprehensive plan that involves successive commits, ask before making a commit.
 -   All commands in this file run from the repo root. Use `--directory` (uv) or `-C` (pnpm) flags instead of `cd <dir> && ...` patterns.
 -   Do not make any changes until you have 95% confidence that you know what to build - ask me follow up questions using the AskUserQuestion tool until you have that confidence; but don't ask obvious questions, dig into the hard parts I might not have considered.
--   Do not worry about running the pytest commands yet. I have not implemented unit tests and likely will not for a while
 -   After modifying backend API endpoints, regenerate the frontend client with `pnpm -C frontend generate-client`. Do not manually edit files in `frontend/api/generated/`.
