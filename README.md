@@ -1,9 +1,15 @@
-# Neurocache
+<div align="center">
+  <img src="frontend/public/images/neurocache-logo.png" alt="Neurocache" width="120" />
+  <h1>Neurocache</h1>
+  <p>Build an institution of your mind. An AI agent that turns your notes, books, and articles into a searchable second brain — grounding every answer in what you actually know.</p>
 
-Build an institution of your mind. An AI agent that turns your notes, books, and articles into a searchable second brain — grounding every answer in what you actually know.
+  [![CI](https://github.com/LukeMainwaring/neurocache/actions/workflows/ci.yml/badge.svg)](https://github.com/LukeMainwaring/neurocache/actions/workflows/ci.yml)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+</div>
 
-<!-- TODO: Add hero GIF showing a chat with KB search + web search + inline citations -->
-<!-- ![Neurocache Demo](docs/assets/hero-demo.gif) -->
+<div align="center">
+  <img src="docs/assets/search-knowledge-base.gif" alt="Neurocache demo — hybrid search with inline citations" width="700" />
+</div>
 
 ## Why Neurocache?
 
@@ -27,47 +33,6 @@ General-purpose chatbots (ChatGPT, Claude) start every conversation from scratch
 - **User personalization** — Profile context (background, interests, custom instructions) shapes how the agent responds
 - **Auth0 authentication** — JWT-based auth with JWKS verification
 
-## Architecture
-
-```mermaid
-graph TB
-    subgraph Frontend ["Frontend (Next.js 16 / React 19)"]
-        UI["Chat UI<br/><small>Vercel AI SDK useChat</small>"]
-        Proxy["API Proxy Route<br/><small>/api/chat → backend</small>"]
-    end
-
-    subgraph Backend ["Backend (FastAPI / Python)"]
-        Router["Chat Router<br/><small>streaming endpoint</small>"]
-        Agent["Pydantic AI Agent<br/><small>tool-use orchestration</small>"]
-        KBTool["search_knowledge_base"]
-        WebTool["web_search"]
-        Extract["Extraction Agent<br/><small>conversation → Obsidian note</small>"]
-    end
-
-    subgraph Data ["Data Layer"]
-        PG["PostgreSQL + pgvector"]
-        Vault["Obsidian Vault<br/><small>markdown notes, book PDFs</small>"]
-    end
-
-    subgraph External ["External"]
-        MCP["MCP Server<br/><small>Claude Desktop / Code / Cursor</small>"]
-        OpenAI["OpenAI API<br/><small>embeddings + chat</small>"]
-    end
-
-    UI --> Proxy --> Router --> Agent
-    Agent --> KBTool --> PG
-    Agent --> WebTool
-    Agent --> OpenAI
-    Extract --> Vault --> PG
-    MCP --> KBTool
-```
-
-**Backend** — FastAPI with async SQLAlchemy, Pydantic AI for agent orchestration, hybrid retrieval service, Alembic migrations.
-
-**Frontend** — Next.js 16 App Router, React 19, Tailwind CSS, TanStack Query for data fetching, streaming chat via Vercel AI SDK.
-
-**Database** — PostgreSQL 17 with pgvector for embeddings and tsvector for full-text search. Documents are chunked, embedded, and indexed during ingestion.
-
 ## Demo Workflows
 
 These prompts showcase what Neurocache can do that generic chatbots can't. See [docs/DEMO_WORKFLOWS.md](docs/DEMO_WORKFLOWS.md) for the full list.
@@ -87,17 +52,29 @@ Retrieves relevant chunks across notes written months apart, then reasons about 
 
 Surfaces non-obvious links across your knowledge base using semantic search and LLM reasoning.
 
-<!-- ## Screenshots -->
 
-<!-- TODO: Add screenshots -->
-<!-- ### Chat with Inline Citations -->
-<!-- ![Chat](docs/assets/chat-citations.png) -->
+## MCP Integration
 
-<!-- ### Knowledge Base Management -->
-<!-- ![Knowledge Base](docs/assets/knowledge-base.png) -->
+Search your knowledge base from Claude Desktop, Claude Code, or Cursor via the built-in MCP server.
 
-<!-- ### PDF Book Upload & Analysis -->
-<!-- ![PDF Upload](docs/assets/pdf-upload.png) -->
+<div align="center">
+  <img src="docs/assets/mcp-claude-search.png" alt="Searching the knowledge base from Claude" width="30%" />
+  &nbsp;&nbsp;
+  <img src="docs/assets/mcp-claude-save.png" alt="Save to knowledge base in Claude" width="30%" />
+    &nbsp;&nbsp;
+  <img src="docs/assets/mcp-obsidian-save.png" alt="Obsidian note output from thread" width="30%" />
+</div>
+
+## PDF Book Pipeline
+
+Upload a book PDF and the AI generates tags, a summary, and key concepts — then the content is chunked, embedded, and searchable.
+
+<div align="center">
+  <img src="docs/assets/book-upload-pdf.png" alt="PDF book upload and AI analysis" width="45%" />
+  &nbsp;&nbsp;
+  <img src="docs/assets/book-obsidian-note.png" alt="Obsidian note with output from book agent" width="45%" />
+</div>
+
 
 ## Quick Start
 
