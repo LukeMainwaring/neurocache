@@ -26,6 +26,7 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { ExtractionDialog } from "./extraction-dialog";
 import { ChatItem } from "./sidebar-history-item";
 
 type GroupedThreads = {
@@ -93,6 +94,7 @@ export function SidebarHistory() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [extractThreadId, setExtractThreadId] = useState<string | null>(null);
   const { deleteThread } = useDeleteThread();
   const { renameThread } = useRenameThread();
 
@@ -194,6 +196,7 @@ export function SidebarHistory() {
                     key={thread.id}
                     isRenaming={renamingId === thread.id}
                     onCancelRename={() => setRenamingId(null)}
+                    onExtract={(chatId) => setExtractThreadId(chatId)}
                     onDelete={(chatId) => {
                       setDeleteId(chatId);
                       setShowDeleteDialog(true);
@@ -222,6 +225,7 @@ export function SidebarHistory() {
                     key={thread.id}
                     isRenaming={renamingId === thread.id}
                     onCancelRename={() => setRenamingId(null)}
+                    onExtract={(chatId) => setExtractThreadId(chatId)}
                     onDelete={(chatId) => {
                       setDeleteId(chatId);
                       setShowDeleteDialog(true);
@@ -250,6 +254,7 @@ export function SidebarHistory() {
                     key={thread.id}
                     isRenaming={renamingId === thread.id}
                     onCancelRename={() => setRenamingId(null)}
+                    onExtract={(chatId) => setExtractThreadId(chatId)}
                     onDelete={(chatId) => {
                       setDeleteId(chatId);
                       setShowDeleteDialog(true);
@@ -278,6 +283,7 @@ export function SidebarHistory() {
                     key={thread.id}
                     isRenaming={renamingId === thread.id}
                     onCancelRename={() => setRenamingId(null)}
+                    onExtract={(chatId) => setExtractThreadId(chatId)}
                     onDelete={(chatId) => {
                       setDeleteId(chatId);
                       setShowDeleteDialog(true);
@@ -306,6 +312,7 @@ export function SidebarHistory() {
                     key={thread.id}
                     isRenaming={renamingId === thread.id}
                     onCancelRename={() => setRenamingId(null)}
+                    onExtract={(chatId) => setExtractThreadId(chatId)}
                     onDelete={(chatId) => {
                       setDeleteId(chatId);
                       setShowDeleteDialog(true);
@@ -338,6 +345,16 @@ export function SidebarHistory() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {extractThreadId && (
+        <ExtractionDialog
+          threadId={extractThreadId}
+          open={!!extractThreadId}
+          onOpenChange={(open) => {
+            if (!open) setExtractThreadId(null);
+          }}
+        />
+      )}
     </>
   );
 }

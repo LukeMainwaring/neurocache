@@ -45,14 +45,14 @@ After making frontend code changes, run `pnpm -C frontend format` to fix formatt
 FastAPI Python backend using async patterns throughout.
 
 -   **`src/neurocache/app.py`**: FastAPI application entry point with CORS and logging middleware
--   **`src/neurocache/routers/`**: API routes by domain (chat, threads, users, knowledge sources, health)
--   **`src/neurocache/agents/`**: Pydantic AI agents — `chat_agent.py` defines the chat agent and system prompt; `capabilities/` bundles tools and hooks as composable capabilities (`WebSearch` for web search, `KnowledgeBaseCapability` for RAG); `book_analysis_agent.py` generates structured book analysis (tags, summary, key concepts) on PDF upload; `deps.py` defines shared `AgentDeps`; `tools/` contains agent tool functions (e.g., `knowledge_base_tools.py` for RAG search)
--   **`src/neurocache/models/`**: SQLAlchemy async models with CRUD classmethods (User, Thread, Message, KnowledgeSource, Document)
+-   **`src/neurocache/routers/`**: API routes by domain (chat, threads, users, knowledge sources, extractions, health)
+-   **`src/neurocache/agents/`**: Pydantic AI agents — `chat_agent.py` defines the chat agent and system prompt; `capabilities/` bundles tools and hooks as composable capabilities (`WebSearch` for web search, `KnowledgeBaseCapability` for RAG); `book_analysis_agent.py` generates structured book analysis (tags, summary, key concepts) on PDF upload; `extraction_agent.py` extracts reusable knowledge from conversations as structured Obsidian notes; `deps.py` defines shared `AgentDeps`; `tools/` contains agent tool functions (e.g., `knowledge_base_tools.py` for RAG search)
+-   **`src/neurocache/models/`**: SQLAlchemy async models with CRUD classmethods (User, Thread, Message, KnowledgeSource, Document, Extraction)
 -   **`src/neurocache/schemas/`**: Pydantic schemas for API contracts, enums, and domain types
--   **`src/neurocache/services/`**: Business logic (embeddings, hybrid RAG retrieval with RRF, document ingestion, title generation)
+-   **`src/neurocache/services/`**: Business logic (embeddings, hybrid RAG retrieval with RRF, document ingestion, title generation, conversation-to-knowledge extraction)
 -   **`src/neurocache/utils/message_serialization.py`**: Message format round-trip: storage serialization, frontend conversion via `VercelAIAdapter.dump_messages()`, RAG/web source metadata extraction and attachment (sources attached to both user messages for "View Sources" dialog and assistant messages for inline citation rendering)
 -   **`src/neurocache/core/config.py`**: Settings via pydantic-settings (reads from `.env`)
--   **`src/neurocache/mcp/`**: FastMCP server exposing the knowledge base as MCP tools (`search_knowledge_base`, `get_document`, `list_documents`) for Claude Desktop/Code/Cursor. Mounted on FastAPI at `/mcp` (HTTP) and runnable standalone via `python -m neurocache.mcp` (stdio)
+-   **`src/neurocache/mcp/`**: FastMCP server exposing the knowledge base as MCP tools (`search_knowledge_base`, `get_document`, `list_documents`, `save_to_knowledge_base`) for Claude Desktop/Code/Cursor. Mounted on FastAPI at `/mcp` (HTTP) and runnable standalone via `python -m neurocache.mcp` (stdio)
 -   **`src/neurocache/migrations/`**: Alembic migrations for PostgreSQL
 -   **`src/neurocache/dependencies/`**: FastAPI dependency injection (db sessions, OpenAI client, auth)
 
@@ -88,6 +88,7 @@ Key patterns:
 3. Backend uses `VercelAIAdapter.dispatch_request()` to parse the request and execute the chat agent, which decides whether to call `search_knowledge_base` for RAG retrieval (hybrid semantic + keyword search with RRF) or `web_search` for real-time web results, then streams the response
 4. `on_complete` callback extracts web search sources, persists conversation (with RAG/web source metadata) to PostgreSQL, and triggers title generation for new threads
 5. Frontend renders streamed chunks in real-time; on finish, refetches messages from DB for RAG/web source metadata (inline citations on assistant messages become interactive, "View Sources" / "View Web Sources" buttons appear on user messages). Each RAG source includes an `obsidian_url` field (`obsidian://open?vault=...&file=...`) so citation file paths link directly to the original note in Obsidian.
+6. **Conversation-to-knowledge loop**: User clicks "Extract Insights" in the sidebar thread dropdown → `extraction_agent` analyzes the conversation with structured output → user previews/edits the generated Obsidian note → confirms → note is written to `Neurocache Insights/` in the vault and ingested via the existing pipeline (chunk → embed → TSVECTOR). The MCP `save_to_knowledge_base` tool provides the same write-and-ingest flow for external clients (Claude Desktop/Code/Cursor), where the client LLM formats the note directly.
 
 ## Additional Instructions
 

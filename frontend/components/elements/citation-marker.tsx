@@ -23,6 +23,7 @@ const CONTENT_TYPE_LABELS: Record<string, string> = {
   book_note: "Book Note",
   book_source: "Book Source",
   article: "Article",
+  chat_insight: "Chat Insight",
 };
 
 type CitationMarkerProps = {

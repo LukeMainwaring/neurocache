@@ -42,6 +42,12 @@ class BookAnalysisSettings(BaseSettings):
     BOOK_ANALYSIS_MODEL: str = "gpt-5-mini"
 
 
+class ExtractionSettings(BaseSettings):
+    """Conversation-to-knowledge extraction agent configuration."""
+
+    EXTRACTION_MODEL: str = "gpt-5-mini"
+
+
 class ObsidianSettings(BaseSettings):
     """Obsidian vault configuration."""
 
@@ -76,6 +82,7 @@ class Settings(
     EmbeddingSettings,
     BaseAgentSettings,
     BookAnalysisSettings,
+    ExtractionSettings,
     PostgresSettings,
     ObsidianSettings,
     Auth0Settings,

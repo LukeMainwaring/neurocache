@@ -19,13 +19,14 @@ from neurocache.mcp.deps import mcp_lifespan
 
 logger = logging.getLogger(__name__)
 
-VALID_CONTENT_TYPES = {"personal_note", "book_note", "book_source", "article"}
+VALID_CONTENT_TYPES = {"personal_note", "book_note", "book_source", "article", "chat_insight"}
 
 CONTENT_TYPE_LABELS: dict[str, str] = {
     "personal_note": "Personal Notes",
     "book_note": "Book Notes",
     "book_source": "Book Sources",
     "article": "Articles",
+    "chat_insight": "Chat Insights",
 }
 
 mcp = FastMCP(
@@ -35,7 +36,9 @@ mcp = FastMCP(
         "book notes, book sources (PDFs), and curated articles. "
         "Use search_knowledge_base to find relevant information by topic, concept, "
         "author name, or book title. Use list_documents to browse what's available. "
-        "Use get_document to read a specific document's full content."
+        "Use get_document to read a specific document's full content. "
+        "Use save_to_knowledge_base to save insights, decisions, or knowledge "
+        "from the current conversation into the vault for future retrieval."
     ),
     lifespan=mcp_lifespan,
 )
@@ -263,3 +266,57 @@ async def list_documents(ctx: Context, content_type: str | None = None) -> str:
 
         total = len(indexed)
         return "\n\n".join(sections) + f"\n\nTotal: {total} indexed documents"
+
+
+@mcp.tool()
+async def save_to_knowledge_base(
+    title: str,
+    content: str,
+    ctx: Context,
+    tags: list[str] | None = None,
+) -> str:
+    """Save insights, decisions, or knowledge to the Obsidian vault.
+
+    Use this when the user asks to save something from the conversation to their
+    knowledge base, or when you identify valuable insights worth preserving.
+    The note will be written to the vault and indexed for future retrieval.
+
+    Write the content in Obsidian-native markdown — use bullet points, bold,
+    headers (##), and [[wiki-links]] to existing notes where relevant.
+
+    Args:
+        title: Concise, descriptive title for the note (3-8 words).
+        content: Markdown body of the note. Write substantive, reference-friendly
+            content — not a transcript, but distilled knowledge.
+        tags: Optional list of lowercase-hyphenated tags (e.g., ["machine-learning", "architecture"]).
+    """
+    from neurocache.dependencies.db import get_async_sqlalchemy_session
+    from neurocache.models.knowledge_source import KnowledgeSource
+    from neurocache.services.extraction import compose_insight_markdown, write_and_ingest_note
+
+    lifespan = _get_lifespan(ctx)
+    user_id = lifespan["user_id"]
+    openai_client = lifespan["openai_client"]
+
+    async with get_async_sqlalchemy_session() as db:
+        sources = await KnowledgeSource.list_for_user(db, user_id)
+        if not sources:
+            return "No knowledge source configured. Add one in the Neurocache settings first."
+
+        knowledge_source_id = sources[0].id
+        vault_path = sources[0].file_path
+        if not vault_path:
+            return "Knowledge source has no file path configured."
+        full_content = compose_insight_markdown(title, content, tags)
+
+        # No Extraction provenance record here — MCP has no thread context.
+        # Notes saved via MCP are tracked only as Documents in the knowledge source.
+        try:
+            relative_path, obsidian_url = await write_and_ingest_note(
+                db, openai_client, knowledge_source_id, title, full_content, vault_path=vault_path
+            )
+        except Exception:
+            logger.exception("Failed to save note to knowledge base")
+            return f"Failed to save note '{title}' to the knowledge base. Check the server logs for details."
+
+        return f"Saved and indexed: {relative_path}\nOpen in Obsidian: {obsidian_url}"

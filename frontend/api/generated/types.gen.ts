@@ -249,7 +249,7 @@ export type BookUploadResponse = {
  *
  * Type of content for tiered knowledge retrieval.
  */
-export type ContentType = 'personal_note' | 'book_note' | 'book_source' | 'article';
+export type ContentType = 'personal_note' | 'book_note' | 'book_source' | 'article' | 'chat_insight';
 
 /**
  * DocumentSchema
@@ -347,6 +347,142 @@ export type DocumentSchema = {
  * Status of a document in the indexing pipeline.
  */
 export type DocumentStatus = 'pending' | 'processing' | 'indexed' | 'error' | 'deleted';
+
+/**
+ * ExtractionConfirmRequest
+ *
+ * User-edited content to save to the vault.
+ */
+export type ExtractionConfirmRequest = {
+    /**
+     * Thread Id
+     */
+    thread_id: string;
+    /**
+     * Title
+     *
+     * Note title (may be edited by user)
+     */
+    title: string;
+    /**
+     * Content
+     *
+     * Full markdown content (may be edited by user)
+     */
+    content: string;
+};
+
+/**
+ * ExtractionPreview
+ *
+ * LLM-generated preview for user review before saving.
+ */
+export type ExtractionPreview = {
+    /**
+     * Thread Id
+     */
+    thread_id: string;
+    /**
+     * Title
+     *
+     * Suggested note title
+     */
+    title: string;
+    /**
+     * Content
+     *
+     * Full Obsidian markdown (with frontmatter)
+     */
+    content: string;
+    /**
+     * Tags
+     *
+     * Suggested Obsidian tags
+     */
+    tags: Array<string>;
+    /**
+     * Wiki Links
+     *
+     * Suggested [[links]] to existing notes
+     */
+    wiki_links: Array<string>;
+};
+
+/**
+ * ExtractionPreviewRequest
+ *
+ * Request to generate an extraction preview from a conversation.
+ */
+export type ExtractionPreviewRequest = {
+    /**
+     * Thread Id
+     *
+     * Thread ID to extract insights from
+     */
+    thread_id: string;
+};
+
+/**
+ * ExtractionResponse
+ *
+ * Result after saving an extraction to the vault.
+ */
+export type ExtractionResponse = {
+    /**
+     * Extraction Id
+     */
+    extraction_id: string;
+    /**
+     * Relative Path
+     *
+     * Path relative to vault root
+     */
+    relative_path: string;
+    /**
+     * Obsidian Url
+     *
+     * Deep link to open in Obsidian
+     */
+    obsidian_url: string;
+};
+
+/**
+ * ExtractionStatusResponse
+ *
+ * Response for checking extraction status of a thread.
+ */
+export type ExtractionStatusResponse = {
+    /**
+     * Extractions
+     */
+    extractions: Array<ExtractionSummary>;
+};
+
+/**
+ * ExtractionSummary
+ *
+ * Summary of a previous extraction for status checking.
+ */
+export type ExtractionSummary = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Document Id
+     */
+    document_id: string;
+    /**
+     * Relative Path
+     *
+     * Path of the created note
+     */
+    relative_path: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
 
 /**
  * HTTPValidationError
@@ -798,6 +934,86 @@ export type StreamChatResponses = {
      */
     200: unknown;
 };
+
+export type PreviewExtractionData = {
+    body: ExtractionPreviewRequest;
+    path?: never;
+    query?: never;
+    url: '/api/extractions/preview';
+};
+
+export type PreviewExtractionErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PreviewExtractionError = PreviewExtractionErrors[keyof PreviewExtractionErrors];
+
+export type PreviewExtractionResponses = {
+    /**
+     * Successful Response
+     */
+    200: ExtractionPreview;
+};
+
+export type PreviewExtractionResponse = PreviewExtractionResponses[keyof PreviewExtractionResponses];
+
+export type ConfirmExtractionData = {
+    body: ExtractionConfirmRequest;
+    path?: never;
+    query?: never;
+    url: '/api/extractions/confirm';
+};
+
+export type ConfirmExtractionErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ConfirmExtractionError = ConfirmExtractionErrors[keyof ConfirmExtractionErrors];
+
+export type ConfirmExtractionResponses = {
+    /**
+     * Successful Response
+     */
+    200: ExtractionResponse;
+};
+
+export type ConfirmExtractionResponse = ConfirmExtractionResponses[keyof ConfirmExtractionResponses];
+
+export type GetExtractionStatusData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Thread Id
+         */
+        thread_id: string;
+    };
+    url: '/api/extractions';
+};
+
+export type GetExtractionStatusErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetExtractionStatusError = GetExtractionStatusErrors[keyof GetExtractionStatusErrors];
+
+export type GetExtractionStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: ExtractionStatusResponse;
+};
+
+export type GetExtractionStatusResponse = GetExtractionStatusResponses[keyof GetExtractionStatusResponses];
 
 export type DbHealthCheckData = {
     body?: never;

@@ -130,12 +130,16 @@ def detect_content_type(frontmatter: dict[str, str], relative_path: str, is_pdf:
         return ContentType.BOOK_NOTE
     elif fm_type == "article":
         return ContentType.ARTICLE
+    elif fm_type == "chat_insight":
+        return ContentType.CHAT_INSIGHT
 
     # Path-based detection as fallback
     if in_books_dir:
         return ContentType.BOOK_NOTE
     elif relative_path.startswith("Articles/"):
         return ContentType.ARTICLE
+    elif relative_path.startswith("Neurocache Insights/"):
+        return ContentType.CHAT_INSIGHT
 
     return ContentType.PERSONAL_NOTE
 
@@ -341,6 +345,7 @@ async def ingest_document(
     openai_client: AsyncOpenAI,
     knowledge_source_id: uuid.UUID,
     relative_path: str,
+    vault_path: str = VAULT_MOUNT_PATH,
 ) -> Document:
     """Ingest a single document from a knowledge source.
 
@@ -351,6 +356,7 @@ async def ingest_document(
         openai_client: OpenAI client for embeddings
         knowledge_source_id: The knowledge source this document belongs to
         relative_path: Path relative to the knowledge source root (e.g., "Brain Dump.md")
+        vault_path: Root path of the vault (default: /vault container mount)
 
     Returns:
         The created Document record
@@ -359,7 +365,7 @@ async def ingest_document(
         FileNotFoundError: If the file doesn't exist
         ValueError: If the file is empty
     """
-    file_path = Path(VAULT_MOUNT_PATH) / relative_path
+    file_path = Path(vault_path) / relative_path
 
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")

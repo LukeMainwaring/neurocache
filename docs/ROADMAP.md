@@ -6,10 +6,6 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 ## Next Up
 
-### Conversation-to-Knowledge Pipeline
-
-After each conversation, extract key facts, decisions, and insights. Propose them as new Obsidian notes or additions to existing notes. Subsumes note write-back — the agent gains tools to create and append to notes in the vault. The full loop: read → chat → write → read. This creates a genuine growth loop where using the app makes it smarter.
-
 ### Temporal Knowledge Tracking + Memory Layer
 
 Track how thinking evolves over time. Surface when you first encountered an idea and how your understanding shifted across notes. No commercial tool does this — genuinely unique. Build a memory layer that extracts and timestamps facts from conversations and notes, enabling queries like "when did I first explore this idea?" and "how has my thinking changed?" Technology choice (Mem0, custom pipeline, or alternatives) to be determined after research.

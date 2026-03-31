@@ -48,6 +48,7 @@ def _content_type_label(content_type: str | None) -> str:
         ContentType.BOOK_NOTE.value: "Book Note",
         ContentType.BOOK_SOURCE.value: "Book Source",
         ContentType.ARTICLE.value: "Article",
+        ContentType.CHAT_INSIGHT.value: "Chat Insight",
     }
     return labels.get(content_type, "Note") if content_type else "Note"
 

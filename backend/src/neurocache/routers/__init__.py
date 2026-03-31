@@ -1,4 +1,5 @@
 from .chat_agent import chat_router as chat_router
+from .extraction import extraction_router as extraction_router
 from .health import health_router as health_router
 from .knowledge_source import knowledge_source_router as knowledge_source_router
 from .thread import thread_router as thread_router
