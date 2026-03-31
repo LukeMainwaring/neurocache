@@ -1,5 +1,6 @@
 "use client";
 
+import { ExternalLink } from "lucide-react";
 import { Tooltip as TooltipPrimitive } from "radix-ui";
 import { useState } from "react";
 import type { RAGSource } from "@/lib/types";
@@ -75,7 +76,19 @@ export function CitationMarker({ number, source }: CitationMarkerProps) {
               <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 font-medium text-primary text-xs">
                 [{number}]
               </span>
-              <span className="break-all font-mono text-sm">{source.path}</span>
+              {source.obsidian_url ? (
+                <a
+                  href={source.obsidian_url}
+                  className="inline-flex items-center gap-1.5 break-all font-mono text-sm text-primary underline-offset-2 hover:underline"
+                >
+                  {source.path}
+                  <ExternalLink className="size-3.5 shrink-0" />
+                </a>
+              ) : (
+                <span className="break-all font-mono text-sm">
+                  {source.path}
+                </span>
+              )}
             </DialogTitle>
             <DialogDescription>
               {typeLabel} &middot; {matchPct}% match

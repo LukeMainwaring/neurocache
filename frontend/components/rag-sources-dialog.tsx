@@ -1,5 +1,6 @@
 "use client";
 
+import { ExternalLink } from "lucide-react";
 import type { ReactNode } from "react";
 import type { RAGSource } from "@/lib/types";
 import {
@@ -39,9 +40,19 @@ export function RAGSourcesDialog({ sources, trigger }: RAGSourcesDialogProps) {
                   <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 font-medium text-primary text-xs">
                     [{source.source_number ?? index + 1}]
                   </span>
-                  <span className="line-clamp-2 break-all font-mono text-foreground text-sm">
-                    {source.path}
-                  </span>
+                  {source.obsidian_url ? (
+                    <a
+                      href={source.obsidian_url}
+                      className="line-clamp-2 inline-flex items-center gap-1.5 break-all font-mono text-sm text-primary underline-offset-2 hover:underline"
+                    >
+                      {source.path}
+                      <ExternalLink className="size-3.5 shrink-0" />
+                    </a>
+                  ) : (
+                    <span className="line-clamp-2 break-all font-mono text-foreground text-sm">
+                      {source.path}
+                    </span>
+                  )}
                 </div>
                 <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-muted-foreground text-xs">
                   {Math.round(source.similarity * 100)}% match

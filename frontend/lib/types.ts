@@ -10,6 +10,7 @@ export type RAGSource = {
   author?: string;
   content_type?: string;
   source_number?: number;
+  obsidian_url?: string;
 };
 
 export type WebSource = {
