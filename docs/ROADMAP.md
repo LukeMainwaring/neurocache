@@ -4,22 +4,19 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 **Strategic moat:** Neurocache's value over commercial tools (Claude Desktop, ChatGPT) is depth of integration with YOUR knowledge — your entire vault as always-on context, structured retrieval with provenance, agent tool use against your data, and a portable knowledge API via MCP. Every feature is evaluated against this.
 
-## Next Up: Enhanced Retrieval
+## Next Up
 
-Build on RAG foundation for richer knowledge interactions.
+### Obsidian Deep Links in Citations
+
+Make inline citations link directly to notes via `obsidian://open?vault=...&file=...`. The vault name is already in config. Small effort, high UX payoff — turns source attribution from decorative to actionable.
 
 ### Cross-Reference Discovery
 
-Surface connections across notes during conversation.
-
-- "Related notes" suggestions based on conversation context
-- Concept linking across different sources
-- Leverage Obsidian's `[[wiki-links]]` for explicit connections
+Surface connections across notes during conversation. Parse Obsidian `[[wiki-links]]` during ingestion, store as edges, and retrieve linked notes alongside semantic matches. Combine explicit links with embedding proximity for "related notes."
 
 ### Advanced Retrieval
 
-- Re-ranking retrieved results
-- Query expansion/reformulation
+Re-ranking retrieved results, query expansion/reformulation.
 
 ---
 
@@ -38,10 +35,6 @@ Track how thinking evolves over time. Surface when you first encountered an idea
 ### Knowledge Gap Detection
 
 Analyze the vault for topics referenced frequently but never deeply explored. "You mention 'reinforcement learning' in 8 notes but have no dedicated material on it." Turns passive retrieval into active learning guidance.
-
-### Obsidian Deep Links in Citations
-
-Make inline citations link directly to notes via `obsidian://open?vault=...&file=...`. The vault name is already in config. Small effort, high UX payoff.
 
 ---
 
