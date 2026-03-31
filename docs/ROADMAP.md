@@ -6,10 +6,6 @@ A personal "second brain" AI chat application. This roadmap focuses on what matt
 
 ## Next Up
 
-### Obsidian Deep Links in Citations
-
-Make inline citations link directly to notes via `obsidian://open?vault=...&file=...`. The vault name is already in config. Small effort, high UX payoff — turns source attribution from decorative to actionable.
-
 ### Conversation-to-Knowledge Pipeline
 
 After each conversation, extract key facts, decisions, and insights. Propose them as new Obsidian notes or additions to existing notes. Subsumes note write-back — the agent gains tools to create and append to notes in the vault. The full loop: read → chat → write → read. This creates a genuine growth loop where using the app makes it smarter.

@@ -6,10 +6,13 @@ retrieved chunks into context strings and source metadata.
 """
 
 import logging
+from pathlib import Path
+from urllib.parse import quote
 
 from pydantic_ai import RunContext
 
 from neurocache.agents.deps import AgentDeps
+from neurocache.core.config import get_settings
 from neurocache.models.document_chunk import DocumentChunk
 from neurocache.schemas.knowledge_source.document import ContentType
 from neurocache.services.knowledge_source.retrieval import search_hybrid_for_user
@@ -17,10 +20,25 @@ from neurocache.utils.message_serialization import RAGSource
 
 logger = logging.getLogger(__name__)
 
+config = get_settings()
 
 # ============================================================================
 # RAG Context Formatting (moved from chat_agent.py)
 # ============================================================================
+
+
+def build_obsidian_url(file_path: str) -> str:
+    """Build an obsidian://open URI for a file in the vault.
+
+    The vault name is derived from the vault directory name on disk (which is
+    what Obsidian uses), not the app's display name. Markdown files have their
+    ``.md`` extension stripped per Obsidian's URI convention.
+    """
+    vault_path = config.OBSIDIAN_VAULT_PATH
+    vault_name = Path(vault_path).name if vault_path else config.OBSIDIAN_VAULT_NAME
+    if file_path.endswith(".md"):
+        file_path = file_path[:-3]
+    return f"obsidian://open?vault={quote(vault_name, safe='')}&file={quote(file_path, safe='')}"
 
 
 def _content_type_label(content_type: str | None) -> str:
@@ -101,6 +119,8 @@ def format_rag_context(
             "content": chunk.content,
             "source_number": source_number,
         }
+        if doc:
+            source["obsidian_url"] = build_obsidian_url(source_path)
         if content_type:
             source["content_type"] = content_type
         if section_header:
