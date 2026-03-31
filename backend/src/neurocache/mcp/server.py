@@ -309,11 +309,12 @@ async def save_to_knowledge_base(
             return "Knowledge source has no file path configured."
         full_content = compose_insight_markdown(title, content, tags)
 
+        # No Extraction provenance record here — MCP has no thread context.
+        # Notes saved via MCP are tracked only as Documents in the knowledge source.
         try:
             relative_path, obsidian_url = await write_and_ingest_note(
                 db, openai_client, knowledge_source_id, title, full_content, vault_path=vault_path
             )
-            await db.commit()
         except Exception:
             logger.exception("Failed to save note to knowledge base")
             return f"Failed to save note '{title}' to the knowledge base. Check the server logs for details."

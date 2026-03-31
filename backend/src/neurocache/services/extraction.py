@@ -111,8 +111,10 @@ tags:
 
 def _sanitize_filename(title: str) -> str:
     """Sanitize a title for use as a filename."""
+    # Strip control characters and null bytes
+    sanitized = re.sub(r"[\x00-\x1f\x7f]", "", title)
     # Replace characters invalid in filenames
-    sanitized = re.sub(r'[<>:"/\\|?*]', "-", title)
+    sanitized = re.sub(r'[<>:"/\\|?*]', "-", sanitized)
     # Collapse multiple dashes/spaces
     sanitized = re.sub(r"-{2,}", "-", sanitized)
     sanitized = sanitized.strip(" -.")
@@ -133,24 +135,28 @@ def _resolve_filename(title: str, vault_path: str = VAULT_MOUNT_PATH) -> tuple[s
     vault = Path(vault_path)
     expected_parent = (vault / INSIGHTS_DIR).resolve()
     base_name = _sanitize_filename(title)
-    relative = f"{INSIGHTS_DIR}/{base_name}.md"
-    absolute = vault / relative
 
-    # Path traversal guard — ensure resolved path stays within insights dir
-    if not absolute.resolve().parent == expected_parent:
-        msg = f"Filename resolves outside vault: {title}"
-        raise ValueError(msg)
+    def _check_and_return(rel: str) -> tuple[str, Path] | None:
+        abs_path = vault / rel
+        # Path traversal guard — ensure resolved path stays within insights dir
+        if abs_path.resolve().parent != expected_parent:
+            msg = f"Filename resolves outside vault: {title}"
+            raise ValueError(msg)
+        if not abs_path.exists():
+            return rel, abs_path
+        return None
 
-    if not absolute.exists():
-        return relative, absolute
+    # Try base name first
+    result = _check_and_return(f"{INSIGHTS_DIR}/{base_name}.md")
+    if result:
+        return result
 
     # Append incrementing suffix on collision
     counter = 2
     while True:
-        relative = f"{INSIGHTS_DIR}/{base_name}-{counter}.md"
-        absolute = vault / relative
-        if not absolute.exists():
-            return relative, absolute
+        result = _check_and_return(f"{INSIGHTS_DIR}/{base_name}-{counter}.md")
+        if result:
+            return result
         counter += 1
 
 
