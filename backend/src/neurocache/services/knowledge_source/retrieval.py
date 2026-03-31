@@ -21,6 +21,7 @@ HYBRID_CANDIDATE_MULTIPLIER = 2  # Fetch 2x candidates per method before fusion
 CONTENT_TYPE_BOOSTS: dict[str, float] = {
     ContentType.PERSONAL_NOTE.value: 1.04,  # 4% boost - user's own thoughts
     ContentType.BOOK_NOTE.value: 1.02,  # 2% boost - user's book summaries
+    ContentType.CHAT_INSIGHT.value: 1.03,  # 3% boost - AI-extracted conversation insights
     ContentType.ARTICLE.value: 1.01,  # 1% boost - curated articles
     ContentType.BOOK_SOURCE.value: 1.00,  # baseline - raw PDF content
 }

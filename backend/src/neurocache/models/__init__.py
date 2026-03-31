@@ -3,6 +3,7 @@
 from .base import Base
 from .document import Document
 from .document_chunk import DocumentChunk
+from .extraction import Extraction
 from .knowledge_source import KnowledgeSource
 from .message import Message
 from .thread import Thread
@@ -16,4 +17,5 @@ __all__ = [
     "KnowledgeSource",
     "Document",
     "DocumentChunk",
+    "Extraction",
 ]

@@ -28,6 +28,7 @@ class ContentType(StrEnum):
     BOOK_NOTE = "book_note"
     BOOK_SOURCE = "book_source"
     ARTICLE = "article"
+    CHAT_INSIGHT = "chat_insight"
 
 
 class DocumentSchema(BaseSchema):

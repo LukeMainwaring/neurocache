@@ -1,3 +1,4 @@
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { memo, useEffect, useRef, useState } from "react";
 import type { Chat } from "@/lib/types";
@@ -21,6 +22,7 @@ const PureChatItem = ({
   isRenaming,
   onCancelRename,
   onDelete,
+  onExtract,
   onRename,
   onStartRename,
   setOpenMobile,
@@ -30,6 +32,7 @@ const PureChatItem = ({
   isRenaming: boolean;
   onCancelRename: () => void;
   onDelete: (chatId: string) => void;
+  onExtract: (chatId: string) => void;
   onRename: (chatId: string, title: string) => void;
   onStartRename: (chatId: string) => void;
   setOpenMobile: (open: boolean) => void;
@@ -105,6 +108,13 @@ const PureChatItem = ({
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" side="bottom">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onSelect={() => onExtract(chat.id)}
+            >
+              <Sparkles className="size-4" />
+              <span>Extract Insights</span>
+            </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer"
               onSelect={() => onStartRename(chat.id)}

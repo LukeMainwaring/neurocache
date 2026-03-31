@@ -4,8 +4,8 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
-import { activateMyself, createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listBooks, listKnowledgeSources, listThreads, listUsers, type Options, previewBookPdf, renameThread, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization, uploadBookPdf } from '../sdk.gen';
-import type { ActivateMyselfData, ActivateMyselfError, ActivateMyselfResponse, CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListBooksData, ListBooksError, ListBooksResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, PreviewBookPdfData, PreviewBookPdfError, PreviewBookPdfResponse, RenameThreadData, RenameThreadError, RenameThreadResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse, UploadBookPdfData, UploadBookPdfError, UploadBookPdfResponse } from '../types.gen';
+import { activateMyself, confirmExtraction, createKnowledgeSource, dbHealthCheck, deleteKnowledgeSource, deleteThread, getExtractionStatus, getKnowledgeSource, getKnowledgeSourceDefaults, getMyself, getThreadMessages, ingestAllDocuments, ingestDocument, listBooks, listKnowledgeSources, listThreads, listUsers, type Options, previewBookPdf, previewExtraction, renameThread, retryKnowledgeSource, streamChat, updateKnowledgeSource, updateMyPersonalization, uploadBookPdf } from '../sdk.gen';
+import type { ActivateMyselfData, ActivateMyselfError, ActivateMyselfResponse, ConfirmExtractionData, ConfirmExtractionError, ConfirmExtractionResponse, CreateKnowledgeSourceData, CreateKnowledgeSourceError, CreateKnowledgeSourceResponse, DbHealthCheckData, DbHealthCheckResponse, DeleteKnowledgeSourceData, DeleteKnowledgeSourceError, DeleteThreadData, DeleteThreadError, DeleteThreadResponse, GetExtractionStatusData, GetExtractionStatusError, GetExtractionStatusResponse, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponse, GetKnowledgeSourceError, GetKnowledgeSourceResponse, GetMyselfData, GetMyselfResponse, GetThreadMessagesData, GetThreadMessagesError, GetThreadMessagesResponse, IngestAllDocumentsData, IngestAllDocumentsError, IngestAllDocumentsResponse, IngestDocumentData, IngestDocumentError, IngestDocumentResponse, ListBooksData, ListBooksError, ListBooksResponse, ListKnowledgeSourcesData, ListKnowledgeSourcesResponse, ListThreadsData, ListThreadsResponse, ListUsersData, ListUsersResponse, PreviewBookPdfData, PreviewBookPdfError, PreviewBookPdfResponse, PreviewExtractionData, PreviewExtractionError, PreviewExtractionResponse, RenameThreadData, RenameThreadError, RenameThreadResponse, RetryKnowledgeSourceData, RetryKnowledgeSourceError, RetryKnowledgeSourceResponse, StreamChatData, UpdateKnowledgeSourceData, UpdateKnowledgeSourceError, UpdateKnowledgeSourceResponse, UpdateMyPersonalizationData, UpdateMyPersonalizationError, UpdateMyPersonalizationResponse, UploadBookPdfData, UploadBookPdfError, UploadBookPdfResponse } from '../types.gen';
 
 /**
  * Stream Chat
@@ -19,6 +19,50 @@ export const streamChatMutation = (options?: Partial<Options<StreamChatData>>): 
     const mutationOptions: UseMutationOptions<unknown, AxiosError<DefaultError>, Options<StreamChatData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await streamChat({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Preview Extraction
+ *
+ * Generate an extraction preview from a conversation.
+ *
+ * Runs the extraction agent to analyze the thread and produce
+ * a structured Obsidian note for user review.
+ */
+export const previewExtractionMutation = (options?: Partial<Options<PreviewExtractionData>>): UseMutationOptions<PreviewExtractionResponse, AxiosError<PreviewExtractionError>, Options<PreviewExtractionData>> => {
+    const mutationOptions: UseMutationOptions<PreviewExtractionResponse, AxiosError<PreviewExtractionError>, Options<PreviewExtractionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await previewExtraction({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Confirm Extraction
+ *
+ * Save an extraction to the vault.
+ *
+ * Writes the markdown file, runs ingestion (chunk, embed, index),
+ * and creates a provenance record.
+ */
+export const confirmExtractionMutation = (options?: Partial<Options<ConfirmExtractionData>>): UseMutationOptions<ConfirmExtractionResponse, AxiosError<ConfirmExtractionError>, Options<ConfirmExtractionData>> => {
+    const mutationOptions: UseMutationOptions<ConfirmExtractionResponse, AxiosError<ConfirmExtractionError>, Options<ConfirmExtractionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await confirmExtraction({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -61,6 +105,26 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
     }
     return [params];
 };
+
+export const getExtractionStatusQueryKey = (options: Options<GetExtractionStatusData>) => createQueryKey('getExtractionStatus', options);
+
+/**
+ * Get Extraction Status
+ *
+ * Check if a thread has been extracted.
+ */
+export const getExtractionStatusOptions = (options: Options<GetExtractionStatusData>) => queryOptions<GetExtractionStatusResponse, AxiosError<GetExtractionStatusError>, GetExtractionStatusResponse, ReturnType<typeof getExtractionStatusQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getExtractionStatus({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getExtractionStatusQueryKey(options)
+});
 
 export const dbHealthCheckQueryKey = (options?: Options<DbHealthCheckData>) => createQueryKey('dbHealthCheck', options);
 

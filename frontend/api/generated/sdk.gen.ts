@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { ActivateMyselfData, ActivateMyselfErrors, ActivateMyselfResponses, CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListBooksData, ListBooksErrors, ListBooksResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, PreviewBookPdfData, PreviewBookPdfErrors, PreviewBookPdfResponses, RenameThreadData, RenameThreadErrors, RenameThreadResponses, RetryKnowledgeSourceData, RetryKnowledgeSourceErrors, RetryKnowledgeSourceResponses, StreamChatData, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses, UploadBookPdfData, UploadBookPdfErrors, UploadBookPdfResponses } from './types.gen';
+import type { ActivateMyselfData, ActivateMyselfErrors, ActivateMyselfResponses, ConfirmExtractionData, ConfirmExtractionErrors, ConfirmExtractionResponses, CreateKnowledgeSourceData, CreateKnowledgeSourceErrors, CreateKnowledgeSourceResponses, DbHealthCheckData, DbHealthCheckResponses, DeleteKnowledgeSourceData, DeleteKnowledgeSourceErrors, DeleteKnowledgeSourceResponses, DeleteThreadData, DeleteThreadErrors, DeleteThreadResponses, GetExtractionStatusData, GetExtractionStatusErrors, GetExtractionStatusResponses, GetKnowledgeSourceData, GetKnowledgeSourceDefaultsData, GetKnowledgeSourceDefaultsResponses, GetKnowledgeSourceErrors, GetKnowledgeSourceResponses, GetMyselfData, GetMyselfResponses, GetThreadMessagesData, GetThreadMessagesErrors, GetThreadMessagesResponses, IngestAllDocumentsData, IngestAllDocumentsErrors, IngestAllDocumentsResponses, IngestDocumentData, IngestDocumentErrors, IngestDocumentResponses, ListBooksData, ListBooksErrors, ListBooksResponses, ListKnowledgeSourcesData, ListKnowledgeSourcesResponses, ListThreadsData, ListThreadsResponses, ListUsersData, ListUsersResponses, PreviewBookPdfData, PreviewBookPdfErrors, PreviewBookPdfResponses, PreviewExtractionData, PreviewExtractionErrors, PreviewExtractionResponses, RenameThreadData, RenameThreadErrors, RenameThreadResponses, RetryKnowledgeSourceData, RetryKnowledgeSourceErrors, RetryKnowledgeSourceResponses, StreamChatData, StreamChatResponses, UpdateKnowledgeSourceData, UpdateKnowledgeSourceErrors, UpdateKnowledgeSourceResponses, UpdateMyPersonalizationData, UpdateMyPersonalizationErrors, UpdateMyPersonalizationResponses, UploadBookPdfData, UploadBookPdfErrors, UploadBookPdfResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -29,6 +29,53 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 export const streamChat = <ThrowOnError extends boolean = false>(options?: Options<StreamChatData, ThrowOnError>) => (options?.client ?? client).post<StreamChatResponses, unknown, ThrowOnError>({
     responseType: 'json',
     url: '/api/chat/stream',
+    ...options
+});
+
+/**
+ * Preview Extraction
+ *
+ * Generate an extraction preview from a conversation.
+ *
+ * Runs the extraction agent to analyze the thread and produce
+ * a structured Obsidian note for user review.
+ */
+export const previewExtraction = <ThrowOnError extends boolean = false>(options: Options<PreviewExtractionData, ThrowOnError>) => (options.client ?? client).post<PreviewExtractionResponses, PreviewExtractionErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/extractions/preview',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Confirm Extraction
+ *
+ * Save an extraction to the vault.
+ *
+ * Writes the markdown file, runs ingestion (chunk, embed, index),
+ * and creates a provenance record.
+ */
+export const confirmExtraction = <ThrowOnError extends boolean = false>(options: Options<ConfirmExtractionData, ThrowOnError>) => (options.client ?? client).post<ConfirmExtractionResponses, ConfirmExtractionErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/extractions/confirm',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Extraction Status
+ *
+ * Check if a thread has been extracted.
+ */
+export const getExtractionStatus = <ThrowOnError extends boolean = false>(options: Options<GetExtractionStatusData, ThrowOnError>) => (options.client ?? client).get<GetExtractionStatusResponses, GetExtractionStatusErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/extractions',
     ...options
 });
 

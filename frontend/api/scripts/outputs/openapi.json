@@ -25,6 +25,133 @@
         }
       }
     },
+    "/api/extractions/preview": {
+      "post": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Preview Extraction",
+        "description": "Generate an extraction preview from a conversation.\n\nRuns the extraction agent to analyze the thread and produce\na structured Obsidian note for user review.",
+        "operationId": "previewExtraction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtractionPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionPreview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extractions/confirm": {
+      "post": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Confirm Extraction",
+        "description": "Save an extraction to the vault.\n\nWrites the markdown file, runs ingestion (chunk, embed, index),\nand creates a provenance record.",
+        "operationId": "confirmExtraction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtractionConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extractions": {
+      "get": {
+        "tags": [
+          "extractions"
+        ],
+        "summary": "Get Extraction Status",
+        "description": "Check if a thread has been extracted.",
+        "operationId": "getExtractionStatus",
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health/db": {
       "get": {
         "tags": [
@@ -1169,7 +1296,8 @@
           "personal_note",
           "book_note",
           "book_source",
-          "article"
+          "article",
+          "chat_insight"
         ],
         "title": "ContentType",
         "description": "Type of content for tiered knowledge retrieval."
@@ -1313,6 +1441,168 @@
         ],
         "title": "DocumentStatus",
         "description": "Status of a document in the indexing pipeline."
+      },
+      "ExtractionConfirmRequest": {
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Note title (may be edited by user)"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Full markdown content (may be edited by user)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "thread_id",
+          "title",
+          "content"
+        ],
+        "title": "ExtractionConfirmRequest",
+        "description": "User-edited content to save to the vault."
+      },
+      "ExtractionPreview": {
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Suggested note title"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Full Obsidian markdown (with frontmatter)"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Suggested Obsidian tags"
+          },
+          "wiki_links": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Wiki Links",
+            "description": "Suggested [[links]] to existing notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "thread_id",
+          "title",
+          "content",
+          "tags",
+          "wiki_links"
+        ],
+        "title": "ExtractionPreview",
+        "description": "LLM-generated preview for user review before saving."
+      },
+      "ExtractionPreviewRequest": {
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id",
+            "description": "Thread ID to extract insights from"
+          }
+        },
+        "type": "object",
+        "required": [
+          "thread_id"
+        ],
+        "title": "ExtractionPreviewRequest",
+        "description": "Request to generate an extraction preview from a conversation."
+      },
+      "ExtractionResponse": {
+        "properties": {
+          "extraction_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Extraction Id"
+          },
+          "relative_path": {
+            "type": "string",
+            "title": "Relative Path",
+            "description": "Path relative to vault root"
+          },
+          "obsidian_url": {
+            "type": "string",
+            "title": "Obsidian Url",
+            "description": "Deep link to open in Obsidian"
+          }
+        },
+        "type": "object",
+        "required": [
+          "extraction_id",
+          "relative_path",
+          "obsidian_url"
+        ],
+        "title": "ExtractionResponse",
+        "description": "Result after saving an extraction to the vault."
+      },
+      "ExtractionStatusResponse": {
+        "properties": {
+          "extractions": {
+            "items": {
+              "$ref": "#/components/schemas/ExtractionSummary"
+            },
+            "type": "array",
+            "title": "Extractions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "extractions"
+        ],
+        "title": "ExtractionStatusResponse",
+        "description": "Response for checking extraction status of a thread."
+      },
+      "ExtractionSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "relative_path": {
+            "type": "string",
+            "title": "Relative Path",
+            "description": "Path of the created note"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "document_id",
+          "relative_path",
+          "created_at"
+        ],
+        "title": "ExtractionSummary",
+        "description": "Summary of a previous extraction for status checking."
       },
       "HTTPValidationError": {
         "properties": {

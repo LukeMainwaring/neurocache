@@ -130,12 +130,16 @@ def detect_content_type(frontmatter: dict[str, str], relative_path: str, is_pdf:
         return ContentType.BOOK_NOTE
     elif fm_type == "article":
         return ContentType.ARTICLE
+    elif fm_type == "chat_insight":
+        return ContentType.CHAT_INSIGHT
 
     # Path-based detection as fallback
     if in_books_dir:
         return ContentType.BOOK_NOTE
     elif relative_path.startswith("Articles/"):
         return ContentType.ARTICLE
+    elif relative_path.startswith("Neurocache Insights/"):
+        return ContentType.CHAT_INSIGHT
 
     return ContentType.PERSONAL_NOTE
 
