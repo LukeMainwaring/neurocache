@@ -11,19 +11,12 @@ has fully started.
 """
 
 import logging
-import sys
 from typing import Any
 
 from fastmcp import Context, FastMCP
 
 from neurocache.mcp.deps import mcp_lifespan
 
-# Log to stderr (stdout is reserved for MCP stdio protocol)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    stream=sys.stderr,
-)
 logger = logging.getLogger(__name__)
 
 VALID_CONTENT_TYPES = {"personal_note", "book_note", "book_source", "article"}
