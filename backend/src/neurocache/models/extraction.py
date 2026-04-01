@@ -1,5 +1,3 @@
-"""SQLAlchemy model for Extraction (conversation-to-knowledge provenance tracking)."""
-
 from __future__ import annotations
 
 import uuid
@@ -38,7 +36,6 @@ class Extraction(Base):
         thread_id: str,
         agent_type: str,
     ) -> list[Extraction]:
-        """Get all extractions for a thread."""
         result = await db.execute(
             select(cls).where(cls.thread_id == thread_id, cls.agent_type == agent_type).order_by(cls.created_at.desc())
         )
@@ -51,11 +48,7 @@ class Extraction(Base):
         thread_id: str,
         agent_type: str,
     ) -> list[Row[tuple[Extraction, str]]]:
-        """Get all extractions for a thread with document relative paths.
-
-        Returns:
-            List of (Extraction, relative_path) rows, ordered by most recent first.
-        """
+        """Returns (Extraction, relative_path) rows, ordered by most recent first."""
         result = await db.execute(
             select(cls, Document.relative_path)
             .join(Document, cls.document_id == Document.id)
@@ -74,7 +67,6 @@ class Extraction(Base):
         knowledge_source_id: uuid.UUID,
         document_id: uuid.UUID,
     ) -> Extraction:
-        """Create a new extraction record."""
         extraction = cls(
             thread_id=thread_id,
             agent_type=agent_type,

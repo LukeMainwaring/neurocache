@@ -1,5 +1,3 @@
-"""Message model for conversation persistence."""
-
 from datetime import datetime
 from typing import Any
 
@@ -12,8 +10,6 @@ from neurocache.models.base import Base
 
 
 class Message(Base):
-    """Message model representing a single message in conversation history."""
-
     __tablename__ = "messages"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -32,16 +28,6 @@ class Message(Base):
 
     @classmethod
     async def get_history(cls, db: AsyncSession, thread_id: str, agent_type: str) -> list[dict[str, Any]]:
-        """Get all messages for a thread in chronological order.
-
-        Args:
-            db: Database session
-            thread_id: Thread identifier
-            agent_type: Agent type
-
-        Returns:
-            List of message data dictionaries in chronological order
-        """
         result = await db.execute(
             select(cls.message_data)
             .where(cls.thread_id == thread_id, cls.agent_type == agent_type)
@@ -53,17 +39,7 @@ class Message(Base):
     async def save_history(
         cls, db: AsyncSession, thread_id: str, agent_type: str, messages: list[dict[str, Any]]
     ) -> None:
-        """Append new messages to thread history.
-
-        This uses an append-only approach that only inserts messages that don't
-        already exist in the database, preserving original timestamps and IDs.
-
-        Args:
-            db: Database session
-            thread_id: Thread identifier
-            agent_type: Agent type
-            messages: Complete list of messages (existing + new)
-        """
+        """Append-only: only inserts messages past the existing count, preserving original timestamps and IDs."""
         # Get current message count for this thread
         result = await db.execute(
             select(func.count(cls.id)).where(cls.thread_id == thread_id, cls.agent_type == agent_type)

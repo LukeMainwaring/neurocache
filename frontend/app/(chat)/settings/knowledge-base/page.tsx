@@ -42,7 +42,6 @@ export default function KnowledgeBasePage() {
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
 
-  // Form state
   const [name, setName] = useState("");
   const [filePath, setFilePath] = useState("");
 

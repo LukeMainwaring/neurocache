@@ -1,8 +1,3 @@
-"""Extraction service for conversation-to-knowledge pipeline.
-
-Provides preview (LLM extraction) and save (vault write + ingestion) operations.
-"""
-
 import logging
 import re
 import uuid
@@ -38,7 +33,6 @@ INSIGHTS_DIR = "Neurocache Insights"
 
 
 def _format_conversation(raw_messages: list[dict[str, Any]]) -> str:
-    """Format stored messages into readable conversation text for the extraction agent."""
     messages = deserialize_messages(raw_messages)
 
     parts: list[str] = []
@@ -57,7 +51,6 @@ def _format_conversation(raw_messages: list[dict[str, Any]]) -> str:
 
 
 async def _get_existing_note_titles(db: AsyncSession, user_id: str) -> list[str]:
-    """Load document titles from the user's knowledge source for wiki-link suggestions."""
     sources = await KnowledgeSource.list_for_user(db, user_id)
     if not sources:
         return []
@@ -81,10 +74,8 @@ async def _get_existing_note_titles(db: AsyncSession, user_id: str) -> list[str]
 
 
 def _compose_obsidian_markdown(output: ExtractionOutput, thread_id: str) -> str:
-    """Compose full Obsidian markdown note from extraction agent output."""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    # Build YAML frontmatter
     tags_yaml = "\n".join(f"  - {tag}" for tag in output.tags)
     frontmatter = f"""---
 type: chat_insight
@@ -94,14 +85,12 @@ tags:
 {tags_yaml}
 ---"""
 
-    # Build note body
     sections: list[str] = [frontmatter, f"# {output.title}", output.summary]
 
     for insight in output.insights:
         sections.append(f"## {insight.heading}")
         sections.append(insight.body)
 
-    # Add related notes section with wiki-links
     if output.wiki_links:
         links = "\n".join(f"- [[{link}]]" for link in output.wiki_links)
         sections.append(f"## Related\n\n{links}")
@@ -110,7 +99,6 @@ tags:
 
 
 def _sanitize_filename(title: str) -> str:
-    """Sanitize a title for use as a filename."""
     # Strip control characters and null bytes
     sanitized = re.sub(r"[\x00-\x1f\x7f]", "", title)
     # Replace characters invalid in filenames
@@ -125,13 +113,7 @@ def _sanitize_filename(title: str) -> str:
 
 
 def _resolve_filename(title: str, vault_path: str = VAULT_MOUNT_PATH) -> tuple[str, Path]:
-    """Resolve a unique filename in the insights directory.
-
-    Returns (relative_path, absolute_path) with collision handling.
-
-    Raises:
-        ValueError: If the resolved path escapes the vault directory.
-    """
+    """Returns (relative_path, absolute_path) with filename collision handling."""
     vault = Path(vault_path)
     expected_parent = (vault / INSIGHTS_DIR).resolve()
     base_name = _sanitize_filename(title)
@@ -171,18 +153,15 @@ async def preview_extraction(
     Runs the extraction agent to analyze the conversation and produce
     structured insight content formatted as an Obsidian note.
     """
-    # Load conversation
     raw_messages = await Message.get_history(db, thread_id, agent_type)
     if not raw_messages:
         raise HTTPException(status_code=404, detail="No messages found for this thread")
 
     conversation_text = _format_conversation(raw_messages)
 
-    # Load existing note titles for wiki-link suggestions
     note_titles = await _get_existing_note_titles(db, user_id)
     titles_context = "\n".join(f"- {t}" for t in note_titles[:200]) if note_titles else "(no existing notes)"
 
-    # Build prompt with conversation + note titles context
     prompt = f"""Analyze this conversation and extract reusable knowledge:
 
 ---
@@ -215,23 +194,7 @@ async def write_and_ingest_note(
     content: str,
     vault_path: str = VAULT_MOUNT_PATH,
 ) -> tuple[str, str]:
-    """Write a markdown note to the vault and ingest it.
-
-    Handles directory creation, filename collision, file write, and ingestion.
-    Cleans up the file if ingestion fails.
-
-    Args:
-        db: Database session
-        openai_client: OpenAI client for embeddings
-        knowledge_source_id: Knowledge source to index under
-        title: Note title (used for filename)
-        content: Full markdown content (with frontmatter)
-        vault_path: Root path of the vault (default: /vault container mount,
-            pass OBSIDIAN_VAULT_PATH for standalone MCP usage)
-
-    Returns:
-        Tuple of (relative_path, obsidian_url)
-    """
+    """Write a markdown note to the vault and ingest it. Cleans up the file if ingestion fails."""
     # Ensure insights directory exists
     insights_dir = Path(vault_path) / INSIGHTS_DIR
     insights_dir.mkdir(parents=True, exist_ok=True)
@@ -319,7 +282,6 @@ async def get_extraction_status(
     thread_id: str,
     agent_type: str,
 ) -> ExtractionStatusResponse:
-    """Get extraction status for a thread."""
     rows = await Extraction.get_by_thread_with_paths(db, thread_id, agent_type)
 
     summaries = [
@@ -336,7 +298,6 @@ async def get_extraction_status(
 
 
 async def get_user_knowledge_source_id(db: AsyncSession, user_id: str) -> uuid.UUID:
-    """Get the user's primary knowledge source ID, raising 400 if none configured."""
     sources = await KnowledgeSource.list_for_user(db, user_id)
     if not sources:
         raise HTTPException(

@@ -1,5 +1,3 @@
-"""SQLAlchemy model for Document."""
-
 from __future__ import annotations
 
 import uuid
@@ -25,15 +23,11 @@ if TYPE_CHECKING:
 
 
 class NoDocumentFound(HTTPException):
-    """Exception raised when a document is not found."""
-
     def __init__(self, detail: str = "Document not found"):
         super().__init__(status_code=404, detail=detail)
 
 
 class Document(Base):
-    """Document model representing an individual file from a KnowledgeSource."""
-
     __tablename__ = "documents"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
@@ -70,15 +64,6 @@ class Document(Base):
         db: AsyncSession,
         knowledge_source_id: uuid.UUID,
     ) -> list[Document]:
-        """Get all documents for a knowledge source.
-
-        Args:
-            db: Database session
-            knowledge_source_id: The knowledge source ID
-
-        Returns:
-            List of all documents for this source
-        """
         result = await db.execute(select(Document).where(Document.knowledge_source_id == knowledge_source_id))
         return list(result.scalars().all())
 
@@ -88,18 +73,7 @@ class Document(Base):
         db: AsyncSession,
         knowledge_source_id: uuid.UUID,
     ) -> list[Document]:
-        """Get all book-related documents for a knowledge source.
-
-        Returns BOOK_NOTE and BOOK_SOURCE documents, ordered by relative_path
-        for consistent subfolder grouping.
-
-        Args:
-            db: Database session
-            knowledge_source_id: The knowledge source ID
-
-        Returns:
-            List of book-related documents
-        """
+        """Returns BOOK_NOTE and BOOK_SOURCE documents, ordered by relative_path for subfolder grouping."""
         result = await db.execute(
             select(Document)
             .where(
@@ -117,16 +91,6 @@ class Document(Base):
         knowledge_source_id: uuid.UUID,
         relative_path: str,
     ) -> Document | None:
-        """Get a document by its knowledge source ID and relative path.
-
-        Args:
-            db: Database session
-            knowledge_source_id: The knowledge source ID
-            relative_path: Path relative to source root
-
-        Returns:
-            Document if exists, None otherwise
-        """
         result = await db.execute(
             select(Document).where(
                 Document.knowledge_source_id == knowledge_source_id,
@@ -141,15 +105,6 @@ class Document(Base):
         db: AsyncSession,
         document_create: DocumentCreateSchema,
     ) -> Document:
-        """Create a new document.
-
-        Args:
-            db: Database session
-            document_create: Document creation schema
-
-        Returns:
-            The created Document instance
-        """
         document = cls(
             **document_create.model_dump(),
         )
@@ -165,16 +120,6 @@ class Document(Base):
         id: uuid.UUID,
         document_update: DocumentUpdateSchema,
     ) -> Document:
-        """Update a document.
-
-        Args:
-            db: Database session
-            id: Document ID
-            document_update: Document update schema
-
-        Returns:
-            The updated Document instance
-        """
         document = await db.get(cls, id)
         if document is None:
             raise NoDocumentFound(f"Document with id {id} not found")
@@ -186,7 +131,6 @@ class Document(Base):
 
     @classmethod
     async def delete(cls, db: AsyncSession, id: uuid.UUID) -> None:
-        """Delete a document."""
         document = await db.get(cls, id)
         if document is None:
             raise NoDocumentFound(f"Document with id {id} not found")

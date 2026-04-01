@@ -1,5 +1,3 @@
-"""SQLAlchemy model for User."""
-
 from datetime import datetime
 
 from fastapi import HTTPException
@@ -12,8 +10,6 @@ from neurocache.schemas.user import UserCreateSchema, UserPersonalizationUpdateS
 
 
 class NoUserFound(HTTPException):
-    """Exception raised when a user is not found."""
-
     def __init__(self, detail: str = "User not found"):
         super().__init__(status_code=404, detail=detail)
 
@@ -36,7 +32,6 @@ class User(Base):
 
     @classmethod
     async def get(cls, db: AsyncSession, id: str) -> UserSchema:
-        """Reads a user by id."""
         user = await db.get(cls, id)
         if user is None:
             raise NoUserFound(f"User with id {id} not found")
@@ -62,7 +57,6 @@ class User(Base):
 
     @classmethod
     async def update_email(cls, db: AsyncSession, id: str, email: str) -> UserSchema:
-        """Update a user's email address."""
         user = await db.get(cls, id)
         if user is None:
             raise NoUserFound(f"User with id {id} not found")
@@ -73,7 +67,6 @@ class User(Base):
 
     @classmethod
     async def activate(cls, db: AsyncSession, id: str, name: str) -> UserSchema:
-        """Activate a user account by setting their display name."""
         user = await db.get(cls, id)
         if user is None:
             raise NoUserFound(f"User with id {id} not found")
@@ -106,7 +99,6 @@ class User(Base):
         id: str,
         personalization: UserPersonalizationUpdateSchema,
     ) -> UserSchema:
-        """Update user personalization settings."""
         user = await db.get(cls, id)
         if user is None:
             raise NoUserFound(f"User with id {id} not found")
@@ -126,6 +118,5 @@ class User(Base):
 
     @classmethod
     async def exists(cls, db: AsyncSession, id: str) -> bool:
-        """Check if a user exists."""
         result = await db.execute(select(exists(cls.id).where(cls.id == id)))
         return result.scalar_one()
