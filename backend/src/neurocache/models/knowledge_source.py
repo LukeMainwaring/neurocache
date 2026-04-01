@@ -1,5 +1,3 @@
-"""SQLAlchemy model for KnowledgeSource."""
-
 import uuid
 from datetime import datetime
 from typing import Any
@@ -20,8 +18,6 @@ from neurocache.schemas.knowledge_source.knowledge_source import (
 
 
 class NoKnowledgeSourceFound(HTTPException):
-    """Exception raised when a knowledge source is not found."""
-
     def __init__(self, detail: str = "Knowledge source not found"):
         super().__init__(status_code=404, detail=detail)
 
@@ -48,7 +44,6 @@ class KnowledgeSource(Base):
 
     @classmethod
     async def get(cls, db: AsyncSession, id: uuid.UUID, user_id: str) -> KnowledgeSourceSchema:
-        """Get a knowledge source by ID for a specific user."""
         source = await db.get(cls, id)
         if source is None or source.user_id != user_id:
             raise NoKnowledgeSourceFound(f"Knowledge source with id {id} not found")
@@ -56,7 +51,6 @@ class KnowledgeSource(Base):
 
     @classmethod
     async def list_for_user(cls, db: AsyncSession, user_id: str) -> list[KnowledgeSourceSchema]:
-        """List all knowledge sources for a user."""
         result = await db.execute(select(cls).where(cls.user_id == user_id).order_by(cls.created_at.desc()))
         sources = result.scalars().all()
         return [KnowledgeSourceSchema.model_validate(source) for source in sources]
@@ -68,7 +62,6 @@ class KnowledgeSource(Base):
         user_id: str,
         source_create: KnowledgeSourceCreateSchema,
     ) -> KnowledgeSourceSchema:
-        """Create a new knowledge source."""
         source = cls(
             user_id=user_id,
             **source_create.model_dump(),
@@ -86,7 +79,6 @@ class KnowledgeSource(Base):
         user_id: str,
         source_update: KnowledgeSourceUpdateSchema,
     ) -> KnowledgeSourceSchema:
-        """Update a knowledge source."""
         source = await db.get(cls, id)
         if source is None or source.user_id != user_id:
             raise NoKnowledgeSourceFound(f"Knowledge source with id {id} not found")
@@ -99,7 +91,6 @@ class KnowledgeSource(Base):
 
     @classmethod
     async def delete(cls, db: AsyncSession, id: uuid.UUID, user_id: str) -> None:
-        """Delete a knowledge source."""
         source = await db.get(cls, id)
         if source is None or source.user_id != user_id:
             raise NoKnowledgeSourceFound(f"Knowledge source with id {id} not found")
@@ -117,7 +108,6 @@ class KnowledgeSource(Base):
         config: dict[str, Any] | None = None,
         last_synced_at: datetime | None = None,
     ) -> KnowledgeSourceSchema:
-        """Update the status of a knowledge source."""
         source = await db.get(cls, id)
         if source is None or source.user_id != user_id:
             raise NoKnowledgeSourceFound(f"Knowledge source with id {id} not found")

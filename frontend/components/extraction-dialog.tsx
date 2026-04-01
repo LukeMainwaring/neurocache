@@ -105,7 +105,6 @@ export function ExtractionDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-2xl flex flex-col">
-        {/* Loading state */}
         {state === "loading" && (
           <>
             <DialogHeader>
@@ -123,7 +122,6 @@ export function ExtractionDialog({
           </>
         )}
 
-        {/* Empty state */}
         {state === "empty" && (
           <>
             <DialogHeader>
@@ -143,7 +141,6 @@ export function ExtractionDialog({
           </>
         )}
 
-        {/* Preview state */}
         {state === "preview" && (
           <>
             <DialogHeader>
@@ -162,7 +159,6 @@ export function ExtractionDialog({
               </DialogDescription>
             </DialogHeader>
 
-            {/* Title */}
             <div className="space-y-1">
               <label htmlFor="extraction-title" className="font-medium text-sm">
                 Title
@@ -175,7 +171,6 @@ export function ExtractionDialog({
               />
             </div>
 
-            {/* Content */}
             <div className="min-h-0 flex-1 space-y-1">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-sm">Content</span>
@@ -213,7 +208,6 @@ export function ExtractionDialog({
           </>
         )}
 
-        {/* Saving state */}
         {state === "saving" && (
           <>
             <DialogHeader>
@@ -231,7 +225,6 @@ export function ExtractionDialog({
           </>
         )}
 
-        {/* Success state */}
         {state === "success" && (
           <>
             <DialogHeader>

@@ -1,5 +1,3 @@
-"""Ingestion service for processing documents into chunks with embeddings."""
-
 import hashlib
 import logging
 import re
@@ -61,28 +59,16 @@ HEADER_PATTERN = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 
 
 def strip_frontmatter(text: str) -> str:
-    """Remove YAML frontmatter from the start of a document."""
     return FRONTMATTER_PATTERN.sub("", text, count=1)
 
 
 def parse_frontmatter(text: str) -> dict[str, str]:
-    """Parse YAML frontmatter from the start of a document.
-
-    Returns a dict of key-value pairs from the frontmatter.
-    Only handles simple key: value pairs (not nested structures).
-
-    Args:
-        text: The full document text
-
-    Returns:
-        Dict of frontmatter fields, empty if no frontmatter found
-    """
+    """Only handles simple key: value pairs (not nested YAML structures)."""
     match = FRONTMATTER_PATTERN.match(text)
     if not match:
         return {}
 
     frontmatter_block = match.group(0)
-    # Remove the --- delimiters
     lines = frontmatter_block.strip().split("\n")[1:-1]
 
     result: dict[str, str] = {}
@@ -91,7 +77,6 @@ def parse_frontmatter(text: str) -> dict[str, str]:
             key, _, value = line.partition(":")
             key = key.strip()
             value = value.strip()
-            # Remove quotes if present
             if value.startswith('"') and value.endswith('"'):
                 value = value.removeprefix('"').removesuffix('"')
             elif value.startswith("'") and value.endswith("'"):
@@ -102,22 +87,7 @@ def parse_frontmatter(text: str) -> dict[str, str]:
 
 
 def detect_content_type(frontmatter: dict[str, str], relative_path: str, is_pdf: bool = False) -> ContentType:
-    """Detect content type from frontmatter or file path.
-
-    Priority:
-    1. PDF files in Books/ -> BOOK_SOURCE
-    2. Explicit 'type' field in frontmatter
-    3. Path-based detection (Books/ folder)
-    4. Default to personal_note
-
-    Args:
-        frontmatter: Parsed frontmatter dict
-        relative_path: Path relative to vault root
-        is_pdf: Whether the file is a PDF
-
-    Returns:
-        Detected ContentType
-    """
+    """Priority: PDF in Books/ -> frontmatter 'type' field -> path-based detection -> personal_note."""
     in_books_dir = relative_path.startswith(f"{BOOKS_DIR}/")
 
     # PDFs in Books/ are book sources
@@ -145,40 +115,20 @@ def detect_content_type(frontmatter: dict[str, str], relative_path: str, is_pdf:
 
 
 def extract_book_metadata(frontmatter: dict[str, str]) -> dict[str, str]:
-    """Extract book-specific metadata from frontmatter.
-
-    Args:
-        frontmatter: Parsed frontmatter dict
-
-    Returns:
-        Dict with book metadata fields (author, title, date_read, rating)
-    """
     book_fields = ["author", "title", "date_read", "rating", "tags"]
     return {k: v for k, v in frontmatter.items() if k in book_fields and v}
 
 
 def compute_content_hash(content: str) -> str:
-    """Compute SHA-256 hash of content for change detection."""
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
 def detect_sections(text: str) -> list[tuple[str, str, int]]:
-    """Split text into sections based on headers and date patterns.
+    """Split text into (section_header, section_content, start_position) tuples.
 
-    Sections are detected in priority order:
-    1. Markdown headers (# through ######)
-    2. Date patterns at line start (e.g., "January 14, 2024" or "5/15/2019")
-
-    For header sections, the header line itself is excluded from section_content
-    since it's already captured in the section_header field (avoids duplication
-    when the header is injected as chunk context).
-
-    Args:
-        text: The full document text
-
-    Returns:
-        List of (section_header, section_content, start_position) tuples.
-        If no sections are found, returns single entry with empty header.
+    Detects markdown headers and date patterns at line start.
+    Header lines are excluded from section_content since the header is
+    captured separately (avoids duplication when injected as chunk context).
     """
     # Find all section boundaries
     # Each boundary: (boundary_pos, content_start, header_text)
@@ -205,7 +155,6 @@ def detect_sections(text: str) -> list[tuple[str, str, int]]:
 
     sections: list[tuple[str, str, int]] = []
 
-    # Handle content before first section (if any)
     if boundaries[0][0] > 0:
         preamble = text[: boundaries[0][0]].strip()
         if preamble:
@@ -232,17 +181,7 @@ def split_section_with_overlap(
     overlap: int = CHUNK_OVERLAP,
     min_size: int = MIN_CHUNK_SIZE,
 ) -> list[str]:
-    """Split a section that exceeds max_size on paragraph breaks with overlap.
-
-    Args:
-        content: Section content to split
-        max_size: Maximum characters per chunk
-        overlap: Characters of overlap between chunks
-        min_size: Minimum chunk size (smaller chunks merged with previous)
-
-    Returns:
-        List of text chunks
-    """
+    """Split a section that exceeds max_size on paragraph breaks with overlap."""
     if len(content) <= max_size:
         return [content]
 
@@ -286,21 +225,9 @@ def markdown_aware_chunk_text(
 ) -> list[ChunkData]:
     """Chunk text respecting markdown structure.
 
-    This function:
-    1. Detects sections based on headers and date patterns
-    2. Keeps small sections intact, splits large ones on paragraph breaks
-    3. Returns ChunkData with raw content and section metadata (no context prefixes)
-    4. Merges orphan chunks that are too small
-
-    Args:
-        text: The full document text
-        target_size: Target chunk size (used for small file detection)
-        max_size: Maximum chunk size before splitting
-        overlap: Characters of overlap when splitting large sections
-        min_size: Minimum chunk size (smaller chunks get merged)
-
-    Returns:
-        List of ChunkData with raw content and section metadata
+    Detects sections by headers/dates, keeps small sections intact, splits large
+    ones on paragraph breaks, and merges orphan chunks below min_size.
+    Returns ChunkData with raw content and section metadata (no context prefixes).
     """
     text = strip_frontmatter(text)
 
@@ -347,24 +274,7 @@ async def ingest_document(
     relative_path: str,
     vault_path: str = VAULT_MOUNT_PATH,
 ) -> Document:
-    """Ingest a single document from a knowledge source.
-
-    Reads the file, chunks it, generates embeddings, and stores in the database.
-
-    Args:
-        db: Database session
-        openai_client: OpenAI client for embeddings
-        knowledge_source_id: The knowledge source this document belongs to
-        relative_path: Path relative to the knowledge source root (e.g., "Brain Dump.md")
-        vault_path: Root path of the vault (default: /vault container mount)
-
-    Returns:
-        The created Document record
-
-    Raises:
-        FileNotFoundError: If the file doesn't exist
-        ValueError: If the file is empty
-    """
+    """Read, chunk, embed, and store a single markdown document."""
     file_path = Path(vault_path) / relative_path
 
     if not file_path.exists():
@@ -383,7 +293,6 @@ async def ingest_document(
     frontmatter = parse_frontmatter(content)
     content_type = detect_content_type(frontmatter, relative_path)
 
-    # Build doc_metadata from frontmatter
     doc_metadata: dict[str, str] | None = None
     if content_type == ContentType.BOOK_NOTE:
         book_meta = extract_book_metadata(frontmatter)
@@ -417,7 +326,6 @@ async def ingest_document(
         # Embed only raw content (no context prefixes)
         embeddings = await generate_embeddings_batch(openai_client, [cd.content for cd in chunk_data_list])
 
-        # Create chunk records
         for i, (cd, embedding) in enumerate(zip(chunk_data_list, embeddings, strict=True)):
             chunk = DocumentChunk(
                 document_id=document.id,
@@ -446,7 +354,6 @@ async def ingest_document(
         return document
 
     except Exception as e:
-        # Update document status to ERROR on failure
         await Document.update(
             db,
             document.id,
@@ -462,22 +369,13 @@ def discover_markdown_files(
     base_path: Path,
     exclude_dirs: set[str] | None = None,
 ) -> list[str]:
-    """Recursively find all .md files, excluding system directories.
-
-    Args:
-        base_path: Root directory to search
-        exclude_dirs: Directory names to skip (defaults to DEFAULT_EXCLUDE_DIRS)
-
-    Returns:
-        List of relative paths to markdown files
-    """
+    """Recursively find all .md files, excluding system directories."""
     if exclude_dirs is None:
         exclude_dirs = DEFAULT_EXCLUDE_DIRS
 
     markdown_files: list[str] = []
 
     for file_path in base_path.rglob("*.md"):
-        # Check if any parent directory should be excluded
         parts = file_path.relative_to(base_path).parts
         if any(part in exclude_dirs for part in parts[:-1]):  # Exclude dirs, not filename
             continue
@@ -490,18 +388,7 @@ def discover_pdf_files(
     base_path: Path,
     exclude_dirs: set[str] | None = None,
 ) -> list[str]:
-    """Find PDF files in the Books/ directory.
-
-    Only searches within the top-level Books/ directory.
-    PDFs outside this directory are ignored.
-
-    Args:
-        base_path: Root directory to search
-        exclude_dirs: Directory names to skip (defaults to DEFAULT_EXCLUDE_DIRS)
-
-    Returns:
-        List of relative paths to PDF files
-    """
+    """Only searches within the top-level Books/ directory."""
     if exclude_dirs is None:
         exclude_dirs = DEFAULT_EXCLUDE_DIRS
 
@@ -526,16 +413,7 @@ async def _auto_link_book_documents(
     knowledge_source_id: uuid.UUID,
     document: Document,
 ) -> None:
-    """Link a document to other documents in the same book folder.
-
-    PDFs get linked to book notes and vice versa when they share
-    the same book folder (e.g., "Books/AI Engineering/").
-
-    Args:
-        db: Database session
-        knowledge_source_id: Knowledge source ID
-        document: The document to link
-    """
+    """Link PDF <-> book note documents that share the same book folder."""
     book_folder = BookSchema.folder_from_path(document.relative_path)
     if not book_folder:
         return
@@ -584,24 +462,7 @@ async def ingest_pdf_document(
     knowledge_source_id: uuid.UUID,
     relative_path: str,
 ) -> Document:
-    """Ingest a PDF document from a knowledge source.
-
-    Extracts text from the PDF, chunks it respecting chapter boundaries,
-    generates embeddings, and stores in the database.
-
-    Args:
-        db: Database session
-        openai_client: OpenAI client for embeddings
-        knowledge_source_id: The knowledge source this document belongs to
-        relative_path: Path relative to the knowledge source root
-
-    Returns:
-        The created Document record
-
-    Raises:
-        FileNotFoundError: If the file doesn't exist
-        ValueError: If the PDF is password-protected or has no extractable text
-    """
+    """Extract text from PDF, chunk by chapter boundaries, embed, and store."""
     file_path = Path(VAULT_MOUNT_PATH) / relative_path
 
     if not file_path.exists():
@@ -658,7 +519,6 @@ async def ingest_pdf_document(
         # Generate embeddings
         embeddings = await generate_embeddings_batch(openai_client, [cd.content for cd in chunk_data_list])
 
-        # Create chunk records
         for i, (cd, embedding) in enumerate(zip(chunk_data_list, embeddings, strict=True)):
             chunk = DocumentChunk(
                 document_id=document.id,
@@ -691,7 +551,6 @@ async def ingest_pdf_document(
         return document
 
     except Exception as e:
-        # Update document status to ERROR on failure
         await Document.update(
             db,
             document.id,
@@ -704,15 +563,7 @@ async def ingest_pdf_document(
 
 
 def _file_has_changed(existing_doc: Document, file_path: Path) -> tuple[bool, str | None]:
-    """Check if a file's content has changed since last ingestion.
-
-    Uses a two-stage check:
-    1. Fast: compare mtime — if unchanged, skip reading file
-    2. Slow: read file and compare content hash
-
-    Returns:
-        (has_changed, new_content_hash) — hash is None if unchanged
-    """
+    """Two-stage check: fast mtime comparison, then content hash if mtime differs."""
     file_stat = file_path.stat()
     current_mtime = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
 
@@ -736,17 +587,7 @@ async def ingest_all_documents(
     knowledge_source_id: uuid.UUID,
     force_reindex: bool = False,
 ) -> BatchIngestResult:
-    """Ingest all documents (markdown and PDF) from a knowledge source.
-
-    Args:
-        db: Database session
-        openai_client: OpenAI client for embeddings
-        knowledge_source_id: The knowledge source to ingest from
-        force_reindex: If True, re-ingest documents even if already indexed
-
-    Returns:
-        BatchIngestResult with statistics about the operation
-    """
+    """Ingest all markdown and PDF documents, skipping unchanged files unless force_reindex is set."""
     start_time = time.time()
 
     base_path = Path(VAULT_MOUNT_PATH)
@@ -855,26 +696,11 @@ async def ingest_all_documents(
 
 
 def preview_book_pdf(pdf_bytes: bytes, filename: str) -> BookPdfPreview:
-    """Parse PDF metadata for preview before upload confirmation.
-
-    Opens the PDF from bytes in memory, extracts title/author from PDF metadata,
-    and returns a preview with page count.
-
-    Args:
-        pdf_bytes: Raw PDF file content
-        filename: Original filename
-
-    Returns:
-        BookPdfPreview with extracted metadata
-
-    Raises:
-        ValueError: If the PDF is encrypted or has no extractable text
-    """
+    """Extract title/author/page_count from PDF metadata for upload preview."""
     with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:  # type: ignore[no-untyped-call]
         if doc.is_encrypted:
             raise ValueError("PDF is password-protected and cannot be processed")
 
-        # Check for extractable text (sample first few pages)
         has_text = False
         for page_num in range(min(3, doc.page_count)):
             if doc[page_num].get_text().strip():
@@ -905,25 +731,9 @@ async def upload_book_pdf(
     title: str,
     author: str | None,
 ) -> tuple[str, str | None]:
-    """Save a PDF to the vault and scaffold notes.
+    """Write PDF to vault/Books/{title}/ and scaffold a Notes.md if one doesn't exist.
 
-    Writes the PDF to /vault/Books/{title}/{filename} and scaffolds a Notes.md
-    file if one doesn't exist. Does NOT create a Document record or run ingestion —
-    those are handled by ingest_pdf_document() and ingest_document() separately.
-
-    Args:
-        db: Database session
-        knowledge_source_id: Parent knowledge source ID
-        pdf_bytes: Raw PDF content
-        filename: Original PDF filename
-        title: User-edited book title (used as folder name)
-        author: User-edited author (used in Notes.md frontmatter)
-
-    Returns:
-        Tuple of (pdf_relative_path, notes_relative_path or None if not created)
-
-    Raises:
-        ValueError: If a document already exists at this path
+    Does NOT run ingestion — that's handled separately by ingest_pdf_document/ingest_document.
     """
     # Sanitize the title for use as a folder name
     safe_title = title.strip().replace("/", "-").replace("\\", "-").replace("\n", " ")
@@ -942,12 +752,10 @@ async def upload_book_pdf(
     pdf_path = book_dir / safe_filename
     relative_path = f"{BOOKS_DIR}/{safe_title}/{safe_filename}"
 
-    # Check for duplicate
     existing = await Document.get_by_relative_path(db, knowledge_source_id, relative_path)
     if existing:
         raise ValueError(f"A document already exists at {relative_path}")
 
-    # Create directory and write PDF
     book_dir.mkdir(parents=True, exist_ok=True)
     pdf_path.write_bytes(pdf_bytes)
     logger.info(f"Saved PDF to {pdf_path}")

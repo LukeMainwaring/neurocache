@@ -32,7 +32,6 @@ async def create_and_validate(
     db: AsyncPostgresSessionDep,
     user_id: str,
 ) -> KnowledgeSourceSchema:
-    """Create a new knowledge source and validate if it's an Obsidian vault."""
     source = await KnowledgeSource.create(db, user_id, source_data)
     if source_data.source_type == KnowledgeSourceType.OBSIDIAN:
         source = await _validate_obsidian_source(db, source, user_id)
@@ -44,7 +43,6 @@ async def retry_validation(
     db: AsyncPostgresSessionDep,
     user_id: str,
 ) -> KnowledgeSourceSchema:
-    """Re-validate an existing knowledge source."""
     source = await KnowledgeSource.get(db, source_id, user_id)
     if source.source_type == KnowledgeSourceType.OBSIDIAN:
         source = await _validate_obsidian_source(db, source, user_id)
@@ -100,7 +98,6 @@ async def _validate_obsidian_source(
     source: KnowledgeSourceSchema,
     user_id: str,
 ) -> KnowledgeSourceSchema:
-    """Validate an Obsidian vault source and update its status."""
     is_valid, error_message, file_count = await validate_obsidian_vault(
         user_file_path=source.file_path or "",
     )
@@ -126,7 +123,6 @@ async def list_books(
     db: AsyncPostgresSessionDep,
     user_id: str,
 ) -> BookListResponse:
-    """List books grouped by subfolder for a knowledge source."""
     source = await KnowledgeSource.get(db, source_id, user_id)
     book_docs = await Document.get_books_by_source(db, source.id)
 

@@ -1,5 +1,3 @@
-"""Embedding service for generating vector embeddings via OpenAI."""
-
 import logging
 
 from openai import AsyncOpenAI
@@ -12,18 +10,6 @@ config = get_settings()
 
 
 async def generate_embedding(openai_client: AsyncOpenAI, text: str) -> list[float]:
-    """Generate a vector embedding for the given text.
-
-    Args:
-        openai_client: OpenAI client
-        text: The text to embed
-
-    Returns:
-        A list of floats representing the embedding vector (1536 dimensions)
-
-    Raises:
-        OpenAIError: If the API call fails
-    """
     response = await openai_client.embeddings.create(
         model=config.EMBEDDING_MODEL,
         input=text,
@@ -39,26 +25,11 @@ CHARS_PER_TOKEN_ESTIMATE = 3  # Conservative estimate (technical text can be ~2-
 
 
 def _estimate_tokens(text: str) -> int:
-    """Estimate token count for a text string."""
     return len(text) // CHARS_PER_TOKEN_ESTIMATE
 
 
 async def generate_embeddings_batch(openai_client: AsyncOpenAI, texts: list[str]) -> list[list[float]]:
-    """Generate embeddings for multiple texts, batching to stay under API limits.
-
-    Automatically splits into multiple API calls if total tokens exceed
-    the 300k token limit per request.
-
-    Args:
-        openai_client: OpenAI client
-        texts: List of texts to embed
-
-    Returns:
-        List of embedding vectors, one per input text (in same order)
-
-    Raises:
-        OpenAIError: If the API call fails
-    """
+    """Splits into multiple API calls if total tokens exceed the per-request limit."""
     if not texts:
         return []
 

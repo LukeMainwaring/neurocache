@@ -1,5 +1,3 @@
-"""PDF parsing utilities for extracting text and table of contents."""
-
 import logging
 from pathlib import Path
 
@@ -11,14 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 def extract_toc(doc: pymupdf.Document) -> list[TOCEntry]:
-    """Parse PDF bookmarks/outline into TOC entries.
-
-    Args:
-        doc: PyMuPDF document object
-
-    Returns:
-        List of TOCEntry objects representing the document outline
-    """
     toc_entries: list[TOCEntry] = []
 
     try:
@@ -34,18 +24,7 @@ def extract_toc(doc: pymupdf.Document) -> list[TOCEntry]:
 
 
 def get_chapter_for_page(toc: list[TOCEntry], page_number: int | None) -> str | None:
-    """Look up the chapter title for a given page number.
-
-    Finds the most recent top-level chapter (level 1) that starts
-    at or before the given page.
-
-    Args:
-        toc: List of TOC entries
-        page_number: Printed page number to look up, or None for front matter
-
-    Returns:
-        Chapter title or None if no TOC or page is before first chapter
-    """
+    """Find the most recent level-1 chapter at or before the given page."""
     if not toc or page_number is None:
         return None
 
@@ -67,18 +46,6 @@ def get_chapter_for_page(toc: list[TOCEntry], page_number: int | None) -> str | 
 
 
 def extract_pdf_content(file_path: Path) -> list[PageContent]:
-    """Extract text content from all pages of a PDF.
-
-    Args:
-        file_path: Path to the PDF file
-
-    Returns:
-        List of PageContent objects, one per page
-
-    Raises:
-        ValueError: If PDF is password-protected or has no extractable text
-        FileNotFoundError: If file doesn't exist
-    """
     if not file_path.exists():
         raise FileNotFoundError(f"PDF file not found: {file_path}")
 
@@ -87,7 +54,6 @@ def extract_pdf_content(file_path: Path) -> list[PageContent]:
     except Exception as e:
         raise ValueError(f"Failed to open PDF: {e}") from e
 
-    # Check for password protection
     if doc.is_encrypted:
         doc.close()  # type: ignore[no-untyped-call]
         raise ValueError(f"PDF is password-protected: {file_path}")

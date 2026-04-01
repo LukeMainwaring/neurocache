@@ -12,7 +12,6 @@ export default function PersonalizationPage() {
   const { data: user, isLoading } = useMyself();
   const { updatePersonalization, isPending } = useUpdateMyPersonalization();
 
-  // Form state
   const [nickname, setNickname] = useState("");
   const [occupation, setOccupation] = useState("");
   const [aboutYou, setAboutYou] = useState("");

@@ -1,10 +1,3 @@
-"""Knowledge base search tool for Pydantic AI agents.
-
-Provides the ``search_knowledge_base`` tool that lets agents query the user's
-personal knowledge base on demand, along with helper functions for formatting
-retrieved chunks into context strings and source metadata.
-"""
-
 import logging
 from pathlib import Path
 from urllib.parse import quote
@@ -22,10 +15,6 @@ logger = logging.getLogger(__name__)
 
 config = get_settings()
 
-# ============================================================================
-# RAG Context Formatting (moved from chat_agent.py)
-# ============================================================================
-
 
 def build_obsidian_url(file_path: str) -> str:
     """Build an obsidian://open URI for a file in the vault.
@@ -42,7 +31,6 @@ def build_obsidian_url(file_path: str) -> str:
 
 
 def _content_type_label(content_type: str | None) -> str:
-    """Return a human-readable label for a content type."""
     labels: dict[str, str] = {
         ContentType.PERSONAL_NOTE.value: "Personal Note",
         ContentType.BOOK_NOTE.value: "Book Note",
@@ -57,21 +45,11 @@ def format_rag_context(
     relevant_chunks: list[tuple[DocumentChunk, float]],
     start_index: int = 1,
 ) -> tuple[str | None, list[RAGSource]]:
-    """Format retrieved chunks into numbered context for the prompt.
+    """Format retrieved chunks into numbered context for the agent prompt.
 
-    Reconstructs attribution prefixes from chunk metadata and document path
-    (the chunk content itself is stored without prefixes for clean embeddings).
-    Each source is numbered for inline citation (e.g., [1], [2]) by the agent.
-
-    Args:
-        relevant_chunks: List of (chunk, similarity) tuples from retrieval
-        start_index: Starting source number (supports consecutive numbering
-            across multiple search_knowledge_base calls in one turn)
-
-    Returns:
-        Tuple of (formatted_context, sources_metadata)
-        - formatted_context: String for the prompt, or None if no relevant chunks
-        - sources_metadata: List of source info dicts for the frontend
+    Chunk content is stored without attribution prefixes (for clean embeddings),
+    so we reconstruct them here from chunk metadata and document path.
+    start_index supports consecutive numbering across multiple tool calls in one turn.
     """
     if not relevant_chunks:
         return None, []
@@ -86,34 +64,28 @@ def format_rag_context(
         doc_metadata = doc.doc_metadata if doc else None
         chunk_meta = chunk.chunk_metadata or {}
 
-        # Build attribution prefix with content type
         type_label = _content_type_label(content_type)
         prefix = f"[Source: {source_path} ({type_label})]"
 
-        # Add author for book notes and book sources
         if content_type in (ContentType.BOOK_NOTE.value, ContentType.BOOK_SOURCE.value) and doc_metadata:
             author = doc_metadata.get("author")
             if author:
                 prefix += f"\n[Author: {author}]"
 
-        # Add page number for book sources (PDFs)
         page_number = chunk_meta.get("page_number")
         if page_number:
             prefix += f"\n[Page: {page_number}]"
 
-        # Add chapter for book sources (PDFs)
         chapter = chunk_meta.get("chapter")
         if chapter:
             prefix += f"\n[Chapter: {chapter}]"
 
-        # Add section header if available (markdown documents)
         section_header = chunk_meta.get("section_header")
         if section_header:
             prefix += f"\n[Section: {section_header}]"
 
         context_parts.append(f"[{source_number}] {prefix}\n\n{chunk.content}")
 
-        # Build source metadata for frontend
         source: RAGSource = {
             "path": source_path,
             "similarity": float(similarity),
@@ -136,11 +108,6 @@ def format_rag_context(
         sources.append(source)
 
     return "\n\n---\n\n".join(context_parts), sources
-
-
-# ============================================================================
-# Knowledge Base Tool
-# ============================================================================
 
 
 async def search_knowledge_base(ctx: RunContext[AgentDeps], query: str) -> str:
