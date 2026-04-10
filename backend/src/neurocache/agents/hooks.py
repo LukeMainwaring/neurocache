@@ -1,11 +1,7 @@
-"""Hooks for the neurocache chat agent.
+"""Safety net for unanticipated tool exceptions.
 
-Tool bodies should return structured ``{"error": ...}`` payloads for
-anticipated failures. This module is the safety net for *unanticipated*
-exceptions — anything that bubbles out of a tool body would otherwise
-crash the Vercel AI SDK stream mid-response. ``_recover_tool_error``
-intercepts those, logs the traceback, and returns a structured recovery
-payload so the agent can explain the failure to the user conversationally.
+Without this, a raised exception inside a tool body would crash the Vercel
+AI SDK stream mid-response instead of letting the agent recover conversationally.
 """
 
 from __future__ import annotations
@@ -41,10 +37,10 @@ async def _recover_tool_error(
     *,
     call: ToolCallPart,
     tool_def: ToolDefinition,
-    args: Any,
+    args: dict[str, Any],
     error: Exception,
 ) -> dict[str, Any]:
-    logger.exception(f"Unhandled exception in tool {tool_def.name}: {error!r}")
+    logger.exception(f"Unhandled exception in tool {tool_def.name}")
     return _recovery_payload(tool_def.name, error)
 
 

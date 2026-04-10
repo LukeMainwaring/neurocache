@@ -1,10 +1,3 @@
-"""Unit tests for the chat_agent hooks module.
-
-Exercises the recovery payload helper and the ``_recover_tool_error``
-handler directly against real ``ToolCallPart`` / ``ToolDefinition``
-instances.
-"""
-
 from __future__ import annotations
 
 import asyncio
