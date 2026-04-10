@@ -21,6 +21,7 @@ class BaseAgentSettings(BaseSettings):
     """Base agent configuration."""
 
     AGENT_MODEL: str = "gpt-5-mini"
+    AGENT_REASONING_EFFORT: Literal["low", "medium", "high"] | None = None
 
 
 class EmbeddingSettings(BaseSettings):

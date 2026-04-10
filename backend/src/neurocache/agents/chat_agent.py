@@ -11,10 +11,11 @@ import logging
 import logfire
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.capabilities import WebSearch
-from pydantic_ai.models.openai import OpenAIResponsesModel
+from pydantic_ai.models.openai import OpenAIResponsesModel, OpenAIResponsesModelSettings
 
 from neurocache.agents.capabilities.knowledge_base import KnowledgeBaseCapability
 from neurocache.agents.deps import AgentDeps
+from neurocache.agents.hooks import build_chat_agent_hooks
 from neurocache.core.config import get_settings
 
 logfire.configure()
@@ -113,12 +114,20 @@ def build_chat_instructions(ctx: RunContext[AgentDeps]) -> str:
 
 _model = OpenAIResponsesModel(config.AGENT_MODEL)
 
+_model_settings = (
+    OpenAIResponsesModelSettings(openai_reasoning_effort=config.AGENT_REASONING_EFFORT)
+    if config.AGENT_REASONING_EFFORT is not None
+    else None
+)
+
 chat_agent = Agent(
     model=_model,
+    model_settings=_model_settings,
     deps_type=AgentDeps,
     instructions=build_chat_instructions,
     capabilities=[
         WebSearch(search_context_size="medium"),
         KnowledgeBaseCapability(),
+        build_chat_agent_hooks(),
     ],
 )

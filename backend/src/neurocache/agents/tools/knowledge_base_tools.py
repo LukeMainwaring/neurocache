@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from urllib.parse import quote
 
@@ -10,8 +9,6 @@ from neurocache.models.document_chunk import DocumentChunk
 from neurocache.schemas.knowledge_source.document import ContentType
 from neurocache.services.knowledge_source.retrieval import search_hybrid_for_user
 from neurocache.utils.message_serialization import RAGSource
-
-logger = logging.getLogger(__name__)
 
 config = get_settings()
 
@@ -122,16 +119,11 @@ async def search_knowledge_base(ctx: RunContext[AgentDeps], query: str) -> str:
                rather than vague phrases. Rephrase the user's question into
                effective search terms.
     """
-    try:
-        chunks = await search_hybrid_for_user(ctx.deps.db, ctx.deps.openai_client, query, ctx.deps.user.id)
-        if not chunks:
-            return "No relevant results found in the knowledge base."
+    chunks = await search_hybrid_for_user(ctx.deps.db, ctx.deps.openai_client, query, ctx.deps.user.id)
+    if not chunks:
+        return "No relevant results found in the knowledge base."
 
-        # Offset source numbering for consecutive citations across multiple searches
-        start_index = len(ctx.deps.rag_sources) + 1
-        formatted_context, sources = format_rag_context(chunks, start_index=start_index)
-        ctx.deps.rag_sources.extend(sources)
-        return formatted_context or "No relevant results found in the knowledge base."
-    except Exception:
-        logger.exception("Error searching knowledge base")
-        return "An error occurred while searching the knowledge base."
+    start_index = len(ctx.deps.rag_sources) + 1
+    formatted_context, sources = format_rag_context(chunks, start_index=start_index)
+    ctx.deps.rag_sources.extend(sources)
+    return formatted_context or "No relevant results found in the knowledge base."
