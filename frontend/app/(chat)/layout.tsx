@@ -6,13 +6,11 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <DataStreamProvider>
-        <Suspense fallback={<div className="flex h-dvh" />}>
-          <SidebarWrapper>{children}</SidebarWrapper>
-        </Suspense>
-      </DataStreamProvider>
-    </>
+    <DataStreamProvider>
+      <Suspense fallback={<div className="flex h-dvh" />}>
+        <SidebarWrapper>{children}</SidebarWrapper>
+      </Suspense>
+    </DataStreamProvider>
   );
 }
 
