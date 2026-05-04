@@ -89,6 +89,8 @@ async def stream_chat(
         deps=deps,
         on_complete=on_complete,
         sdk_version=6,
+        conversation_id=thread_id,
+        allowed_file_url_schemes=frozenset({"https"}),
         model_settings=OpenAIResponsesModelSettings(
             openai_include_web_search_sources=True,
             openai_previous_response_id="auto",
