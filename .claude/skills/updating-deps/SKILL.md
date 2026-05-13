@@ -83,8 +83,27 @@ Download fresh copies of the key AI library documentation used by this project:
 curl -o docs/pydantic-ai-llms-full.txt https://ai.pydantic.dev/llms-full.txt
 ```
 
+The Vercel AI SDK docs are assembled from each AI SDK UI page's `.md` variant, discovered via `sitemap.xml`. The old approach (awk-extracting between `# AI SDK UI` and `# AI_APICallError` headers in `llms.txt`) silently produced an empty diff after upstream restructured `llms.txt` around guide topics — the assertions below catch any future drift loudly.
+
 ```bash
-curl -s https://ai-sdk.dev/llms.txt | awk '/^# AI SDK UI$/{if(!found){found=1; printing=1}} /^# AI_APICallError$/{if(printing){printing=0; exit}} printing' > docs/vercel-ai-sdk-ui.txt
+set -eo pipefail
+tmpfile=$(mktemp)
+trap 'rm -f "$tmpfile"' EXIT
+curl -fsSL https://ai-sdk.dev/sitemap.xml \
+  | grep -oE 'https://ai-sdk\.dev/docs/(ai-sdk-ui|reference/ai-sdk-ui)[^<]*' \
+  | sort -u > "$tmpfile"
+test -s "$tmpfile" || { echo "ERROR: sitemap returned no AI SDK UI URLs"; exit 1; }
+
+: > docs/vercel-ai-sdk-ui.txt
+while IFS= read -r url; do
+  {
+    printf '\n<!-- source: %s -->\n\n' "$url"
+    curl -fsSL "${url}.md"
+  } >> docs/vercel-ai-sdk-ui.txt
+done < "$tmpfile"
+
+grep -q 'useChat' docs/vercel-ai-sdk-ui.txt || { echo "ERROR: vercel-ai-sdk-ui.txt missing 'useChat' — upstream layout may have changed"; exit 1; }
+test "$(wc -c < docs/vercel-ai-sdk-ui.txt)" -gt 100000 || { echo "ERROR: vercel-ai-sdk-ui.txt unexpectedly small"; exit 1; }
 ```
 
 ## Phase 5: Validate
