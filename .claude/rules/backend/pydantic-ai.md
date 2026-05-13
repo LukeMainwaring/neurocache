@@ -1,3 +1,9 @@
+---
+paths:
+  - "backend/src/neurocache/agents/**/*.py"
+  - "backend/tests/**/*.py"
+---
+
 # Pydantic AI Rules
 
 ## Docs are split between two places

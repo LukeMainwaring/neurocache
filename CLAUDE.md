@@ -56,8 +56,6 @@ FastAPI Python backend using async patterns throughout.
 -   **`src/neurocache/migrations/`**: Alembic migrations for PostgreSQL
 -   **`src/neurocache/dependencies/`**: FastAPI dependency injection (db sessions, OpenAI client, auth)
 
-See `.claude/rules/backend/code-conventions.md` for code style and conventions.
-
 ### Frontend (`frontend/`)
 
 Next.js 16 with App Router and React 19.
@@ -92,9 +90,10 @@ Key patterns:
 
 ## Additional Instructions
 
--   This project uses Pydantic AI. Documentation is available at `docs/pydantic-ai-llms-full.txt`. Read this file when working on agent code or when you need Pydantic AI API reference. Re-download periodically with `curl -o docs/pydantic-ai-llms-full.txt https://ai.pydantic.dev/llms-full.txt`.
--   Vercel AI SDK UI documentation is available at `docs/vercel-ai-sdk-ui.txt`. This project only uses **AI SDK UI** (hooks like `useChat` for chat UI) — it does NOT use AI SDK Core (LLM orchestration is handled by Pydantic AI on the backend). Read this file when working on frontend chat UI, message rendering, `useChat` hook, or streaming integration. Re-download via the Phase 4 script in `.claude/skills/updating-deps/SKILL.md` (discovers pages via `sitemap.xml` and fetches the `.md` variant of each — the old awk-on-`llms.txt` one-liner silently broke after upstream restructured the index).
 -   Assume that Git operations for branches, commits, and pushes will mostly be done manually. If executing a multi-step, comprehensive plan that involves successive commits, ask before making a commit.
 -   All commands in this file run from the repo root. Use `--directory` (uv) or `-C` (pnpm) flags instead of `cd <dir> && ...` patterns.
--   Do not make any changes until you have 95% confidence that you know what to build - ask me follow up questions using the AskUserQuestion tool until you have that confidence; but don't ask obvious questions, dig into the hard parts I might not have considered.
 -   After modifying backend API endpoints, regenerate the frontend client with `pnpm -C frontend generate-client`. Do not manually edit files in `frontend/api/generated/`.
+-   Editing the Pydantic AI agent, tools, or evals? See `.claude/rules/backend/pydantic-ai.md` first — docs are split between the local `docs/pydantic-ai-llms-full.txt` snapshot and `ai.pydantic.dev`; tool error-handling convention routes through `hooks._recover_tool_error`.
+-   Editing backend Python? See `.claude/rules/backend/code-conventions.md` first — filename, typing, naming conventions, SQLAlchemy/Pydantic patterns, module re-export convention.
+-   Editing the frontend chat UI, `useChat`, message rendering, or tool-call panels? See `.claude/rules/frontend/vercel-ai-sdk.md` first — pinned UI docs at `docs/vercel-ai-sdk-ui.txt` cover the UI surface only; the backend SSE stream is the source of truth; `ChatMessage` typing must stay threaded through every `UseChatHelpers` site.
+-   Editing frontend code in general? See `.claude/rules/frontend/code-conventions.md` first — import-alias scope, shadcn/ui usage, kebab-case filenames, `cn()` from `@/lib/utils`, memoization policy.
