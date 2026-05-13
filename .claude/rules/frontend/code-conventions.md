@@ -4,7 +4,7 @@ paths:
   - "frontend/app/**/*.{ts,tsx}"
   - "frontend/hooks/**/*.{ts,tsx}"
   - "frontend/api/hooks/**/*.{ts,tsx}"
-  - "frontend/lib/**/*.{ts,tsx}"
+  - "frontend/lib/**/*.ts"
 ---
 
 # Frontend Patterns

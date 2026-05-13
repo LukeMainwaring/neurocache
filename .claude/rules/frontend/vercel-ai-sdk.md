@@ -37,11 +37,15 @@ the web docs. Use WebFetch on `https://ai-sdk.dev/docs/...` before giving up.
   `ChatMessage` type in `frontend/lib/types.ts`. Carry that generic through
   every `UseChatHelpers` site — falling back to plain `UIMessage` loses the
   project's custom metadata (RAG sources, web sources) and tool-part typing.
-- **Tool-call panels switch on `part.type === "tool-<name>"`** in the message
-  renderer. Use the `isToolPart()` helper in `components/message.tsx` to detect
-  tool parts — both `tool-<name>` and `dynamic-tool` are valid tool-part shapes
-  and the helper handles both. A new backend tool that needs a custom UI panel
-  adds a branch there.
+- **Tool parts are detected via `isToolUIPart` from the `ai` package.**
+  `components/message.tsx` uses it as a type guard, then delegates every tool
+  part to the unified `<ToolCall>` in `components/elements/tool-call.tsx`.
+  Per-tool customization happens *inside* `ToolCall` — primarily the
+  `TOOL_VERBS` map keyed by `getToolName(part)` (which accepts both
+  `ToolUIPart` and `DynamicToolUIPart`). When adding a new backend tool that
+  needs a friendlier running-state label, add an entry to `TOOL_VERBS`. If a
+  tool truly needs a bespoke panel (not just a label), add a branch in
+  `message.tsx` *before* the generic `isToolUIPart` arm; don't fork `ToolCall`.
 - **Tool-call streaming caveat.** `experimental_throttle: 100` on `useChat`
   coalesces intermediate states, so tool parts often arrive as
   `output-available` directly without an in-between `input-streaming` /
